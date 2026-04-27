@@ -1,0 +1,56 @@
+.causal-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+  padding: 24px;
+  background: color-mix(in srgb, var(--zone1-bg) 80%, white);
+  border: 1.5px solid color-mix(in srgb, var(--zone1-color) 30%, var(--line));
+  border-radius: var(--radius-lg);
+  margin-top: var(--gap-lg);
+  color: var(--zone1-color);
+}
+
+.causal-chain__stage {
+  background: #ffffff;
+  border: 2px solid;
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  min-width: 130px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.causal-chain__stage-label {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.causal-chain__stage-sublabel {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.causal-chain__arrow-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--zone1-color);
+}
+
+.causal-chain__arrow-word {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  color: var(--zone1-color);
+}
+
+.causal-chain__arrow-svg {
+  display: block;
+}

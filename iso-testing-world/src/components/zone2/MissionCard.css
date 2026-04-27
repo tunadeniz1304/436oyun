@@ -1,0 +1,62 @@
+.mission-card {
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  border-left: 4px solid var(--zone2-color);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.mission-card--correct {
+  border-color: var(--status-correct);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-correct) 20%, transparent);
+}
+
+.mission-card--wrong {
+  border-color: var(--status-review);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-review) 20%, transparent);
+}
+
+.mission-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  margin-bottom: 10px;
+}
+
+.mission-card__index {
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.mission-card__index strong {
+  color: var(--zone2-color);
+  font-weight: 700;
+}
+
+.mission-card__divider {
+  margin: 0 2px;
+  color: var(--line);
+}
+
+.mission-card__clause {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.mission-card__text {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.mission-card__prompt {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-style: italic;
+}

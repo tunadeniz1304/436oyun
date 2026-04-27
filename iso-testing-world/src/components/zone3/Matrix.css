@@ -1,0 +1,116 @@
+.matrix-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: 130px repeat(4, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.matrix__corner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  background: var(--zone3-bg);
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+.matrix__col-head {
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--zone3-color);
+  background: var(--zone3-bg);
+  border-bottom: 1px solid var(--line);
+  display: inline-flex;
+  justify-content: center;
+  align-items: baseline;
+}
+
+.matrix__row {
+  display: contents;
+}
+
+.matrix__row-head {
+  padding: 0 12px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--zone3-color);
+  background: color-mix(in srgb, var(--zone3-bg) 65%, white);
+  border-right: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.matrix__cell {
+  position: relative;
+  background: #ffffff;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  height: 60px;
+  cursor: pointer;
+  transition: background 180ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matrix__row:last-child .matrix__cell { border-bottom: 0; }
+.matrix__row .matrix__cell:last-child { border-right: 0; }
+
+.matrix__cell:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--zone3-bg) 60%, white);
+}
+
+.matrix__cell:focus-visible {
+  outline: 2px solid var(--zone3-color);
+  outline-offset: -2px;
+}
+
+.matrix__cell.is-selected {
+  background: var(--zone3-bg);
+  box-shadow: inset 0 0 0 2.5px var(--zone3-color);
+}
+
+.matrix__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--zone3-color);
+  color: #ffffff;
+}
+
+.matrix__legend {
+  display: flex;
+  gap: var(--gap-md);
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.matrix__legend strong {
+  color: var(--ink);
+  font-weight: 600;
+  margin-right: 2px;
+}

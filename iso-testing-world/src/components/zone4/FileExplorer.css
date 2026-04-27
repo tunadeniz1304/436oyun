@@ -1,0 +1,87 @@
+.file-explorer {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: fit-content;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.file-row:hover {
+  background: color-mix(in srgb, var(--zone4-bg) 70%, white);
+}
+
+.file-row:focus-visible {
+  outline: 2px solid var(--zone4-color);
+  outline-offset: -2px;
+}
+
+.file-row.is-selected {
+  background: var(--zone4-bg);
+  box-shadow: inset 3px 0 0 var(--zone4-color);
+}
+
+.file-row__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-row__meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.file-row__name {
+  font-size: 13px;
+  color: var(--ink);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-row__status {
+  font-size: 10.5px;
+}
+
+.file-row__pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+}
+
+.file-row__pill.is-correct {
+  background: color-mix(in srgb, var(--status-correct) 18%, white);
+  color: var(--status-correct);
+}
+
+.file-row__pill.is-partial {
+  background: color-mix(in srgb, var(--status-partial) 18%, white);
+  color: var(--status-partial);
+}
+
+.file-row__pill.is-wrong {
+  background: color-mix(in srgb, var(--status-review) 18%, white);
+  color: var(--status-review);
+}

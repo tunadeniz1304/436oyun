@@ -1,0 +1,121 @@
+.matrix-tower {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-lg);
+}
+
+.matrix-tower__brief {
+  background: #ffffff;
+  border-left: 4px solid var(--zone3-color);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.matrix-tower__brief-meta {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.matrix-tower__brief-meta strong {
+  color: var(--zone3-color);
+  font-weight: 700;
+}
+
+.matrix-tower__brief p {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.matrix-tower__verdict {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+.matrix-tower__verdict--exact {
+  background: color-mix(in srgb, var(--status-correct) 18%, white);
+  color: var(--status-correct);
+}
+
+.matrix-tower__verdict--partial {
+  background: color-mix(in srgb, var(--status-partial) 18%, white);
+  color: var(--status-partial);
+}
+
+.matrix-tower__verdict--wrong {
+  background: color-mix(in srgb, var(--status-review) 18%, white);
+  color: var(--status-review);
+}
+
+.matrix-tower__board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+.matrix-tower__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-md);
+  flex-wrap: wrap;
+}
+
+.matrix-tower__counter {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.matrix-tower__scope-note {
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+.matrix-tower__scope-note strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-style: normal;
+}
+
+.matrix-tower__complete {
+  background: #ffffff;
+  padding: 28px 24px;
+  border: 1.5px solid var(--zone3-color);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+  align-items: center;
+}
+
+.matrix-tower__complete h2 {
+  font-size: 22px;
+  color: var(--zone3-color);
+}
+
+.matrix-tower__complete p {
+  font-size: 14.5px;
+  color: var(--ink);
+}

@@ -1,0 +1,16 @@
+.timer-ring {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-ring__value {
+  position: absolute;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--zone2-color);
+}

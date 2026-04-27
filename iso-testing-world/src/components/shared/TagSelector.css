@@ -1,0 +1,12 @@
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+
+.tag-selector__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

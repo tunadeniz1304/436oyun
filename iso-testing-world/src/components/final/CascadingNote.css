@@ -1,0 +1,27 @@
+.cascading-note {
+  flex: 1;
+  min-width: 240px;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.55;
+  border-left: 3px solid var(--final-color);
+  padding: 8px 12px;
+  background: var(--final-bg);
+  border-radius: var(--radius-md);
+}
+
+.cascading-note__item {
+  font-style: italic;
+}
+
+.cascading-note--clean {
+  border-left-color: var(--status-correct);
+  background: color-mix(in srgb, var(--status-correct) 8%, white);
+  color: var(--status-correct);
+  font-weight: 500;
+  font-style: italic;
+}

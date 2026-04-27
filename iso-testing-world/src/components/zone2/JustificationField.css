@@ -1,0 +1,58 @@
+.justification-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--zone2-bg);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  border-left: 3px solid var(--zone2-color);
+}
+
+.justification-field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--zone2-color);
+  letter-spacing: 0.02em;
+}
+
+.justification-field__textarea {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  background: #ffffff;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 56px;
+}
+
+.justification-field__textarea:focus-visible {
+  outline: 2px solid var(--zone2-color);
+  outline-offset: 1px;
+}
+
+.justification-field__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
+}
+
+.justification-field__count {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.justification-field__count.is-ok {
+  color: var(--status-correct);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.justification-field__actions {
+  display: flex;
+  gap: var(--gap-sm);
+}

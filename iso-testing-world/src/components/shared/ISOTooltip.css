@@ -1,0 +1,72 @@
+.iso-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.iso-tooltip-children {
+  display: inline;
+}
+
+.iso-tooltip-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, white);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  cursor: help;
+  white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.iso-tooltip-badge:hover,
+.iso-tooltip-badge[aria-expanded="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.iso-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 240px;
+  max-width: 360px;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 12.5px;
+  line-height: 1.5;
+  z-index: 100;
+}
+
+.iso-tooltip__term {
+  font-weight: 700;
+  text-transform: lowercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
+}
+
+.iso-tooltip__definition {
+  font-style: italic;
+  opacity: 0.92;
+}
+
+.iso-tooltip__note {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 11.5px;
+}
+
+.iso-tooltip__source {
+  margin-top: 8px;
+  font-size: 10.5px;
+  opacity: 0.55;
+  letter-spacing: 0.04em;
+}

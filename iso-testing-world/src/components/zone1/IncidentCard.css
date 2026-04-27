@@ -1,0 +1,70 @@
+.incident-card {
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.incident-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--zone1-color) 30%, var(--line));
+}
+
+.incident-card.is-dragging {
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+  border-color: var(--zone1-color);
+}
+
+.incident-card.is-locked {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.incident-card.is-shaking {
+  animation: shake 0.22s ease;
+}
+
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.incident-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.incident-card__tag {
+  display: inline-block;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+.incident-card__tag.tag-log   { background: #e7eaf2; color: #2c3a5a; }
+.incident-card__tag.tag-dev   { background: #fbe7d3; color: #6c3c0a; }
+.incident-card__tag.tag-user  { background: #e2eedb; color: #2f5212; }
+
+.incident-card__handle {
+  color: var(--muted);
+}
+
+.incident-card__text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}

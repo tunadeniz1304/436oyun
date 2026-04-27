@@ -1,0 +1,24 @@
+.dep-map {
+  background: #ffffff;
+  border: 1.5px solid var(--zone4-color);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  margin-top: var(--gap-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dep-map__title {
+  font-size: 16px;
+  color: var(--zone4-color);
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+
+.dep-map__sub {
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}

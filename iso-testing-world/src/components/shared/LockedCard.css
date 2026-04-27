@@ -1,0 +1,68 @@
+.locked-card {
+  --locked-color: var(--ink-soft);
+  --locked-bg: #f3f3f3;
+  position: relative;
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed color-mix(in srgb, var(--locked-color) 35%, var(--line));
+  background: var(--locked-bg);
+  color: var(--locked-color);
+  padding: 24px 18px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.locked-card__hatch {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 7px,
+    color-mix(in srgb, var(--locked-color) 14%, transparent) 7px,
+    color-mix(in srgb, var(--locked-color) 14%, transparent) 8px
+  );
+  opacity: 0.65;
+  z-index: 0;
+}
+
+.locked-card__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.locked-card__number {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.locked-card__name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.locked-card__lock {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locked-card__hint {
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0.85;
+  font-style: italic;
+}

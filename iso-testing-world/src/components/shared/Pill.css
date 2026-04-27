@@ -1,0 +1,41 @@
+.pill {
+  --pill-color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid var(--pill-color);
+  background: #ffffff;
+  color: var(--pill-color);
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pill:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pill:focus-visible {
+  outline: 2px solid var(--pill-color);
+  outline-offset: 2px;
+}
+
+.pill--selected {
+  background: var(--pill-color);
+  color: #ffffff;
+}
+
+.pill__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pill:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

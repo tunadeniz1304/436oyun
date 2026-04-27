@@ -1,0 +1,45 @@
+.score-badge {
+  --badge-color: var(--ink);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
+  min-width: 96px;
+}
+
+.score-badge__label {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.score-badge__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+  color: var(--badge-color);
+  margin-top: 2px;
+}
+
+.score-badge__current {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.score-badge__sep {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 2px;
+}
+
+.score-badge__total {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
