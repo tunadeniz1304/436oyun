@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame.js';
-import { ZONE_META } from '../context/GameContext.jsx';
 import { useMotion } from '../hooks/useMotion.js';
 import ProgressTracker from '../components/shared/ProgressTracker.jsx';
 import './WorldMap.css';
 
 /* ------------------------------------------------------------------ */
-/*  Zone definitions — including their (x, y) on the 1200×720 canvas  */
+/*  Zone definitions (used for sidebar + routing only now)             */
 /* ------------------------------------------------------------------ */
 const ZONE_DEFS = [
   {
@@ -18,8 +17,9 @@ const ZONE_DEFS = [
     cluster: 'Error · Fault · Failure',
     clauses: '§3.39 · §3.40 · §4.7',
     intro: 'Sort 5 incident items along the causal chain.',
-    pos: { x: 170, y: 540 },
-    building: 'errorDistrict',
+    color: 'var(--zone1-color)',
+    bg: 'var(--zone1-bg)',
+    isoZone: 1,
   },
   {
     id: 'vv-headquarters',
@@ -29,8 +29,9 @@ const ZONE_DEFS = [
     cluster: 'Verification · Validation · Oracle',
     clauses: '§4.1.3 · §3.115',
     intro: 'Route 8 missions under a 30-second timer.',
-    pos: { x: 385, y: 310 },
-    building: 'vvHQ',
+    color: 'var(--zone2-color)',
+    bg: 'var(--zone2-bg)',
+    isoZone: 2,
   },
   {
     id: 'matrix-tower',
@@ -40,8 +41,9 @@ const ZONE_DEFS = [
     cluster: 'Levels × Types',
     clauses: '§3.108 · §3.130',
     intro: 'Pick cells in a 4×4 matrix — and justify each.',
-    pos: { x: 600, y: 530 },
-    building: 'matrixTower',
+    color: 'var(--zone3-color)',
+    bg: 'var(--zone3-bg)',
+    isoZone: 3,
   },
   {
     id: 'artefact-archive',
@@ -51,8 +53,9 @@ const ZONE_DEFS = [
     cluster: 'Test Basis · Test Item / Test Object',
     clauses: '§3.84 · §3.107 · §3.78 · §3.29',
     intro: 'Tag 6 artefacts. One trap. Read carefully.',
-    pos: { x: 825, y: 290 },
-    building: 'archive',
+    color: 'var(--zone4-color)',
+    bg: 'var(--zone4-bg)',
+    isoZone: 4,
   },
   {
     id: 'final-inspection',
@@ -62,419 +65,490 @@ const ZONE_DEFS = [
     cluster: 'All concepts + Test Oracle',
     clauses: '§3.115 · §4.1.10',
     intro: 'Five integrated decisions. Earn the ISO Incident Report.',
-    pos: { x: 1035, y: 505 },
-    building: 'finalInspection',
+    color: 'var(--final-color)',
+    bg: 'var(--final-bg)',
+    isoZone: 5,
     isFinal: true,
   },
 ];
 
-/* Path connecting zone N → N+1 across the canvas (smooth bezier S-curves) */
-const ROAD_SEGMENTS = [
-  // Z1 (170,540) → Z2 (385,310)
-  'M 170 540 C 285 540 290 310 385 310',
-  // Z2 (385,310) → Z3 (600,530)
-  'M 385 310 C 490 310 495 530 600 530',
-  // Z3 (600,530) → Z4 (825,290)
-  'M 600 530 C 720 530 720 290 825 290',
-  // Z4 (825,290) → Z5 (1035,505)
-  'M 825 290 C 935 290 935 505 1035 505',
-];
+/* ── Isometric map (from design-export) ───────────────────────────── */
 
-/* ------------------------------------------------------------------ */
-/*  Building art — one stylised SVG per zone landmark                 */
-/* ------------------------------------------------------------------ */
+const ZONE_COLORS = {
+  1: { color: 'var(--zone1-color)', tint: 'var(--zone1-tint)' },
+  2: { color: 'var(--zone2-color)', tint: 'var(--zone2-tint)' },
+  3: { color: 'var(--zone3-color)', tint: 'var(--zone3-tint)' },
+  4: { color: 'var(--zone4-color)', tint: 'var(--zone4-tint)' },
+  5: { color: 'var(--zone5-color)', tint: 'var(--zone5-tint)' },
+};
+const ZONE_ICONS = { 1: '◬', 2: '◇', 3: '▦', 4: '▤', 5: '◈' };
+const ZONE_NAMES = {
+  1: 'Error District',
+  2: 'V&V Headquarters',
+  3: 'Test Matrix Tower',
+  4: 'Artefact Archive',
+  5: 'Final Inspection',
+};
 
-function ErrorDistrictBuilding({ color, bg }) {
-  // Three buildings: intact, cracked, fallen — Error → Fault → Failure
+function lighten(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  const blend = (c) => Math.min(255, Math.round(c + (255 - c) * 0.25));
+  return `rgb(${blend(r)}, ${blend(g)}, ${blend(b)})`;
+}
+function darken(hex) {
+  if (!hex || hex.startsWith('rgb')) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  const blend = (c) => Math.round(c * 0.7);
+  return `rgb(${blend(r)}, ${blend(g)}, ${blend(b)})`;
+}
+
+/* Resolve CSS variable to hex at runtime via a hidden div */
+function resolveColor(cssVar) {
+  // fallback colors in order for each zone
+  const fallback = {
+    '--zone1-color': '#993C1D',
+    '--zone2-color': '#0C447C',
+    '--zone3-color': '#3B6D11',
+    '--zone4-color': '#854F0B',
+    '--zone5-color': '#3C3489',
+    '--final-color': '#3C3489',
+  };
+  const key = cssVar.replace('var(', '').replace(')', '').trim();
+  return fallback[key] ?? '#888';
+}
+
+/* Isometric box: cx/cy = bottom-center anchor point */
+function Box({ cx, cy, w, h, fill, top, side }) {
+  /* Diamond corners at ground level */
+  const TL = { x: cx - w,     y: cy - w * 0.5 };
+  const TR = { x: cx,         y: cy - w };
+  const BR = { x: cx + w,     y: cy - w * 0.5 };
+  const BL = { x: cx,         y: cy };
+  /* Same corners lifted by h */
+  const TL2 = { x: TL.x, y: TL.y - h };
+  const TR2 = { x: TR.x, y: TR.y - h };
+  const BR2 = { x: BR.x, y: BR.y - h };
+  const BL2 = { x: BL.x, y: BL.y - h };
   return (
-    <svg viewBox="0 0 140 150" width="140" height="150" aria-hidden="true">
-      {/* shadow */}
-      <ellipse cx="70" cy="142" rx="58" ry="6" fill="rgba(0,0,0,0.18)" />
-      {/* building 1 — intact (Error) */}
-      <rect x="10" y="62" width="32" height="78" rx="2" fill={color} />
-      <rect x="14" y="68" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="24" y="68" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="14" y="82" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="24" y="82" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="14" y="96" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="24" y="96" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="32" y="68" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="32" y="82" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="32" y="96" width="6" height="8" fill={bg} opacity="0.85" />
-      <rect x="20" y="120" width="12" height="20" fill={bg} opacity="0.85" />
-      {/* building 2 — cracked (Fault) */}
-      <rect x="50" y="48" width="36" height="92" rx="2" fill={color} />
-      {/* lightning crack */}
-      <path d="M68 56 L62 80 L72 86 L60 130" stroke={bg} strokeWidth="2.5" fill="none" strokeLinejoin="round" />
-      <rect x="56" y="60" width="6" height="8" fill={bg} opacity="0.55" />
-      <rect x="76" y="60" width="6" height="8" fill={bg} opacity="0.55" />
-      <rect x="56" y="100" width="6" height="8" fill={bg} opacity="0.55" />
-      <rect x="76" y="100" width="6" height="8" fill={bg} opacity="0.55" />
-      {/* building 3 — collapsed (Failure) */}
-      <g transform="translate(105 140) rotate(-18)">
-        <rect x="-8" y="-66" width="28" height="66" rx="2" fill={color} opacity="0.9" />
-        <rect x="-4" y="-60" width="6" height="8" fill={bg} opacity="0.55" />
-        <rect x="6"  y="-60" width="6" height="8" fill={bg} opacity="0.55" />
-        <rect x="-4" y="-46" width="6" height="8" fill={bg} opacity="0.55" />
-        <rect x="6"  y="-46" width="6" height="8" fill={bg} opacity="0.55" />
-        {/* dust puff */}
-        <circle cx="-10" cy="-2" r="6" fill={bg} opacity="0.55" />
-        <circle cx="22"  cy="-3" r="5" fill={bg} opacity="0.45" />
-      </g>
-      {/* exclamation mark hovering */}
-      <g transform="translate(122 30)">
-        <circle r="9" fill={color} />
-        <rect x="-1" y="-5" width="2" height="6" fill={bg} />
-        <rect x="-1" y="2"  width="2" height="2" fill={bg} />
-      </g>
-    </svg>
+    <g>
+      {/* right face */}
+      <polygon points={`${BL.x},${BL.y} ${BR.x},${BR.y} ${BR2.x},${BR2.y} ${BL2.x},${BL2.y}`} fill={fill} />
+      {/* left face */}
+      <polygon points={`${TL.x},${TL.y} ${BL.x},${BL.y} ${BL2.x},${BL2.y} ${TL2.x},${TL2.y}`} fill={side} />
+      {/* top face */}
+      <polygon points={`${TL2.x},${TL2.y} ${TR2.x},${TR2.y} ${BR2.x},${BR2.y} ${BL2.x},${BL2.y}`} fill={top} />
+    </g>
   );
 }
 
-function VVHQBuilding({ color, bg }) {
-  // Twin tower government-style HQ with two flags
+/* Zone 1 — Fortress: solid block + battlements + tower + flag */
+function FortressBuilding({ cx, baseY, fill, top, side, unlocked }) {
+  const w = 44, h = 52;
   return (
-    <svg viewBox="0 0 140 150" width="140" height="150" aria-hidden="true">
-      <ellipse cx="70" cy="142" rx="58" ry="6" fill="rgba(0,0,0,0.18)" />
-      {/* steps */}
-      <rect x="14" y="128" width="112" height="6" fill={color} opacity="0.55" />
-      <rect x="22" y="122" width="96"  height="6" fill={color} opacity="0.7" />
-      {/* base */}
-      <rect x="28" y="78" width="84" height="44" fill={color} />
-      {/* pediment */}
-      <path d="M28 78 L70 56 L112 78 Z" fill={color} opacity="0.85" />
-      {/* twin towers */}
-      <rect x="34" y="36" width="22" height="42" fill={color} />
-      <rect x="84" y="36" width="22" height="42" fill={color} />
-      {/* tower roofs */}
-      <path d="M34 36 L45 22 L56 36 Z" fill={color} opacity="0.85" />
-      <path d="M84 36 L95 22 L106 36 Z" fill={color} opacity="0.85" />
-      {/* V letters on towers */}
-      <text x="45" y="62" textAnchor="middle" fontSize="14" fontWeight="800" fill={bg} fontFamily="system-ui">V</text>
-      <text x="95" y="62" textAnchor="middle" fontSize="14" fontWeight="800" fill={bg} fontFamily="system-ui">V</text>
-      {/* central door */}
-      <rect x="62" y="92" width="16" height="30" rx="2" fill={bg} opacity="0.9" />
+    <g>
+      <Box cx={cx} cy={baseY} w={w} h={h} fill={fill} top={top} side={side} />
+      {/* battlements */}
+      {[-30, -16, -2, 12, 26].map((dx) => (
+        <rect key={dx} x={cx + dx - w + w} y={baseY - h - 8} width={8} height={9}
+          fill={side} transform={`skewX(-26)`} style={{ transformOrigin: `${cx}px ${baseY - h}px` }} />
+      ))}
+      {/* side tower */}
+      <Box cx={cx + 22} cy={baseY - 8} w={18} h={38} fill={fill} top={top} side={side} />
+      {/* door arch */}
+      <ellipse cx={cx - 8} cy={baseY - 6} rx={6} ry={8} fill="#111" opacity="0.75" />
+      {/* flag */}
+      <line x1={cx + 22} y1={baseY - 46} x2={cx + 22} y2={baseY - 46 - 16} stroke="#3a2820" strokeWidth="1.5" />
+      <polygon points={`${cx + 22},${baseY - 62} ${cx + 22 + 12},${baseY - 58} ${cx + 22},${baseY - 54}`} fill={unlocked ? '#993C1D' : '#444'} />
+      {/* windows */}
+      {unlocked && (
+        <>
+          <rect x={cx - 18} y={baseY - h * 0.6} width={5} height={7} fill="#FFD86B" opacity="0.9" />
+          <rect x={cx - 8}  y={baseY - h * 0.6} width={5} height={7} fill="#FFD86B" opacity="0.7" />
+        </>
+      )}
+    </g>
+  );
+}
+
+/* Zone 2 — Glass tower: tall slim box + antenna + lit windows */
+function GlassBuilding({ cx, baseY, fill, top, side, unlocked }) {
+  const w = 28, h = 90;
+  return (
+    <g>
+      <Box cx={cx} cy={baseY} w={w} h={h} fill={fill} top={top} side={side} />
+      {/* antenna */}
+      <line x1={cx} y1={baseY - h} x2={cx} y2={baseY - h - 22} stroke={side} strokeWidth="2" />
+      <circle cx={cx} cy={baseY - h - 22} r="3" fill={unlocked ? '#FFD86B' : '#333'} />
+      {/* windows grid */}
+      {unlocked && [0,1,2,3,4,5].map((row) =>
+        [0,1].map((col) => (
+          <rect key={`${row}-${col}`}
+            x={cx + 2 + col * 10} y={baseY - h + 10 + row * 14}
+            width={7} height={10}
+            fill={row < 3 ? '#FFD86B' : 'rgba(180,220,255,0.9)'}
+            opacity={(row + col) % 2 === 0 ? 1 : 0.6} />
+        ))
+      )}
+      {/* lobby door */}
+      <rect x={cx - 5} y={baseY - 14} width={10} height={14} fill="#111" opacity="0.6" />
+    </g>
+  );
+}
+
+/* Zone 3 — Ziggurat: 3 stepped tiers */
+function ZigguratBuilding({ cx, baseY, fill, top, side, unlocked }) {
+  const tiers = [
+    { w: 48, h: 22, dy: 0 },
+    { w: 34, h: 20, dy: 22 },
+    { w: 22, h: 26, dy: 42 },
+  ];
+  return (
+    <g>
+      {tiers.map((t, i) => (
+        <Box key={i} cx={cx} cy={baseY - t.dy} w={t.w} h={t.h} fill={fill} top={top} side={side} />
+      ))}
+      {/* top spire */}
+      <line x1={cx} y1={baseY - 68} x2={cx} y2={baseY - 68 - 14} stroke={side} strokeWidth="2" />
+      <polygon points={`${cx - 5},${baseY - 68} ${cx + 5},${baseY - 68} ${cx},${baseY - 68 - 14}`} fill={top} />
+      {/* tier windows */}
+      {unlocked && tiers.map((t, i) => (
+        <rect key={`tw-${i}`}
+          x={cx + 4} y={baseY - t.dy - t.h + 6}
+          width={6} height={8}
+          fill="#FFD86B" opacity={0.8 - i * 0.15}>
+          <animate attributeName="opacity" values={`${0.6 - i * 0.1};${0.95 - i * 0.1};${0.6 - i * 0.1}`} dur={`${2.5 + i * 0.5}s`} repeatCount="indefinite" />
+        </rect>
+      ))}
+    </g>
+  );
+}
+
+/* Zone 4 — Bunker: wide low box + radar dish */
+function BunkerBuilding({ cx, baseY, fill, top, side, unlocked }) {
+  const w = 54, h = 32;
+  const dishCx = cx + 16, dishCy = baseY - h - 8;
+  return (
+    <g>
+      <Box cx={cx} cy={baseY} w={w} h={h} fill={fill} top={top} side={side} />
+      {/* radar dish */}
+      <line x1={dishCx} y1={baseY - h} x2={dishCx} y2={dishCy} stroke={side} strokeWidth="1.5" />
+      <ellipse cx={dishCx} cy={dishCy} rx={14} ry={7} fill={side} stroke={top} strokeWidth="1" />
+      <ellipse cx={dishCx} cy={dishCy} rx={9}  ry={4.5} fill="none" stroke={top} strokeWidth="0.8" opacity="0.6" />
+      <circle  cx={dishCx} cy={dishCy} r={2.5} fill={top} />
+      {/* tick marks around dish */}
+      {[0,60,120,180,240,300].map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return <line key={deg}
+          x1={dishCx + 9  * Math.cos(rad)} y1={dishCy + 4.5 * Math.sin(rad)}
+          x2={dishCx + 12 * Math.cos(rad)} y2={dishCy + 6   * Math.sin(rad)}
+          stroke={top} strokeWidth="1" />;
+      })}
+      {/* entry hatch */}
+      <rect x={cx - 12} y={baseY - h + 4} width={14} height={10} rx="1" fill="#111" opacity="0.55" />
+      {unlocked && (
+        <circle cx={dishCx} cy={dishCy} r={5} fill="#FFD86B" opacity="0.7">
+          <animate attributeName="r" values="5;9;5" dur="2.2s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2.2s" repeatCount="indefinite" />
+        </circle>
+      )}
+    </g>
+  );
+}
+
+/* Zone 5 — Capitol: wide base + drum + dome + spire */
+function CapitolBuilding({ cx, baseY, fill, top, side, unlocked }) {
+  const baseW = 50, baseH = 28;
+  const drumW = 28, drumH = 16;
+  const totalBase = baseH + drumH;
+  return (
+    <g>
       {/* columns */}
-      <rect x="36" y="86" width="3" height="36" fill={bg} opacity="0.5" />
-      <rect x="46" y="86" width="3" height="36" fill={bg} opacity="0.5" />
-      <rect x="91" y="86" width="3" height="36" fill={bg} opacity="0.5" />
-      <rect x="101" y="86" width="3" height="36" fill={bg} opacity="0.5" />
-      {/* flagpoles */}
-      <rect x="44.5" y="10" width="1.4" height="14" fill={color} />
-      <rect x="94.5" y="10" width="1.4" height="14" fill={color} />
-      <path d="M46 10 L54 13 L46 16 Z" fill={color} />
-      <path d="M96 10 L104 13 L96 16 Z" fill={color} />
-    </svg>
+      {[-24,-12,0,12,24].map((dx) => (
+        <Box key={dx} cx={cx + dx} cy={baseY - baseH + 2} w={5} h={baseH - 4} fill={side} top={top} side={side} />
+      ))}
+      {/* pediment */}
+      <polygon
+        points={`${cx - baseW},${baseY - baseH} ${cx + baseW},${baseY - baseH} ${cx},${baseY - baseH - 18}`}
+        fill={top} stroke={side} strokeWidth="0.5" />
+      {/* base block */}
+      <Box cx={cx} cy={baseY} w={baseW} h={baseH} fill={fill} top={top} side={side} />
+      {/* drum */}
+      <Box cx={cx} cy={baseY - baseH} w={drumW} h={drumH} fill={fill} top={top} side={side} />
+      {/* dome */}
+      <ellipse cx={cx} cy={baseY - totalBase} rx={drumW} ry={drumH * 1.1} fill={top} stroke={side} strokeWidth="0.5" />
+      {/* spire */}
+      <line x1={cx} y1={baseY - totalBase - drumH * 1.1} x2={cx} y2={baseY - totalBase - drumH * 1.1 - 18} stroke={side} strokeWidth="2" />
+      <circle cx={cx} cy={baseY - totalBase - drumH * 1.1 - 20} r="3" fill={unlocked ? '#FFD86B' : '#333'} />
+      {unlocked && (
+        <>
+          <rect x={cx - 10} y={baseY - baseH * 0.55} width={6} height={8} fill="#FFD86B" opacity="0.9" />
+          <rect x={cx + 4}  y={baseY - baseH * 0.55} width={6} height={8} fill="#FFD86B" opacity="0.7" />
+        </>
+      )}
+    </g>
   );
 }
 
-function MatrixTowerBuilding({ color, bg }) {
-  // Tall tower with 4×4 grid of windows — some lit, some dark
+/* Label height below the building anchor */
+const LABEL_OFFSET = 32;
+
+function Building({ cx, baseY, zone, unlocked, shape, label }) {
+  const hex  = resolveColor(`var(--zone${zone}-color)`);
+  const fill = unlocked ? hex        : '#3a3a3a';
+  const top  = unlocked ? lighten(hex) : '#4a4a4a';
+  const side = unlocked ? darken(hex)  : '#222';
+
   return (
-    <svg viewBox="0 0 140 170" width="140" height="170" aria-hidden="true">
-      <ellipse cx="70" cy="162" rx="48" ry="6" fill="rgba(0,0,0,0.18)" />
-      {/* base plinth */}
-      <rect x="34" y="146" width="72" height="14" fill={color} opacity="0.85" />
-      {/* tower */}
-      <rect x="42" y="32" width="56" height="116" fill={color} />
-      {/* roof step */}
-      <rect x="40" y="28" width="60" height="6" fill={color} opacity="0.85" />
-      {/* spire */}
-      <rect x="68" y="6" width="4" height="22" fill={color} />
-      <circle cx="70" cy="6" r="3" fill={color} />
-      {/* 4×4 grid of windows */}
-      {[0,1,2,3].map((row) =>
-        [0,1,2,3].map((col) => {
-          // pattern of "lit" cells (the diagonal pattern matters less than visual rhythm)
-          const lit = (row + col) % 2 === 0 || (row === 1 && col === 2) || (row === 2 && col === 1);
+    <g>
+      {unlocked && (
+        <ellipse cx={cx} cy={baseY + 4} rx={58} ry={26} fill="url(#warm-glow)">
+          <animate attributeName="opacity" values="1;0.6;1" dur="2.4s" repeatCount="indefinite" />
+        </ellipse>
+      )}
+      <g opacity={unlocked ? 1 : 0.38}>
+        {shape === 'fortress' && <FortressBuilding cx={cx} baseY={baseY} fill={fill} top={top} side={side} unlocked={unlocked} />}
+        {shape === 'glass'    && <GlassBuilding    cx={cx} baseY={baseY} fill={fill} top={top} side={side} unlocked={unlocked} />}
+        {shape === 'ziggurat' && <ZigguratBuilding cx={cx} baseY={baseY} fill={fill} top={top} side={side} unlocked={unlocked} />}
+        {shape === 'bunker'   && <BunkerBuilding   cx={cx} baseY={baseY} fill={fill} top={top} side={side} unlocked={unlocked} />}
+        {shape === 'capitol'  && <CapitolBuilding  cx={cx} baseY={baseY} fill={fill} top={top} side={side} unlocked={unlocked} />}
+      </g>
+      {/* name label */}
+      <g transform={`translate(${cx} ${baseY + LABEL_OFFSET})`}>
+        <rect x={-52} y={-11} width={104} height={22} rx={4} fill="#fff" stroke={unlocked ? hex : '#ccc'} strokeWidth="1.2" />
+        {!unlocked && <text x={-40} y={4} fontSize="10" fill="#888">🔒</text>}
+        <text
+          x={unlocked ? 0 : 6} y={4}
+          textAnchor="middle" fontSize="10" fontWeight="700"
+          fill={unlocked ? hex : '#888'} fontFamily="var(--font-mono)"
+          letterSpacing="0.04em"
+        >
+          {label.toUpperCase()}
+        </text>
+      </g>
+    </g>
+  );
+}
+
+function Tree({ cx, cy }) {
+  return (
+    <g transform={`translate(${cx} ${cy})`}>
+      <ellipse cx="0" cy="2" rx="6" ry="2" fill="rgba(0,0,0,0.18)" />
+      <rect x="-1.5" y="-6" width="3" height="6" fill="#6b4a2a" />
+      <polygon points="0,-26 -8,-6 8,-6" fill="#3B6D11" />
+      <polygon points="0,-22 -6,-10 6,-10" fill="#4F8C19" />
+      <polygon points="0,-18 -5,-12 5,-12" fill="#67A924" />
+    </g>
+  );
+}
+
+function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
+  /*
+   * Isometric projection: tile half-width = TW, tile half-height = TH
+   * Screen coords: sx = ox + (gx - gy) * TW,  sy = oy + (gx + gy) * TH
+   * Buildings are anchored at their tile center (sx, sy).
+   * baseY for a building = sy + TH  (bottom of tile diamond).
+   */
+  const TW = 72, TH = 36;   // tile half-width / half-height
+  const ox = 500, oy = 90;  // isometric origin (top of diamond grid)
+
+  const proj = (gx, gy) => ({
+    x: ox + (gx - gy) * TW,
+    y: oy + (gx + gy) * TH,
+  });
+
+  /* Grid spans gx: 0..5, gy: 0..5 — 6×6 tiles */
+  const GRID = [0, 1, 2, 3, 4, 5];
+
+  /* Building positions (grid coords) */
+  const buildings = [
+    { zone: 1, gx: 1,   gy: 0,   id: 'error-district',   shape: 'fortress', label: 'Error District' },
+    { zone: 2, gx: 4,   gy: 1,   id: 'vv-headquarters',  shape: 'glass',    label: 'V&V HQ' },
+    { zone: 3, gx: 1,   gy: 3,   id: 'matrix-tower',     shape: 'ziggurat', label: 'Matrix Tower' },
+    { zone: 4, gx: 4,   gy: 3,   id: 'artefact-archive', shape: 'bunker',   label: 'Artefact Archive' },
+    { zone: 5, gx: 2.5, gy: 4.5, id: 'final-inspection', shape: 'capitol',  label: 'Final Inspection' },
+  ];
+
+  /* Paths (zone unlock chain) */
+  const paths = [
+    { from: [1, 0],   to: [4, 1],   fromId: 'error-district' },
+    { from: [1, 0],   to: [1, 3],   fromId: 'error-district' },
+    { from: [4, 1],   to: [4, 3],   fromId: 'vv-headquarters' },
+    { from: [1, 3],   to: [2.5, 4.5], fromId: 'matrix-tower' },
+    { from: [4, 3],   to: [2.5, 4.5], fromId: 'artefact-archive' },
+  ];
+
+  /* Stone-path tile set for ground colouring */
+  const stoneSet = new Set();
+  buildings.forEach((b) => stoneSet.add(`${Math.round(b.gx)},${Math.round(b.gy)}`));
+  paths.forEach(({ from: [x1, y1], to: [x2, y2] }) => {
+    const steps = Math.ceil(Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) * 2);
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      stoneSet.add(`${Math.round(x1 + (x2 - x1) * t)},${Math.round(y1 + (y2 - y1) * t)}`);
+    }
+  });
+
+  const trees = [
+    { gx: 0, gy: 2 }, { gx: 3, gy: 0 }, { gx: 5, gy: 2 },
+    { gx: 0, gy: 5 }, { gx: 5, gy: 5 }, { gx: 3, gy: 5 },
+  ];
+
+  /* Diamond tile polygon for a given grid cell */
+  const tilePoly = (gx, gy) => {
+    const { x, y } = proj(gx, gy);
+    return `${x},${y + TH} ${x + TW},${y} ${x + TW * 2},${y + TH} ${x + TW},${y + TH * 2}`;
+  };
+
+  return (
+    <svg
+      viewBox="0 0 1000 600"
+      width="100%" height="100%"
+      style={{ display: 'block' }}
+      aria-label="Isometric map of five zones"
+    >
+      <defs>
+        <filter id="fog-blur" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="6" />
+        </filter>
+        <radialGradient id="fog-grad" cx="50%" cy="45%" r="55%">
+          <stop offset="0%"   stopColor="#b0bec5" stopOpacity="0.92" />
+          <stop offset="60%"  stopColor="#90a4ae" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#78909c" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="warm-glow" cx="50%" cy="60%" r="55%">
+          <stop offset="0%"   stopColor="#FFD86B" stopOpacity="0.6" />
+          <stop offset="55%"  stopColor="#F5A742" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#F5A742" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* ── Ground tiles (painter's order: back-to-front = low gy+gx first) ── */}
+      {GRID.flatMap((gy) =>
+        GRID.map((gx) => {
+          const key = `${gx},${gy}`;
+          const isStone = stoneSet.has(key);
+          const isDirt  = !isStone && ((gx * 7 + gy * 13) % 5 === 0);
+          const fill = isStone ? '#c8c2b2' : isDirt ? '#d9c29a' : '#c4dda0';
           return (
-            <rect
-              key={`m-${row}-${col}`}
-              x={48 + col * 12}
-              y={42 + row * 24}
-              width="8"
-              height="14"
-              rx="1"
-              fill={bg}
-              opacity={lit ? 0.95 : 0.35}
+            <polygon
+              key={key}
+              points={tilePoly(gx, gy)}
+              fill={fill}
+              stroke="rgba(0,0,0,0.07)"
+              strokeWidth="0.6"
             />
           );
         })
       )}
-      {/* door */}
-      <rect x="62" y="128" width="16" height="18" rx="2" fill={bg} opacity="0.9" />
-      {/* flag on spire */}
-      <path d="M72 8 L82 11 L72 14 Z" fill={color} />
-    </svg>
-  );
-}
 
-function ArchiveBuilding({ color, bg }) {
-  // Library / archive with columns + pediment
-  return (
-    <svg viewBox="0 0 160 150" width="160" height="150" aria-hidden="true">
-      <ellipse cx="80" cy="142" rx="68" ry="6" fill="rgba(0,0,0,0.18)" />
-      {/* steps */}
-      <rect x="12" y="128" width="136" height="6" fill={color} opacity="0.5" />
-      <rect x="22" y="122" width="116" height="6" fill={color} opacity="0.7" />
-      {/* base */}
-      <rect x="28" y="64" width="104" height="58" fill={color} />
-      {/* pediment */}
-      <path d="M22 64 L80 30 L138 64 Z" fill={color} opacity="0.9" />
-      {/* pediment carving */}
-      <circle cx="80" cy="56" r="6" fill={bg} opacity="0.85" />
-      {/* columns */}
-      {[0,1,2,3,4].map((i) => (
-        <g key={`col-${i}`}>
-          <rect x={36 + i * 22} y={70} width="8" height="46" fill={bg} opacity="0.92" />
-          <rect x={34 + i * 22} y={68} width="12" height="3" fill={bg} opacity="0.7" />
-          <rect x={34 + i * 22} y={114} width="12" height="3" fill={bg} opacity="0.7" />
-        </g>
-      ))}
-      {/* book stacks visible in the entrance */}
-      <rect x="70" y="100" width="20" height="22" fill={color} opacity="0.85" />
-      <rect x="72" y="104" width="16" height="2" fill={bg} opacity="0.7" />
-      <rect x="72" y="110" width="16" height="2" fill={bg} opacity="0.7" />
-      <rect x="72" y="116" width="16" height="2" fill={bg} opacity="0.7" />
-      {/* paper scrolls floating */}
-      <g transform="translate(140 38)">
-        <rect x="-6" y="-8" width="14" height="18" rx="2" fill={bg} stroke={color} strokeWidth="1.4" />
-        <line x1="-3" y1="-3" x2="5" y2="-3" stroke={color} strokeWidth="0.8" />
-        <line x1="-3" y1="0" x2="5" y2="0" stroke={color} strokeWidth="0.8" />
-        <line x1="-3" y1="3" x2="5" y2="3" stroke={color} strokeWidth="0.8" />
+      {/* ── Dashed paths between zones ── */}
+      {paths.map((p, i) => {
+        const a = proj(p.from[0], p.from[1]);
+        const b = proj(p.to[0],   p.to[1]);
+        const ax = a.x + TW, ay = a.y + TH;
+        const bx = b.x + TW, by = b.y + TH;
+        const done   = completedZones.has(p.fromId);
+        const stroke = done ? '#F5C16C' : '#7a6e5f';
+        return (
+          <line key={i}
+            x1={ax} y1={ay} x2={bx} y2={by}
+            stroke={stroke}
+            strokeWidth={done ? 3.5 : 2}
+            strokeDasharray={done ? 'none' : '5 7'}
+            strokeLinecap="round"
+            opacity={done ? 0.95 : 0.5}
+            style={{ filter: done ? 'drop-shadow(0 1px 3px rgba(245,193,108,0.6))' : 'none' }}
+          >
+            {!done && (
+              <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.8s" repeatCount="indefinite" />
+            )}
+          </line>
+        );
+      })}
+
+      {/* ── Trees ── */}
+      {trees.map((t, i) => {
+        const { x, y } = proj(t.gx, t.gy);
+        return <Tree key={i} cx={x + TW} cy={y + TH} />;
+      })}
+
+      {/* ── START signpost (top-left of zone 1) ── */}
+      {(() => {
+        const { x, y } = proj(0, 0);
+        const sx = x + TW, sy = y + TH;
+        const c1 = resolveColor('var(--zone1-color)');
+        return (
+          <g transform={`translate(${sx} ${sy - 10})`}>
+            <rect x="-1" y="-20" width="2" height="20" fill="#7a5c3a" />
+            <rect x="-16" y="-20" width="32" height="12" rx="2" fill="#fff" stroke={c1} strokeWidth="1.5" />
+            <text x="0" y="-11" textAnchor="middle" fontFamily="var(--font-mono)" fontWeight="800" fontSize="8" fill={c1}>START</text>
+          </g>
+        );
+      })()}
+
+      {/* ── Buildings (painter's order: low gy+gx first) ── */}
+      {[...buildings]
+        .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy))
+        .map((b) => {
+          const { x, y } = proj(b.gx, b.gy);
+          const cx    = x + TW;
+          const baseY = y + TH * 2;   /* bottom of the tile */
+          const unlocked = isZoneUnlocked(b.id);
+          return (
+            <g key={b.id} onClick={() => unlocked && onSelect(b.id)}
+               style={{ cursor: unlocked ? 'pointer' : 'default' }}>
+              <Building cx={cx} baseY={baseY} zone={b.zone} unlocked={unlocked} shape={b.shape} label={b.label} />
+            </g>
+          );
+        })}
+
+      {/* ── Fog overlays for locked zones ── */}
+      {buildings.filter((b) => !isZoneUnlocked(b.id)).map((b) => {
+        const { x, y } = proj(b.gx, b.gy);
+        const cx    = x + TW;
+        const baseY = y + TH * 2;
+        return (
+          <g key={`fog-${b.id}`} style={{ pointerEvents: 'none' }}>
+            <ellipse cx={cx} cy={baseY - 40} rx={80} ry={60}
+              fill="url(#fog-grad)" filter="url(#fog-blur)" opacity="0.88">
+              <animate attributeName="opacity" values="0.82;0.95;0.82" dur="7s" repeatCount="indefinite" />
+            </ellipse>
+            <ellipse cx={cx + 10} cy={baseY - 60} rx={55} ry={35}
+              fill="#c8d2db" opacity="0.5" filter="url(#fog-blur)">
+              <animate attributeName="cx" values={`${cx+10};${cx-10};${cx+10}`} dur="11s" repeatCount="indefinite" />
+            </ellipse>
+          </g>
+        );
+      })}
+
+      {/* ── Compass rose (bottom-right) ── */}
+      <g transform="translate(940 540)">
+        <circle r="24" fill="#fff" stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
+        <polygon points="0,-20 3.5,0 0,20 -3.5,0" fill="#1a1a1a" opacity="0.8" />
+        <polygon points="-20,0 0,3.5 20,0 0,-3.5" fill="#1a1a1a" opacity="0.4" />
+        <polygon points="0,-20 3.5,0 0,0" fill="#993C1D" />
+        <text x="0" y="-12" textAnchor="middle" fontSize="6.5" fontWeight="800" fill="#fff" fontFamily="var(--font-mono)">N</text>
+        <text x="13" y="2"  textAnchor="middle" fontSize="5.5" fontWeight="700" fill="#444" fontFamily="var(--font-mono)">E</text>
+        <text x="0"  y="17" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="#444" fontFamily="var(--font-mono)">S</text>
+        <text x="-13" y="2" textAnchor="middle" fontSize="5.5" fontWeight="700" fill="#444" fontFamily="var(--font-mono)">W</text>
       </g>
     </svg>
   );
 }
 
-function FinalInspectionBuilding({ color, bg }) {
-  // Domed inspection courthouse with seal/star
-  return (
-    <svg viewBox="0 0 160 160" width="160" height="160" aria-hidden="true">
-      <ellipse cx="80" cy="152" rx="68" ry="6" fill="rgba(0,0,0,0.18)" />
-      {/* steps */}
-      <rect x="10" y="138" width="140" height="6" fill={color} opacity="0.45" />
-      <rect x="20" y="132" width="120" height="6" fill={color} opacity="0.65" />
-      <rect x="30" y="126" width="100" height="6" fill={color} opacity="0.85" />
-      {/* base */}
-      <rect x="36" y="74" width="88" height="52" fill={color} />
-      {/* dome drum */}
-      <rect x="58" y="42" width="44" height="32" fill={color} opacity="0.92" />
-      {/* dome */}
-      <path d="M58 42 Q80 12 102 42 Z" fill={color} />
-      {/* finial + star */}
-      <rect x="79" y="6" width="2" height="10" fill={color} />
-      <g transform="translate(80 6)">
-        <path d="M0 -7 L2 -2 L7 -2 L3 1 L4 6 L0 3 L-4 6 L-3 1 L-7 -2 L-2 -2 Z" fill={color} />
-      </g>
-      {/* dome window */}
-      <rect x="74" y="50" width="12" height="20" rx="6" fill={bg} opacity="0.9" />
-      <rect x="74" y="50" width="12" height="20" rx="6" fill="none" stroke={color} strokeWidth="1.2" />
-      {/* central door */}
-      <rect x="68" y="96" width="24" height="30" rx="2" fill={bg} opacity="0.9" />
-      <path d="M68 96 Q80 86 92 96" stroke={color} strokeWidth="1.5" fill="none" />
-      {/* columns flanking door */}
-      <rect x="44" y="86" width="4" height="40" fill={bg} opacity="0.6" />
-      <rect x="54" y="86" width="4" height="40" fill={bg} opacity="0.6" />
-      <rect x="102" y="86" width="4" height="40" fill={bg} opacity="0.6" />
-      <rect x="112" y="86" width="4" height="40" fill={bg} opacity="0.6" />
-      {/* seal on the base */}
-      <circle cx="80" cy="86" r="6" fill={bg} opacity="0.9" />
-      <text x="80" y="90" textAnchor="middle" fontSize="9" fontWeight="800" fill={color} fontFamily="system-ui">★</text>
-    </svg>
-  );
-}
-
-const BUILDINGS = {
-  errorDistrict: ErrorDistrictBuilding,
-  vvHQ: VVHQBuilding,
-  matrixTower: MatrixTowerBuilding,
-  archive: ArchiveBuilding,
-  finalInspection: FinalInspectionBuilding,
-};
-
 /* ------------------------------------------------------------------ */
-/*  Tiny inline icons                                                  */
-/* ------------------------------------------------------------------ */
-function LockGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      <path d="M7 11 V8 a5 5 0 0 1 10 0 v3" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <rect x="4" y="11" width="16" height="11" rx="2" fill="currentColor" />
-      <circle cx="12" cy="16" r="1.6" fill="#fff" />
-    </svg>
-  );
-}
-
-function CheckGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path d="M5 12.5 L10 17 L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Zone landmark — absolutely-positioned interactive hotspot          */
-/* ------------------------------------------------------------------ */
-function ZoneLandmark({ def, unlocked, completed, score, isNext, onSelect, index }) {
-  const meta = ZONE_META[def.id];
-  const Building = BUILDINGS[def.building];
-  const motionProps = useMotion({
-    initial: { opacity: 0, y: 14, scale: 0.96 },
-    animate: { opacity: 1, y: 0, scale: 1 },
-    transition: { duration: 0.45, delay: 0.12 + index * 0.08, ease: 'easeOut' },
-  });
-
-  const status = !unlocked ? 'locked' : completed ? 'completed' : isNext ? 'next' : 'open';
-  const ariaLabel =
-    status === 'locked'
-      ? `Zone ${def.number} ${def.name} — locked. Complete the previous zone first.`
-      : status === 'completed'
-        ? `Zone ${def.number} ${def.name} — completed. Score ${score} of 200. Replay.`
-        : `Zone ${def.number} ${def.name}. ${def.intro} Start.`;
-
-  return (
-    <motion.div
-      className={`landmark landmark--${status} ${def.isFinal ? 'landmark--final' : ''}`.trim()}
-      style={{
-        left:  `${(def.pos.x / 1200) * 100}%`,
-        top:   `${(def.pos.y / 720)  * 100}%`,
-        '--landmark-color': meta.color,
-        '--landmark-bg':    meta.bg,
-      }}
-      {...motionProps}
-    >
-      {/* Floating pin marker above each landmark */}
-      <div className="landmark__pin" aria-hidden="true">
-        <div className="landmark__pin-flag">
-          {status === 'completed' ? (
-            <span className="landmark__pin-check"><CheckGlyph /></span>
-          ) : status === 'locked' ? (
-            <span className="landmark__pin-lock"><LockGlyph /></span>
-          ) : (
-            <span className="landmark__pin-num">{def.number}</span>
-          )}
-        </div>
-        <div className="landmark__pin-stem" />
-      </div>
-
-      {/* Pulsing "you are here" beacon on the next available zone */}
-      {status === 'next' ? <span className="landmark__beacon" aria-hidden="true" /> : null}
-
-      {/* The actual building artwork */}
-      <button
-        type="button"
-        className="landmark__btn"
-        onClick={unlocked ? onSelect : undefined}
-        disabled={!unlocked}
-        aria-label={ariaLabel}
-      >
-        <span className="landmark__art">
-          <Building color={meta.color} bg={meta.bg} />
-        </span>
-
-        {status === 'locked' ? <span className="landmark__fog" aria-hidden="true" /> : null}
-
-        <span className="landmark__plate">
-          <span className="landmark__plate-num">Zone {def.number}</span>
-          <span className="landmark__plate-name">{def.name}</span>
-        </span>
-      </button>
-
-      {/* Hover info card */}
-      <div className="landmark__info" role="presentation">
-        <div className="landmark__info-cluster">{def.cluster}</div>
-        <div className="landmark__info-intro">{def.intro}</div>
-        <div className="landmark__info-foot">
-          <span className="landmark__info-clauses">{def.clauses}</span>
-          <span className="landmark__info-cta">
-            {status === 'locked' ? 'LOCKED'
-              : status === 'completed' ? `${score} / 200`
-              : def.isFinal ? 'START FINAL →'
-              : 'ENTER →'}
-          </span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Decorative atmosphere — clouds, trees, distant blocks              */
-/* ------------------------------------------------------------------ */
-function MapAtmosphere() {
-  return (
-    <>
-      {/* far-distance city blocks (very faint) */}
-      <g opacity="0.18" fill="var(--ink-soft)">
-        <rect x="60"   y="220" width="60" height="40" rx="3" />
-        <rect x="130"  y="200" width="40" height="60" rx="3" />
-        <rect x="220"  y="230" width="50" height="30" rx="3" />
-        <rect x="700"  y="190" width="50" height="70" rx="3" />
-        <rect x="760"  y="220" width="60" height="40" rx="3" />
-        <rect x="970"  y="200" width="40" height="60" rx="3" />
-        <rect x="1090" y="240" width="60" height="20" rx="3" />
-      </g>
-
-      {/* clouds */}
-      <g fill="#ffffff" opacity="0.9">
-        <ellipse cx="180" cy="90" rx="44" ry="14" />
-        <ellipse cx="200" cy="80" rx="30" ry="14" />
-        <ellipse cx="160" cy="80" rx="24" ry="12" />
-      </g>
-      <g fill="#ffffff" opacity="0.85">
-        <ellipse cx="780" cy="70"  rx="38" ry="12" />
-        <ellipse cx="800" cy="60"  rx="26" ry="12" />
-      </g>
-      <g fill="#ffffff" opacity="0.85">
-        <ellipse cx="1050" cy="110" rx="48" ry="14" />
-        <ellipse cx="1070" cy="98"  rx="30" ry="13" />
-      </g>
-
-      {/* trees */}
-      <g>
-        <ellipse cx="320" cy="610" rx="14" ry="18" fill="#7da06b" />
-        <rect x="319" y="608" width="2" height="14" fill="#5a4022" />
-      </g>
-      <g>
-        <ellipse cx="510" cy="445" rx="12" ry="16" fill="#7da06b" />
-        <rect x="509" y="443" width="2" height="12" fill="#5a4022" />
-      </g>
-      <g>
-        <ellipse cx="730" cy="615" rx="14" ry="18" fill="#7da06b" />
-        <rect x="729" y="613" width="2" height="14" fill="#5a4022" />
-      </g>
-      <g>
-        <ellipse cx="930" cy="430" rx="12" ry="16" fill="#7da06b" />
-        <rect x="929" y="428" width="2" height="12" fill="#5a4022" />
-      </g>
-      <g>
-        <ellipse cx="1140" cy="600" rx="14" ry="18" fill="#7da06b" />
-        <rect x="1139" y="598" width="2" height="14" fill="#5a4022" />
-      </g>
-
-      {/* small ground tufts */}
-      {[100, 260, 460, 690, 880, 1100].map((x) => (
-        <path key={`tuft-${x}`} d={`M ${x} 670 q 4 -8 8 0 q 4 -8 8 0 q 4 -8 8 0`} stroke="#9bb47e" strokeWidth="1.2" fill="none" />
-      ))}
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main map page                                                      */
+/*  Main WorldMap page                                                  */
 /* ------------------------------------------------------------------ */
 function WorldMap() {
   const navigate = useNavigate();
   const { state, isZoneUnlocked } = useGame();
+
   const completedCount = ['error-district', 'vv-headquarters', 'matrix-tower', 'artefact-archive']
     .filter((id) => state.completedZones.has(id)).length;
 
-  // Find the next zone to complete (the first unlocked, not-completed zone)
-  const nextZoneId = ZONE_DEFS.find(
-    (z) => isZoneUnlocked(z.id) && !state.completedZones.has(z.id)
-  )?.id;
+  const nextZone = ZONE_DEFS.find((z) => isZoneUnlocked(z.id) && !state.completedZones.has(z.id));
 
   const headerMotion = useMotion({
     initial: { opacity: 0, y: -8 },
@@ -482,11 +556,10 @@ function WorldMap() {
     transition: { duration: 0.3, ease: 'easeOut' },
   });
 
-  const stageMotion = useMotion({
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    transition: { duration: 0.4, delay: 0.05, ease: 'easeOut' },
-  });
+  const handleSelect = (zoneId) => {
+    const def = ZONE_DEFS.find((z) => z.id === zoneId);
+    if (def) navigate(def.route);
+  };
 
   return (
     <div className="world-map">
@@ -495,7 +568,7 @@ function WorldMap() {
           <span className="world-map__incident">
             <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true">
               <path d="M9 1 L17 16 H1 Z" fill="currentColor" />
-              <rect x="8.3" y="6"  width="1.4" height="5"   fill="#ffffff" />
+              <rect x="8.3" y="6" width="1.4" height="5" fill="#ffffff" />
               <rect x="8.3" y="12" width="1.4" height="1.4" fill="#ffffff" />
             </svg>
             Incident #047 · Production Outage
@@ -511,107 +584,101 @@ function WorldMap() {
         </div>
       </motion.header>
 
-      <motion.main className="world-map__stage" {...stageMotion}>
-        {/* The illustrated SVG canvas — sky, ground, roads, atmosphere */}
-        <svg
-          className="world-map__art"
-          viewBox="0 0 1200 720"
-          preserveAspectRatio="xMidYMid slice"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#cfe6f4" />
-              <stop offset="60%"  stopColor="#e8f1f7" />
-              <stop offset="100%" stopColor="#f3efe4" />
-            </linearGradient>
-            <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#f0e9d6" />
-              <stop offset="100%" stopColor="#e6dec2" />
-            </linearGradient>
-            <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
-              <circle cx="2" cy="2" r="1" fill="rgba(0,0,0,0.05)" />
-            </pattern>
-          </defs>
-
-          {/* sky */}
-          <rect x="0" y="0" width="1200" height="350" fill="url(#skyGrad)" />
-          {/* ground */}
-          <rect x="0" y="350" width="1200" height="370" fill="url(#groundGrad)" />
-          {/* dot texture on the ground */}
-          <rect x="0" y="350" width="1200" height="370" fill="url(#dots)" />
-          {/* horizon */}
-          <line x1="0" y1="350" x2="1200" y2="350" stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
-
-          <MapAtmosphere />
-
-          {/* Roads — outer (light beige) */}
-          {ROAD_SEGMENTS.map((d, i) => (
-            <path
-              key={`road-bg-${i}`}
-              d={d}
-              fill="none"
-              stroke="#f5edd2"
-              strokeWidth="22"
-              strokeLinecap="round"
-            />
-          ))}
-          {/* Roads — middle (cream center) */}
-          {ROAD_SEGMENTS.map((d, i) => (
-            <path
-              key={`road-mid-${i}`}
-              d={d}
-              fill="none"
-              stroke="#fbf8ec"
-              strokeWidth="14"
-              strokeLinecap="round"
-            />
-          ))}
-          {/* Roads — dashed centerline; segments completed turn solid+colored */}
-          {ROAD_SEGMENTS.map((d, i) => {
-            // segment i connects ZONE_DEFS[i] -> ZONE_DEFS[i+1]
-            // it's "completed" when the source zone is in completedZones
-            const fromId = ZONE_DEFS[i].id;
-            const completed = state.completedZones.has(fromId);
-            const meta = ZONE_META[fromId];
-            return (
-              <path
-                key={`road-line-${i}`}
-                d={d}
-                fill="none"
-                stroke={completed ? meta.color : '#c9beae'}
-                strokeWidth={completed ? 2.5 : 2}
-                strokeDasharray={completed ? '0' : '6 6'}
-                strokeLinecap="round"
-                opacity={completed ? 0.95 : 0.7}
-                className={completed ? 'road-line road-line--done' : 'road-line'}
-              />
-            );
-          })}
-        </svg>
-
-        {/* Zone landmarks — absolutely-positioned interactive hotspots */}
-        <div className="world-map__landmarks">
-          {ZONE_DEFS.map((def, idx) => {
-            const unlocked  = isZoneUnlocked(def.id);
-            const completed = state.completedZones.has(def.id);
-            const score     = state.zoneScores[def.id];
-            const isNext    = def.id === nextZoneId;
-            return (
-              <ZoneLandmark
-                key={def.id}
-                def={def}
-                index={idx}
-                unlocked={unlocked}
-                completed={completed}
-                score={score}
-                isNext={isNext}
-                onSelect={() => navigate(def.route)}
-              />
-            );
-          })}
+      <main className="world-map__body">
+        {/* Isometric map (left, large) */}
+        <div className="world-map__map-panel">
+          <IsometricMap
+            completedZones={state.completedZones}
+            onSelect={handleSelect}
+            isZoneUnlocked={isZoneUnlocked}
+          />
+          <p className="world-map__no-persist">No persistence — refresh resets the game.</p>
         </div>
-      </motion.main>
+
+        {/* Sidebar (right) */}
+        <aside className="world-map__sidebar">
+          {/* Progress card */}
+          <div className="world-map__card">
+            <div className="world-map__card-label">Progress</div>
+            <div className="world-map__card-score" style={{ color: 'var(--final-color)' }}>
+              {completedCount} / 4 zones
+            </div>
+            <div className="world-map__progress-bar">
+              <div className="world-map__progress-fill" style={{ width: `${(completedCount / 4) * 100}%` }} />
+            </div>
+            <div className="world-map__zone-chips">
+              {ZONE_DEFS.filter((z) => !z.isFinal).map((z) => {
+                const done = state.completedZones.has(z.id);
+                const isNext = z.id === nextZone?.id;
+                return (
+                  <div
+                    key={z.id}
+                    className={`world-map__zone-chip ${done ? 'is-done' : isNext ? 'is-next' : ''}`}
+                    style={{ '--chip-color': z.color }}
+                    title={z.name}
+                  >
+                    {done ? '✓' : z.number}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Score card */}
+          <div className="world-map__card world-map__card--score">
+            <div className="world-map__card-label">Total Score</div>
+            <div className="world-map__card-bigscore" style={{ color: 'var(--final-color)' }}>
+              {state.totalScore}
+              <span className="world-map__card-max"> / 1000</span>
+            </div>
+          </div>
+
+          {/* Next up card */}
+          {nextZone ? (
+            <div className="world-map__card">
+              <div className="world-map__card-label">Next up</div>
+              <p className="world-map__card-text">
+                <strong style={{ color: nextZone.color }}>{nextZone.name}</strong>
+                {' '}— {nextZone.intro}
+              </p>
+              <button
+                type="button"
+                className="world-map__enter-btn"
+                style={{ '--btn-color': nextZone.color }}
+                onClick={() => navigate(nextZone.route)}
+              >
+                Enter Zone {nextZone.number} →
+              </button>
+            </div>
+          ) : completedCount === 4 ? (
+            <div className="world-map__card">
+              <div className="world-map__card-label">Next up</div>
+              <p className="world-map__card-text">
+                <strong style={{ color: 'var(--final-color)' }}>Final Inspection</strong>
+                {' '}— All four zones complete. Enter the Final Inspection.
+              </p>
+              <button
+                type="button"
+                className="world-map__enter-btn"
+                style={{ '--btn-color': 'var(--final-color)' }}
+                onClick={() => navigate('/final-inspection')}
+              >
+                Enter Final Inspection →
+              </button>
+            </div>
+          ) : null}
+
+          {/* Legend */}
+          <div className="world-map__card">
+            <div className="world-map__card-label">Legend</div>
+            <div className="world-map__legend">
+              <div><span className="world-map__legend-dot" style={{ background: 'var(--zone1-color)' }} />Unlocked &amp; glowing</div>
+              <div><span className="world-map__legend-dot" style={{ background: 'var(--ink-muted)' }} />Locked · in fog</div>
+              <div><span className="world-map__legend-dot" style={{ background: '#28a745' }} />Completed</div>
+            </div>
+          </div>
+        </aside>
+      </main>
 
       <footer className="world-map__footer">
         <span>OPUS · ISO/IEC/IEEE 29119-1:2022 — Part 1: General Concepts</span>

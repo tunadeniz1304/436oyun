@@ -1,59 +1,139 @@
 .zone-layout {
   min-height: 100vh;
-  background: var(--paper);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
 
+/* Dark HUD-style header matching design-export ZoneHeader */
 .zone-layout__header {
-  background: var(--zone-color);
-  color: #ffffff;
-  padding: 14px 24px;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  background: #111;
+  color: #fff;
+  border-left: 6px solid var(--zone-color);
+  padding: 18px 32px;
+  display: flex;
   align-items: center;
-  gap: var(--gap-md);
-  box-shadow: var(--shadow-sm);
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  overflow: hidden;
+  position: relative;
+}
+
+/* diagonal HUD texture overlay */
+.zone-layout__header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255,255,255,0.03) 0 2px,
+    transparent 2px 8px
+  );
+  pointer-events: none;
+}
+
+/* thin progress bar at bottom edge */
+.zone-layout__header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* zone icon + name cluster */
+.zone-layout__heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.zone-layout__zone-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: var(--zone-color);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--zone-color) 53%, transparent);
+}
+
+.zone-layout__heading-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.zone-layout__zone-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--zone-color);
+  opacity: 0.95;
+  line-height: 1.1;
+}
+
+.zone-layout__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.zone-layout__subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 2px;
+}
+
+/* right side: back button + score badge */
+.zone-layout__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
 }
 
 .zone-layout__back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(255, 255, 255, 0.08);
-  width: fit-content;
-  transition: background 120ms ease;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  transition: background 150ms ease;
+  white-space: nowrap;
 }
 
 .zone-layout__back:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255,255,255,0.14);
 }
 
-.zone-layout__heading {
-  text-align: center;
-}
-
-.zone-layout__title {
-  font-size: 22px;
+.zone-layout__score-badge {
+  background: #000;
+  border: 1px solid var(--zone-color);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-family: var(--font-mono);
   font-weight: 700;
-  letter-spacing: 0.01em;
-  color: #ffffff;
-}
-
-.zone-layout__subtitle {
-  font-size: 12.5px;
-  margin-top: 2px;
-  color: rgba(255, 255, 255, 0.78);
-  letter-spacing: 0.02em;
-}
-
-.zone-layout__score {
-  justify-self: end;
+  color: var(--zone-color);
+  letter-spacing: 0.08em;
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--zone-color) 20%, transparent);
+  white-space: nowrap;
 }
 
 .zone-layout__main {
@@ -66,12 +146,17 @@
 
 @media (max-width: 720px) {
   .zone-layout__header {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'back score'
-      'heading heading';
+    padding: 14px 18px;
+    flex-direction: column;
+    align-items: flex-start;
   }
-  .zone-layout__back     { grid-area: back; }
-  .zone-layout__score    { grid-area: score; }
-  .zone-layout__heading  { grid-area: heading; text-align: left; }
+  .zone-layout__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .zone-layout__title { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zone-layout__back { transition: none; }
 }

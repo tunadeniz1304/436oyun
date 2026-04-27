@@ -1,15 +1,15 @@
 /* =========================================================================
-   World Map — illustrated city, themed building landmarks, animated road
+   World Map — isometric map + sidebar layout
    ========================================================================= */
 
 .world-map {
   min-height: 100vh;
-  background: var(--paper);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
 
-/* -------------------------- Top bar (compact) -------------------------- */
+/* ── Top bar ─────────────────────────────────────────────────────────── */
 
 .world-map__topbar {
   display: flex;
@@ -19,7 +19,7 @@
   padding: 18px 28px;
   flex-wrap: wrap;
   background: linear-gradient(135deg, #ffffff, #faf6ea);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
 }
 
 .world-map__topbar-left {
@@ -27,7 +27,6 @@
   flex-direction: column;
   gap: 6px;
   min-width: 280px;
-  max-width: 760px;
 }
 
 .world-map__incident {
@@ -43,7 +42,6 @@
   padding: 5px 12px;
   border-radius: 999px;
   font-weight: 700;
-  box-shadow: var(--shadow-sm);
 }
 
 .world-map__title {
@@ -58,393 +56,235 @@
   margin: 0;
   font-size: 13.5px;
   line-height: 1.5;
-  max-width: 620px;
+  max-width: 580px;
   color: var(--ink-soft);
 }
 
 .world-map__topbar-right { flex-shrink: 0; }
 
-/* ------------------------------ Stage ----------------------------------- */
-/* The map itself — a fixed-aspect canvas with absolutely-positioned
-   landmarks layered on top of the SVG art.                                */
+/* ── Body: map + sidebar ─────────────────────────────────────────────── */
 
-.world-map__stage {
-  position: relative;
+.world-map__body {
   flex: 1;
-  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+  padding: 24px 28px;
   max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  padding: 22px;
   box-sizing: border-box;
 }
 
-/* The aspect-ratio canvas — keeps the map proportions stable */
-.world-map__stage::before {
-  content: '';
-  display: block;
-  padding-top: 60%;          /* 1200 × 720 = 5:3 */
-}
+/* ── Map panel ───────────────────────────────────────────────────────── */
 
-.world-map__art,
-.world-map__landmarks {
-  position: absolute;
-  inset: 22px;
-  border-radius: 14px;
-}
-
-.world-map__art {
-  width: calc(100% - 44px);
-  height: calc(100% - 44px);
-  display: block;
-  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 12px 28px rgba(0, 0, 0, 0.08);
-  background: #e8f1f7;
-}
-
-.world-map__landmarks {
-  width: calc(100% - 44px);
-  height: calc(100% - 44px);
-  pointer-events: none;       /* children opt back in */
-}
-
-/* --------------------------- Road animation ----------------------------- */
-
-.road-line {
-  /* baseline */
-  transition: stroke 280ms ease, opacity 280ms ease;
-}
-.road-line--done {
-  stroke-dasharray: 0;
-  animation: roadDraw 700ms ease-out both;
-}
-@keyframes roadDraw {
-  from { stroke-opacity: 0; }
-  to   { stroke-opacity: 0.95; }
-}
-
-/* ----------------------------- Landmarks -------------------------------- */
-/* Each landmark is positioned by % so it scales with the canvas.          */
-/* Its inner art is anchored center-bottom on the (x,y) point.             */
-
-.landmark {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  pointer-events: auto;
-  --landmark-color: var(--ink);
-  --landmark-bg: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.18));
-  z-index: 2;
-}
-
-/* Pin / flag floating above the building */
-.landmark__pin {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: -4px;
-  pointer-events: none;
-}
-
-.landmark__pin-flag {
+.world-map__map-panel {
+  background: #f0f4e8;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-md);
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 38px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 12px;
-  background: var(--landmark-color);
-  color: #ffffff;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  box-shadow:
-    0 2px 0 color-mix(in srgb, var(--landmark-color) 70%, #000),
-    0 6px 14px rgba(0, 0, 0, 0.18);
-  border: 2px solid #ffffff;
-}
-
-.landmark__pin-num   { font-size: 16px; }
-.landmark__pin-check { display: inline-flex; }
-.landmark__pin-lock  { display: inline-flex; color: #ffffff; }
-
-/* the small triangular stem under the flag */
-.landmark__pin-stem {
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 9px solid var(--landmark-color);
-  margin-top: -1px;
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.15));
-}
-
-/* Pulsing "you are here" beacon — a soft halo behind the pin */
-.landmark__beacon {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: var(--landmark-color);
-  opacity: 0.35;
-  z-index: -1;
-  animation: beacon 1.8s ease-out infinite;
-  pointer-events: none;
-}
-@keyframes beacon {
-  0%   { transform: translateX(-50%) scale(0.6); opacity: 0.5;  }
-  70%  { transform: translateX(-50%) scale(1.4); opacity: 0;    }
-  100% { transform: translateX(-50%) scale(1.4); opacity: 0;    }
-}
-
-/* The clickable button containing the building art */
-.landmark__btn {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
+  min-height: 460px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  position: relative;
-  transition: transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-.landmark__btn:disabled { cursor: not-allowed; }
-
-.landmark__btn:hover:not(:disabled),
-.landmark__btn:focus-visible:not(:disabled) {
-  transform: translateY(-4px);
+  overflow: hidden;
 }
 
-.landmark__btn:focus-visible {
-  outline: none;
-}
-.landmark__btn:focus-visible .landmark__art {
-  outline: 3px solid var(--landmark-color);
-  outline-offset: 6px;
-  border-radius: 12px;
-}
-
-.landmark__art {
-  display: inline-block;
-  line-height: 0;
-}
-
-/* Locked: desaturate + fog overlay */
-.landmark--locked .landmark__art   { filter: grayscale(0.85) brightness(0.92); }
-.landmark--locked .landmark__pin-flag {
-  background: #8a8580;
-  box-shadow:
-    0 2px 0 #5e5a55,
-    0 4px 10px rgba(0, 0, 0, 0.18);
-}
-.landmark--locked .landmark__pin-stem { border-top-color: #8a8580; }
-
-.landmark__fog {
+.world-map__no-persist {
   position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(255, 255, 255, 0.55) 0 6px,
-    rgba(255, 255, 255, 0.35) 6px 12px
-  );
-  mix-blend-mode: screen;
-  pointer-events: none;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin: 0;
 }
 
-/* Completed: gentle glow under the building */
-.landmark--completed .landmark__art {
-  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--landmark-color) 65%, transparent));
-}
-.landmark--completed .landmark__pin-flag {
-  background: var(--landmark-color);
-  box-shadow:
-    0 2px 0 color-mix(in srgb, var(--landmark-color) 70%, #000),
-    0 0 0 4px color-mix(in srgb, var(--landmark-color) 25%, transparent),
-    0 6px 14px rgba(0, 0, 0, 0.18);
-}
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
 
-/* "Next" zone gets a subtle bobbing animation */
-.landmark--next .landmark__btn {
-  animation: bob 2.4s ease-in-out infinite;
-}
-@keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
-}
-.landmark--next .landmark__btn:hover {
-  animation-play-state: paused;
-}
-
-/* Final landmark: slight extra grandeur — gold ring in completed state */
-.landmark--final .landmark__pin-flag {
-  background: var(--final-color);
-  box-shadow:
-    0 2px 0 color-mix(in srgb, var(--final-color) 70%, #000),
-    0 6px 14px rgba(0, 0, 0, 0.18);
-}
-
-/* The plate beneath each building */
-.landmark__plate {
+.world-map__sidebar {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-top: -2px;
-  padding: 4px 10px 5px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid color-mix(in srgb, var(--landmark-color) 30%, var(--line));
+  gap: 16px;
+}
+
+/* ── Card (sidebar) ─────────────────────────────────────────────────── */
+
+.world-map__card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
   box-shadow: var(--shadow-sm);
-  white-space: nowrap;
 }
 
-.landmark__plate-num {
-  font-size: 9.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--landmark-color);
-  font-weight: 700;
-  line-height: 1.1;
-}
-.landmark__plate-name {
+.world-map__card-label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--ink);
-  line-height: 1.2;
-  margin-top: 1px;
-}
-
-/* ---------------- Hover info popover above the building ---------------- */
-
-.landmark__info {
-  position: absolute;
-  bottom: calc(100% + 14px);
-  left: 50%;
-  transform: translate(-50%, 6px);
-  width: 240px;
-  padding: 12px 14px;
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-top: 4px solid var(--landmark-color);
-  border-radius: 10px;
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 180ms ease, transform 180ms ease;
-  z-index: 5;
-  text-align: left;
-}
-
-.landmark__info::after {
-  /* tail pointing down to the pin */
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid #ffffff;
-  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.06));
-}
-
-.landmark:hover .landmark__info,
-.landmark:focus-within .landmark__info {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-.landmark--locked:hover .landmark__info,
-.landmark--locked:focus-within .landmark__info {
-  border-top-color: #8a8580;
-}
-
-.landmark__info-cluster {
-  font-size: 11px;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.world-map__card-score {
+  font-size: 24px;
   font-weight: 700;
-  color: var(--landmark-color);
-  margin-bottom: 4px;
+  font-family: var(--font-mono);
+  margin-bottom: 12px;
 }
-.landmark__info-intro {
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: var(--ink);
+
+.world-map__card--score .world-map__card-bigscore {
+  font-size: 36px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1.1;
 }
-.landmark__info-foot {
+
+.world-map__card-max {
+  font-size: 20px;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.world-map__card-text {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+/* ── Progress bar (in progress card) ─────────────────────────────────── */
+
+.world-map__progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.world-map__progress-fill {
+  height: 100%;
+  background: var(--final-color);
+  border-radius: 3px;
+  transition: width 600ms var(--ease-out);
+}
+
+/* ── Zone chips ─────────────────────────────────────────────────────── */
+
+.world-map__zone-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.world-map__zone-chip {
+  flex: 1;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  transition: all 200ms var(--ease-out);
+}
+
+.world-map__zone-chip.is-done {
+  background: var(--chip-color);
+  color: #fff;
+}
+
+.world-map__zone-chip.is-next {
+  background: #fff;
+  border: 1.5px dashed var(--chip-color);
+  color: var(--chip-color);
+}
+
+/* ── Enter zone button ───────────────────────────────────────────────── */
+
+.world-map__enter-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--btn-color);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 150ms var(--ease-out);
+  font-family: var(--font-sans);
+}
+
+.world-map__enter-btn:hover {
+  filter: brightness(0.9);
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────── */
+
+.world-map__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.world-map__legend div {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--line);
-}
-.landmark__info-clauses {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 10.5px;
-  color: var(--muted);
-}
-.landmark__info-cta {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--landmark-color);
 }
 
-/* --------------------------- Footer ------------------------------------ */
+.world-map__legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
 
 .world-map__footer {
   text-align: center;
   padding: 14px;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--ink-muted);
   letter-spacing: 0.06em;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 
-/* --------------------------- Responsive --------------------------------- */
-/* Below 980px the landmark hover-cards grow tight on a 5:3 canvas; on
-   tight screens we keep the canvas legible and shrink the type.           */
+/* ── Responsive ─────────────────────────────────────────────────────── */
 
-@media (max-width: 980px) {
-  .world-map__title    { font-size: 24px; }
-  .world-map__subtitle { font-size: 12.5px; }
-  .landmark__plate-name { font-size: 11px; }
-  .landmark__info { width: 200px; }
+@media (max-width: 900px) {
+  .world-map__body {
+    grid-template-columns: 1fr;
+  }
+  .world-map__sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .world-map__card {
+    flex: 1 1 220px;
+  }
 }
 
-@media (max-width: 720px) {
-  .world-map__topbar { padding: 14px 18px; }
-  .world-map__stage  { padding: 14px; }
-  .world-map__art,
-  .world-map__landmarks { inset: 14px; width: calc(100% - 28px); height: calc(100% - 28px); }
-  .landmark__art svg   { transform: scale(0.78); transform-origin: center bottom; }
-  .landmark__pin-flag  { min-width: 30px; height: 30px; padding: 0 8px; }
-  .landmark__pin-num   { font-size: 13px; }
-  .landmark__plate     { padding: 3px 8px; }
-  .landmark__plate-num { font-size: 8.5px; }
-  .landmark__plate-name{ font-size: 10.5px; }
-  .landmark__info      { width: 180px; padding: 10px; }
-  .landmark__info-intro{ font-size: 11.5px; }
+@media (max-width: 600px) {
+  .world-map__topbar { padding: 14px 16px; }
+  .world-map__body   { padding: 16px; }
+  .world-map__title  { font-size: 22px; }
+  .world-map__sidebar {
+    flex-direction: column;
+  }
 }
-
-/* --------------------------- Reduced motion ----------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .landmark--next .landmark__btn { animation: none; }
-  .landmark__beacon              { animation: none; opacity: 0.25; }
-  .road-line--done               { animation: none; }
-  .landmark__btn,
-  .landmark__info                { transition: none; }
+  .world-map__progress-fill,
+  .world-map__zone-chip,
+  .world-map__enter-btn { transition: none; }
 }

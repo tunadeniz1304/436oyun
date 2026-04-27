@@ -4,50 +4,135 @@
   --zone2-color: #0C447C;   /* blue   — V&V HQ */
   --zone3-color: #3B6D11;   /* green  — Matrix Tower */
   --zone4-color: #854F0B;   /* amber  — Artefact Archive */
-  --final-color: #3C3489;   /* purple — Final Inspection */
+  --zone5-color: #3C3489;   /* purple — Final Inspection (alias) */
+  --final-color: #3C3489;
 
-  /* Tints (lighter background variants) */
-  --zone1-bg: #FAECE7;
-  --zone2-bg: #E6F1FB;
-  --zone3-bg: #EAF3DE;
-  --zone4-bg: #FAEEDA;
-  --final-bg: #EEEDFE;
+  /* Tints — bg and tint are the same, both names supported */
+  --zone1-bg:   #FAECE7;
+  --zone2-bg:   #E6F1FB;
+  --zone3-bg:   #EAF3DE;
+  --zone4-bg:   #FAEEDA;
+  --final-bg:   #EEEDFE;
+  --zone5-bg:   #EEEDFE;
+  --zone1-tint: #FAECE7;
+  --zone2-tint: #E6F1FB;
+  --zone3-tint: #EAF3DE;
+  --zone4-tint: #FAEEDA;
+  --zone5-tint: #EEEDFE;
+  --final-tint: #EEEDFE;
 
   /* Neutral */
-  --ink: #1a1a1a;
-  --ink-soft: #555;
-  --muted: #888;
-  --paper: #fefcf7;
-  --line: #ddd;
+  --ink:       #1a1a1a;
+  --ink-soft:  #555555;
+  --ink-muted: #888888;
+  --muted:     #888888;   /* legacy alias */
+  --paper:     #fefcf7;
+  --surface:   #ffffff;
+  --bg:        #fefcf7;   /* design export alias for --paper */
+  --line:      #dddddd;
+  --border:    #dddddd;   /* design export alias for --line */
+  --border-soft: rgba(0,0,0,0.06);
 
-  /* Status colors */
-  --status-correct: #2f7a3a;
-  --status-partial: #b8771b;
-  --status-review: #b03030;
-  --status-warning: #854F0B;
+  /* Semantic */
+  --success:          #28a745;
+  --warning:          #ffc107;
+  --danger:           #dc3545;
+  --info:             #0c5460;
+  --status-correct:   #2f7a3a;
+  --status-partial:   #b8771b;
+  --status-review:    #b03030;
+  --status-warning:   #854F0B;
 
-  /* Spacing scale */
-  --gap-xs: 4px;
-  --gap-sm: 8px;
-  --gap-md: 16px;
-  --gap-lg: 24px;
-  --gap-xl: 40px;
+  /* Spacing scale — 8px grid */
+  --gap-xs:  4px;
+  --gap-sm:  8px;
+  --gap-md:  16px;
+  --gap-lg:  24px;
+  --gap-xl:  40px;
+  --gap-2xl: 64px;
 
-  /* Type scale */
+  /* Type */
   --font-display: 'Caveat', 'Patrick Hand', system-ui, -apple-system, sans-serif;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Radius */
+  /* Radius — both naming conventions */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --r-sm:      4px;
+  --r-md:      8px;
+  --r-lg:      12px;
 
   /* Shadow */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+  /* Motion */
+  --t-micro:  150ms;
+  --t-base:   250ms;
+  --t-long:   400ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
 
   /* Layout */
   --container-max: 1100px;
   --header-height: 64px;
+}
+
+/* Hatch pattern for locked cards */
+.hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,0.06) 0,
+    rgba(0,0,0,0.06) 1px,
+    transparent 1px,
+    transparent 8px
+  );
+}
+
+/* Common ISO badge for clause refs */
+.iso-clause {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Spinner animation */
+@keyframes iso-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes iso-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes iso-shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
+
+@keyframes iso-check-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.18); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
