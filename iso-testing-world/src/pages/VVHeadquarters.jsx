@@ -32,7 +32,12 @@ const ROUTING_LABEL = {
 function VVHeadquarters() {
   const navigate = useNavigate();
   const { state, isZoneUnlocked, completeZone, recordWrong, addOraclePoints } = useGame();
-  const feedback = useFeedbackQueue();
+  const {
+    current: feedbackCurrent,
+    isOpen: feedbackIsOpen,
+    push: pushFeedback,
+    pop: popFeedback,
+  } = useFeedbackQueue();
 
   const [idx, setIdx] = useState(0);
   const [tentative, setTentative] = useState(null);  // 'verification' | 'validation' | 'both' | null
@@ -45,12 +50,14 @@ function VVHeadquarters() {
   const advanceTimerRef = useRef(null);
 
   const mission = zone2Missions[idx];
-  const showOracle = !!mission?.oraclePromptHere;
   const total = zone2Missions.length;
+  const finishedMissions = idx >= total;
+  const showingComplete = completed || finishedMissions;
+  const showOracle = !!mission?.oraclePromptHere;
 
   const { remaining, reset: resetTimer } = useTimer({
     initial: TIMER_SECONDS,
-    paused: feedback.isOpen || completed || flash === 'correct' || flash === 'wrong',
+    paused: feedbackIsOpen || showingComplete || flash === 'correct' || flash === 'wrong',
     onExpire: () => handleTimeout(),
   });
 
@@ -66,9 +73,9 @@ function VVHeadquarters() {
     setJustification('');
     setOracleAnswered(null);
     setOracleAwarded(false);
-    setIdx((prev) => prev + 1);
+    setIdx((prev) => Math.min(prev + 1, total));
     resetTimer(TIMER_SECONDS);
-  }, [resetTimer]);
+  }, [resetTimer, total]);
 
   // schedule advance after success/wrong flash + feedback dismissal
   const scheduleAdvance = useCallback(() => {
@@ -82,14 +89,15 @@ function VVHeadquarters() {
 
   // Once feedback queue is empty AND flash is 'wrong', advance
   useEffect(() => {
-    if (flash === 'wrong' && !feedback.isOpen) {
+    if (flash === 'wrong' && !feedbackIsOpen) {
       scheduleAdvance();
     }
-  }, [flash, feedback.isOpen, scheduleAdvance]);
+  }, [flash, feedbackIsOpen, scheduleAdvance]);
 
-  function commitWrongAnswer({ playerAnswer, recordedAnswer }) {
+  const commitWrongAnswer = useCallback(({ playerAnswer, recordedAnswer }) => {
+    if (!mission) return;
     const def = getISODefinition(mission.isoRef);
-    feedback.push({
+    pushFeedback({
       isoRef: mission.isoRef,
       term: def.term,
       definition: def.definition,
@@ -107,17 +115,17 @@ function VVHeadquarters() {
     });
     setMissionScores((prev) => [...prev, 0]);
     setFlash('wrong');
-  }
+  }, [mission, pushFeedback, recordWrong]);
 
-  function commitCorrectAnswer(score) {
+  const commitCorrectAnswer = useCallback((score) => {
     setMissionScores((prev) => [...prev, score]);
     setFlash('correct');
     scheduleAdvance();
-  }
+  }, [scheduleAdvance]);
 
   const handleSelectRouting = useCallback(
     (key) => {
-      if (completed || flash) return;
+      if (showingComplete || flash || !mission) return;
       if (key === 'both') {
         setTentative('both');
         return;
@@ -132,10 +140,11 @@ function VVHeadquarters() {
         });
       }
     },
-    [completed, flash, mission]
+    [showingComplete, flash, mission, commitCorrectAnswer, commitWrongAnswer]
   );
 
   const handleSubmitBoth = useCallback(() => {
+    if (!mission) return;
     if (countWords(justification) < MIN_WORDS) return;
     if (mission.correctRouting === 'both') {
       // valid justification = full points
@@ -147,7 +156,7 @@ function VVHeadquarters() {
         recordedAnswer: `both:${justification}`,
       });
     }
-  }, [justification, mission]);
+  }, [justification, mission, commitCorrectAnswer, commitWrongAnswer]);
 
   const handleCancelBoth = useCallback(() => {
     setTentative(null);
@@ -155,7 +164,7 @@ function VVHeadquarters() {
   }, []);
 
   function handleTimeout() {
-    if (completed || flash) return;
+    if (showingComplete || flash) return;
     if (!mission) return;
     commitWrongAnswer({
       playerAnswer: 'no answer — timer expired',
@@ -185,20 +194,21 @@ function VVHeadquarters() {
 
   // Completion
   useEffect(() => {
-    if (idx >= total && !completed) {
+    if (finishedMissions && !completed) {
       const sum = missionScores.reduce((a, b) => a + b, 0);
       const final = Math.min(ZONE2_FULL_SCORE, sum);
       setCompleted(true);
       completeZone('vv-headquarters', final);
     }
-  }, [idx, total, completed, missionScores, completeZone]);
+  }, [finishedMissions, completed, missionScores, completeZone]);
 
   // Route guard
   if (!isZoneUnlocked('vv-headquarters')) {
     return <Navigate to="/" replace />;
   }
 
-  const finalScore = missionScores.reduce((a, b) => a + b, 0);
+  const finalScore = Math.min(ZONE2_FULL_SCORE, missionScores.reduce((a, b) => a + b, 0));
+  const completionRecorded = state.completedZones.has('vv-headquarters');
 
   return (
     <ZoneLayout
@@ -210,7 +220,7 @@ function VVHeadquarters() {
       scoreCurrent={state.zoneScores['vv-headquarters']}
     >
       <motion.section className="vv-hq" {...headerMotion}>
-        {!completed ? (
+        {!showingComplete ? (
           <>
             <div className="vv-hq__topbar">
               <div className="vv-hq__queue">
@@ -277,6 +287,7 @@ function VVHeadquarters() {
               variant="primary"
               size="lg"
               zoneColor="var(--zone2-color)"
+              disabled={!completionRecorded}
               onClick={() => navigate('/zone/matrix-tower')}
             >
               Continue → Zone 3
@@ -286,10 +297,10 @@ function VVHeadquarters() {
       </motion.section>
 
       <FeedbackModal
-        isOpen={feedback.isOpen}
-        onClose={feedback.pop}
+        isOpen={feedbackIsOpen}
+        onClose={popFeedback}
         headerColor="var(--zone2-color)"
-        {...(feedback.current ?? {})}
+        {...(feedbackCurrent ?? {})}
       />
     </ZoneLayout>
   );
