@@ -53,7 +53,12 @@ function evaluate(scenario, selected) {
 function TestMatrixTower() {
   const navigate = useNavigate();
   const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
-  const feedback = useFeedbackQueue();
+  const {
+    current: feedbackCurrent,
+    isOpen: feedbackIsOpen,
+    push: pushFeedback,
+    pop: popFeedback,
+  } = useFeedbackQueue();
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState(() => new Set());
@@ -101,7 +106,7 @@ function TestMatrixTower() {
 
   const selectedArr = useMemo(() => Array.from(selected), [selected]);
 
-  const handleSubmit = useCallback(() => {
+  function handleSubmit() {
     if (selected.size === 0 || verdict) return;
     // Single-cell challenge gate (only when correctCells.length > 1)
     if (selected.size === 1 && scenario.correctCells.length > 1) {
@@ -109,7 +114,7 @@ function TestMatrixTower() {
       return;
     }
     submitNow();
-  }, [selected, verdict, scenario]);
+  }
 
   function submitNow() {
     setShowChallenge(false);
@@ -137,7 +142,7 @@ function TestMatrixTower() {
 
     if (result.kind !== 'exact') {
       const def = getISODefinition(scenario.isoRef);
-      feedback.push({
+      pushFeedback({
         isoRef: scenario.isoRef,
         term: def.term,
         definition: def.definition,
@@ -287,10 +292,10 @@ function TestMatrixTower() {
         onGoBack={submitNow}
       />
       <FeedbackModal
-        isOpen={feedback.isOpen}
-        onClose={feedback.pop}
+        isOpen={feedbackIsOpen}
+        onClose={popFeedback}
         headerColor="var(--zone3-color)"
-        {...(feedback.current ?? {})}
+        {...(feedbackCurrent ?? {})}
       />
     </ZoneLayout>
   );
