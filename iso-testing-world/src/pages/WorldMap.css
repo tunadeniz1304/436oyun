@@ -79,11 +79,11 @@
 /* ── Map panel ───────────────────────────────────────────────────────── */
 
 .world-map__map-panel {
-  background: #f0f4e8;
+  background: linear-gradient(160deg, #e8f0d8 0%, #f0f4e8 45%, #e4ead8 100%);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 12px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   position: relative;
   min-height: 460px;
   display: flex;
@@ -204,24 +204,42 @@
   color: var(--chip-color);
 }
 
+/* ── Next-zone card emphasis ─────────────────────────────────────────── */
+
+.world-map__card--next {
+  background: var(--grad-next-card);
+  border-color: rgba(245, 193, 108, 0.55);
+  box-shadow: 0 0 0 1px rgba(245,193,108,0.25), var(--shadow-md);
+}
+
 /* ── Enter zone button ───────────────────────────────────────────────── */
 
 .world-map__enter-btn {
   width: 100%;
-  padding: 10px 16px;
+  padding: 11px 16px;
   background: var(--btn-color);
   color: #fff;
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: filter 150ms var(--ease-out);
+  transition: filter 160ms var(--ease-out), transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
   font-family: var(--font-sans);
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.16);
 }
 
 .world-map__enter-btn:hover {
-  filter: brightness(0.9);
+  filter: brightness(0.88);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+}
+
+.world-map__enter-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  filter: brightness(0.84);
 }
 
 /* ── Legend ─────────────────────────────────────────────────────────── */
@@ -283,8 +301,36 @@
   }
 }
 
+/* ── Map building entrance animation ────────────────────────────────── */
+
+@keyframes iso-map-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Cloud group — pointer events off so they don't block clicks */
+.map-clouds { pointer-events: none; }
+
+/* Sidebar card base elevation on hover */
+.world-map__card {
+  transition: box-shadow 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.world-map__card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.world-map__card--next:hover {
+  box-shadow: 0 0 0 1px rgba(245,193,108,0.35), var(--shadow-lg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .world-map__progress-fill,
   .world-map__zone-chip,
-  .world-map__enter-btn { transition: none; }
+  .world-map__enter-btn,
+  .world-map__card { transition: none; }
+  .map-clouds { display: none; }
+  @keyframes iso-map-appear {
+    from { opacity: 1; transform: none; }
+    to   { opacity: 1; transform: none; }
+  }
 }

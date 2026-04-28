@@ -46,13 +46,14 @@
   gap: 10px;
   padding: 10px 14px;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: background 150ms ease, border-left-color 150ms ease, box-shadow 150ms ease;
   position: relative;
   border-left: 3px solid transparent;
 }
 
 .file-row:hover {
   background: #f0dfc0;
+  border-left-color: color-mix(in srgb, var(--zone4-color) 40%, transparent);
 }
 
 .file-row:focus-visible {
@@ -62,8 +63,9 @@
 }
 
 .file-row.is-selected {
-  background: #e8cfa0;
+  background: linear-gradient(90deg, #e8cfa0 0%, #f0dfc0 100%);
   border-left-color: var(--zone4-color);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 0 rgba(0,0,0,0.04);
 }
 
 .file-row.is-trap .file-row__name {

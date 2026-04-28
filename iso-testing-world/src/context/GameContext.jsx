@@ -37,6 +37,15 @@ const initialState = {
   totalScore: 0,
   wrongAnswers: [],
   sessionStarted: false,
+  primersSeen: new Set(),
+  skipAllPrimers: false,
+  hintsUsed: {
+    'error-district':    new Set(),
+    'vv-headquarters':   new Set(),
+    'matrix-tower':      new Set(),
+    'artefact-archive':  new Set(),
+    'final-inspection':  new Set(),
+  },
 };
 
 function recomputeTotal(zoneScores) {
@@ -100,8 +109,37 @@ function reducer(state, action) {
       };
     }
 
+    case 'MARK_PRIMER_SEEN': {
+      const primersSeen = new Set(state.primersSeen);
+      primersSeen.add(action.zoneId);
+      return { ...state, primersSeen };
+    }
+
+    case 'SKIP_ALL_PRIMERS':
+      return { ...state, skipAllPrimers: true };
+
+    case 'USE_HINT': {
+      const zoneSet = new Set(state.hintsUsed[action.zoneId] ?? []);
+      zoneSet.add(action.itemId);
+      return {
+        ...state,
+        hintsUsed: { ...state.hintsUsed, [action.zoneId]: zoneSet },
+      };
+    }
+
     case 'RESET':
-      return { ...initialState, completedZones: new Set() };
+      return {
+        ...initialState,
+        completedZones: new Set(),
+        primersSeen: new Set(),
+        hintsUsed: {
+          'error-district':    new Set(),
+          'vv-headquarters':   new Set(),
+          'matrix-tower':      new Set(),
+          'artefact-archive':  new Set(),
+          'final-inspection':  new Set(),
+        },
+      };
 
     default:
       return state;
@@ -143,6 +181,28 @@ export function GameProvider({ children }) {
   const resetGame = useCallback(() => dispatch({ type: 'RESET' }), []);
   const startSession = useCallback(() => dispatch({ type: 'START_SESSION' }), []);
 
+  const markPrimerSeen = useCallback(
+    (zoneId) => dispatch({ type: 'MARK_PRIMER_SEEN', zoneId }),
+    []
+  );
+  const skipAllPrimers = useCallback(
+    () => dispatch({ type: 'SKIP_ALL_PRIMERS' }),
+    []
+  );
+  const useHint = useCallback(
+    (zoneId, itemId) => dispatch({ type: 'USE_HINT', zoneId, itemId }),
+    []
+  );
+
+  const hasSeenPrimer = useCallback(
+    (zoneId) => state.skipAllPrimers || state.primersSeen.has(zoneId),
+    [state.primersSeen, state.skipAllPrimers]
+  );
+  const usedHint = useCallback(
+    (zoneId, itemId) => Boolean(state.hintsUsed[zoneId]?.has(itemId)),
+    [state.hintsUsed]
+  );
+
   const isZoneUnlocked = useCallback(
     (zoneId) => {
       if (zoneId === 'error-district') return true;
@@ -168,6 +228,11 @@ export function GameProvider({ children }) {
       resetGame,
       startSession,
       isZoneUnlocked,
+      markPrimerSeen,
+      skipAllPrimers,
+      useHint,
+      hasSeenPrimer,
+      usedHint,
     }),
     [
       state,
@@ -179,6 +244,11 @@ export function GameProvider({ children }) {
       resetGame,
       startSession,
       isZoneUnlocked,
+      markPrimerSeen,
+      skipAllPrimers,
+      useHint,
+      hasSeenPrimer,
+      usedHint,
     ]
   );
 

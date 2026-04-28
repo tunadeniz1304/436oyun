@@ -9,10 +9,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--gap-md);
-  background: #ffffff;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--line);
+  background: linear-gradient(135deg, #ffffff 0%, var(--zone2-bg) 100%);
+  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--zone2-color) 18%, var(--line));
+  box-shadow: var(--shadow-sm);
 }
 
 .vv-hq__queue {

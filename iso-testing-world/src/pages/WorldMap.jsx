@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame.js';
@@ -74,21 +75,6 @@ const ZONE_DEFS = [
 
 /* ── Isometric map (from design-export) ───────────────────────────── */
 
-const ZONE_COLORS = {
-  1: { color: 'var(--zone1-color)', tint: 'var(--zone1-tint)' },
-  2: { color: 'var(--zone2-color)', tint: 'var(--zone2-tint)' },
-  3: { color: 'var(--zone3-color)', tint: 'var(--zone3-tint)' },
-  4: { color: 'var(--zone4-color)', tint: 'var(--zone4-tint)' },
-  5: { color: 'var(--zone5-color)', tint: 'var(--zone5-tint)' },
-};
-const ZONE_ICONS = { 1: '◬', 2: '◇', 3: '▦', 4: '▤', 5: '◈' };
-const ZONE_NAMES = {
-  1: 'Error District',
-  2: 'V&V Headquarters',
-  3: 'Test Matrix Tower',
-  4: 'Artefact Archive',
-  5: 'Final Inspection',
-};
 
 function lighten(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -344,6 +330,8 @@ function Tree({ cx, cy }) {
 }
 
 function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
+  const [hoveredId, setHoveredId] = useState(null);
+
   /*
    * Isometric projection: tile half-width = TW, tile half-height = TH
    * Screen coords: sx = ox + (gx - gy) * TW,  sy = oy + (gx + gy) * TH
@@ -412,6 +400,12 @@ function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
         <filter id="fog-blur" x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="6" />
         </filter>
+        <filter id="building-shadow" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="4" stdDeviation="7" floodColor="rgba(0,0,0,0.22)" />
+        </filter>
+        <filter id="building-shadow-hover" x="-35%" y="-35%" width="170%" height="170%">
+          <feDropShadow dx="0" dy="9" stdDeviation="14" floodColor="rgba(0,0,0,0.34)" />
+        </filter>
         <radialGradient id="fog-grad" cx="50%" cy="45%" r="55%">
           <stop offset="0%"   stopColor="#b0bec5" stopOpacity="0.92" />
           <stop offset="60%"  stopColor="#90a4ae" stopOpacity="0.6" />
@@ -422,6 +416,16 @@ function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
           <stop offset="55%"  stopColor="#F5A742" stopOpacity="0.2" />
           <stop offset="100%" stopColor="#F5A742" stopOpacity="0" />
         </radialGradient>
+        <radialGradient id="vignette-grad" cx="50%" cy="50%" r="70%">
+          <stop offset="0%"   stopColor="#1a1008" stopOpacity="0" />
+          <stop offset="72%"  stopColor="#1a1008" stopOpacity="0" />
+          <stop offset="100%" stopColor="#1a1008" stopOpacity="0.16" />
+        </radialGradient>
+        <linearGradient id="path-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#F5C16C" stopOpacity="0.7" />
+          <stop offset="50%"  stopColor="#FFD86B" stopOpacity="1" />
+          <stop offset="100%" stopColor="#F5C16C" stopOpacity="0.7" />
+        </linearGradient>
       </defs>
 
       {/* ── Ground tiles (painter's order: back-to-front = low gy+gx first) ── */}
@@ -474,6 +478,24 @@ function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
         return <Tree key={i} cx={x + TW} cy={y + TH} />;
       })}
 
+      {/* ── Atmospheric clouds ── */}
+      <g aria-hidden="true" className="map-clouds">
+        {[
+          { id: 'c1', cx:  60, cy: 55, rx: 42, ry: 14, dx: 1060, dur: '32s', delay: '0s'   },
+          { id: 'c2', cx: 320, cy: 28, rx: 30, ry: 10, dx: 1060, dur: '44s', delay: '-14s' },
+          { id: 'c3', cx: 700, cy: 70, rx: 48, ry: 16, dx: 1060, dur: '26s', delay: '-8s'  },
+        ].map((cloud) => (
+          <g key={cloud.id} opacity="0.48">
+            <ellipse cx={cloud.cx} cy={cloud.cy} rx={cloud.rx} ry={cloud.ry} fill="#fff" />
+            <ellipse cx={cloud.cx - cloud.rx * 0.28} cy={cloud.cy - cloud.ry * 0.55} rx={cloud.rx * 0.55} ry={cloud.ry * 0.9} fill="#fff" />
+            <ellipse cx={cloud.cx + cloud.rx * 0.33} cy={cloud.cy - cloud.ry * 0.4} rx={cloud.rx * 0.42} ry={cloud.ry * 0.8} fill="#fff" />
+            <animateTransform attributeName="transform" type="translate"
+              from={`-${cloud.dx} 0`} to="0 0"
+              dur={cloud.dur} begin={cloud.delay} repeatCount="indefinite" />
+          </g>
+        ))}
+      </g>
+
       {/* ── START signpost (top-left of zone 1) ── */}
       {(() => {
         const { x, y } = proj(0, 0);
@@ -491,15 +513,47 @@ function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
       {/* ── Buildings (painter's order: low gy+gx first) ── */}
       {[...buildings]
         .sort((a, b) => (a.gx + a.gy) - (b.gx + b.gy))
-        .map((b) => {
+        .map((b, i) => {
           const { x, y } = proj(b.gx, b.gy);
-          const cx    = x + TW;
-          const baseY = y + TH * 2;   /* bottom of the tile */
+          const cx       = x + TW;
+          const baseY    = y + TH * 2;
           const unlocked = isZoneUnlocked(b.id);
+          const isHovered = hoveredId === b.id && unlocked;
+          const zColor    = resolveColor(`var(--zone${b.zone}-color)`);
+          const zoneDef   = ZONE_DEFS.find((z) => z.id === b.id);
           return (
-            <g key={b.id} onClick={() => unlocked && onSelect(b.id)}
-               style={{ cursor: unlocked ? 'pointer' : 'default' }}>
+            <g key={b.id}
+               onClick={() => unlocked && onSelect(b.id)}
+               onMouseEnter={() => unlocked && setHoveredId(b.id)}
+               onMouseLeave={() => setHoveredId(null)}
+               style={{
+                 cursor: unlocked ? 'pointer' : 'default',
+                 transform: isHovered ? 'translateY(-5px)' : 'translateY(0)',
+                 transition: 'transform 220ms cubic-bezier(0,0,0.2,1), filter 220ms ease',
+                 filter: isHovered
+                   ? `drop-shadow(0 9px 18px rgba(0,0,0,0.34))`
+                   : unlocked
+                     ? `drop-shadow(0 3px 10px rgba(0,0,0,0.20))`
+                     : 'none',
+                 animation: `iso-map-appear 0.45s ${i * 0.09}s ease-out both`,
+               }}
+            >
               <Building cx={cx} baseY={baseY} zone={b.zone} unlocked={unlocked} shape={b.shape} label={b.label} />
+              {isHovered && (
+                <g transform={`translate(${cx} ${baseY - 130})`} style={{ pointerEvents: 'none' }}>
+                  <rect x="-72" y="-20" width="144" height="42" rx="7"
+                    fill="#fff" stroke={zColor} strokeWidth="1.5"
+                    style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.13))' }} />
+                  <text x="0" y="-3" textAnchor="middle" fontSize="10" fontWeight="700"
+                    fill={zColor} fontFamily="var(--font-mono)" letterSpacing="0.05em">
+                    {b.label.toUpperCase()}
+                  </text>
+                  <text x="0" y="13" textAnchor="middle" fontSize="9" fill="#666"
+                    fontFamily="var(--font-body)">
+                    {zoneDef?.clauses ?? ''}
+                  </text>
+                </g>
+              )}
             </g>
           );
         })}
@@ -522,6 +576,10 @@ function IsometricMap({ completedZones, onSelect, isZoneUnlocked }) {
           </g>
         );
       })}
+
+      {/* ── Vignette overlay ── */}
+      <rect x="0" y="0" width="1000" height="600"
+        fill="url(#vignette-grad)" style={{ pointerEvents: 'none' }} />
 
       {/* ── Compass rose (bottom-right) ── */}
       <g transform="translate(940 540)">
@@ -555,6 +613,15 @@ function WorldMap() {
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.3, ease: 'easeOut' },
   });
+
+  const sidebarVariants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.07, delayChildren: 0.18 } },
+  };
+  const cardVariants = {
+    hidden:   { opacity: 0, x: 16 },
+    visible:  { opacity: 1, x: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+  };
 
   const handleSelect = (zoneId) => {
     const def = ZONE_DEFS.find((z) => z.id === zoneId);
@@ -596,9 +663,14 @@ function WorldMap() {
         </div>
 
         {/* Sidebar (right) */}
-        <aside className="world-map__sidebar">
+        <motion.aside
+          className="world-map__sidebar"
+          variants={sidebarVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Progress card */}
-          <div className="world-map__card">
+          <motion.div className="world-map__card" variants={cardVariants}>
             <div className="world-map__card-label">Progress</div>
             <div className="world-map__card-score" style={{ color: 'var(--final-color)' }}>
               {completedCount} / 4 zones
@@ -622,20 +694,20 @@ function WorldMap() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
           {/* Score card */}
-          <div className="world-map__card world-map__card--score">
+          <motion.div className="world-map__card world-map__card--score" variants={cardVariants}>
             <div className="world-map__card-label">Total Score</div>
             <div className="world-map__card-bigscore" style={{ color: 'var(--final-color)' }}>
               {state.totalScore}
               <span className="world-map__card-max"> / 1000</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Next up card */}
           {nextZone ? (
-            <div className="world-map__card">
+            <motion.div className="world-map__card world-map__card--next" variants={cardVariants}>
               <div className="world-map__card-label">Next up</div>
               <p className="world-map__card-text">
                 <strong style={{ color: nextZone.color }}>{nextZone.name}</strong>
@@ -649,9 +721,9 @@ function WorldMap() {
               >
                 Enter Zone {nextZone.number} →
               </button>
-            </div>
+            </motion.div>
           ) : completedCount === 4 ? (
-            <div className="world-map__card">
+            <motion.div className="world-map__card world-map__card--next" variants={cardVariants}>
               <div className="world-map__card-label">Next up</div>
               <p className="world-map__card-text">
                 <strong style={{ color: 'var(--final-color)' }}>Final Inspection</strong>
@@ -665,19 +737,19 @@ function WorldMap() {
               >
                 Enter Final Inspection →
               </button>
-            </div>
+            </motion.div>
           ) : null}
 
           {/* Legend */}
-          <div className="world-map__card">
+          <motion.div className="world-map__card" variants={cardVariants}>
             <div className="world-map__card-label">Legend</div>
             <div className="world-map__legend">
               <div><span className="world-map__legend-dot" style={{ background: 'var(--zone1-color)' }} />Unlocked &amp; glowing</div>
               <div><span className="world-map__legend-dot" style={{ background: 'var(--ink-muted)' }} />Locked · in fog</div>
               <div><span className="world-map__legend-dot" style={{ background: '#28a745' }} />Completed</div>
             </div>
-          </div>
-        </aside>
+          </motion.div>
+        </motion.aside>
       </main>
 
       <footer className="world-map__footer">

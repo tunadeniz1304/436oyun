@@ -4,6 +4,7 @@ import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors } from
 import { motion, AnimatePresence } from 'framer-motion';
 import ZoneLayout from '../components/shared/ZoneLayout.jsx';
 import FeedbackModal from '../components/shared/FeedbackModal.jsx';
+import ConceptPrimer from '../components/shared/ConceptPrimer.jsx';
 import Button from '../components/shared/Button.jsx';
 import IncidentCard from '../components/zone1/IncidentCard.jsx';
 import DropColumn from '../components/zone1/DropColumn.jsx';
@@ -18,12 +19,18 @@ import {
   ZONE1_PER_ITEM,
 } from '../data/zone1-scenarios.js';
 import { getISODefinition } from '../data/iso-definitions.js';
+import { getConceptPrimer } from '../data/concept-primers.js';
 import './ErrorDistrict.css';
+
+const ZONE_ID = 'error-district';
+const ZONE_COLOR = 'var(--zone1-color)';
 
 function ErrorDistrict() {
   const navigate = useNavigate();
-  const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
+  const { state, isZoneUnlocked, completeZone, recordWrong, hasSeenPrimer, markPrimerSeen, skipAllPrimers } = useGame();
   const feedback = useFeedbackQueue();
+  const primer = getConceptPrimer(ZONE_ID);
+  const [primerOpen, setPrimerOpen] = useState(() => !hasSeenPrimer(ZONE_ID));
 
   // Per-item state: 'pool' (in source deck), 'placed' (locked into column), 'none' (intermediate)
   // wrongCount: how many incorrect first-try drops the player has burned on this item
@@ -136,12 +143,30 @@ function ErrorDistrict() {
     return map;
   }, [items]);
 
+  const handlePrimerBegin = useCallback(() => {
+    markPrimerSeen(ZONE_ID);
+    setPrimerOpen(false);
+  }, [markPrimerSeen]);
+
+  const handleSkipAll = useCallback(() => {
+    skipAllPrimers();
+    setPrimerOpen(false);
+  }, [skipAllPrimers]);
+
   // Route guard
   if (!isZoneUnlocked('error-district')) {
     return <Navigate to="/" replace />;
   }
 
   return (
+    <>
+    <ConceptPrimer
+      isOpen={primerOpen}
+      primer={primer}
+      zoneColor={ZONE_COLOR}
+      onBegin={handlePrimerBegin}
+      onSkipAll={handleSkipAll}
+    />
     <ZoneLayout
       zoneId="error-district"
       zoneName="Zone 1 — Error District"
@@ -262,6 +287,7 @@ function ErrorDistrict() {
         {...(feedback.current ?? {})}
       />
     </ZoneLayout>
+    </>
   );
 }
 
