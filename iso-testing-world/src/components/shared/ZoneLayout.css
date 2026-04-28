@@ -5,99 +5,105 @@
   flex-direction: column;
 }
 
-/* Dark HUD-style header matching design-export ZoneHeader */
+/* Light, professional header — zone color used as a single accent */
 .zone-layout__header {
-  background: #111;
-  color: #fff;
-  border-left: 6px solid var(--zone-color);
+  background: var(--surface-raised);
+  color: var(--ink);
+  border-bottom: 1px solid var(--border-subtle);
   padding: 18px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--gap-md);
   flex-wrap: wrap;
-  overflow: hidden;
   position: relative;
+  box-shadow: var(--shadow-sm);
 }
 
-/* diagonal HUD texture overlay */
+/* Zone-color top accent strip */
 .zone-layout__header::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255,255,255,0.03) 0 2px,
-    transparent 2px 8px
-  );
-  pointer-events: none;
+  left: 0; right: 0; top: 0;
+  height: 3px;
+  background: var(--zone-color);
 }
 
-/* thin progress bar at bottom edge */
+/* Subtle bottom progress sliver */
 .zone-layout__header::after {
   content: '';
   position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 3px;
-  background: rgba(255,255,255,0.06);
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--zone-color) 30%, transparent) 50%,
+    transparent 100%
+  );
 }
 
 /* zone icon + name cluster */
 .zone-layout__heading {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--gap-md);
   position: relative;
+  min-width: 0;
 }
 
 .zone-layout__zone-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  background: var(--zone-color);
-  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--zone-color) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--zone-color) 25%, transparent);
+  color: var(--zone-color);
   display: grid;
   place-items: center;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   flex-shrink: 0;
-  box-shadow: 0 0 16px color-mix(in srgb, var(--zone-color) 53%, transparent);
 }
 
 .zone-layout__heading-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .zone-layout__zone-label {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-family: var(--font-mono);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--zone-color);
-  opacity: 0.95;
+  font-weight: var(--fw-bold);
   line-height: 1.1;
 }
 
 .zone-layout__title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.15;
-  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--ink);
+  line-height: var(--lh-tight);
+  margin: 2px 0 0 0;
+  letter-spacing: -0.01em;
 }
 
 .zone-layout__subtitle {
-  font-size: 12px;
-  color: rgba(255,255,255,0.6);
-  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  margin-top: 4px;
+  line-height: var(--lh-snug);
+  max-width: 540px;
 }
 
-/* right side: back button + score badge */
+/* right side: review badge + back button + score badge */
 .zone-layout__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--gap-sm);
   position: relative;
 }
 
@@ -106,48 +112,52 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border-radius: var(--r-sm);
-  font-size: 13px;
-  font-weight: 500;
-  color: #fff;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink-soft);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
-  transition: background 150ms ease;
+  transition: all var(--t-micro) var(--ease-out);
   white-space: nowrap;
 }
 
 .zone-layout__back:hover {
-  background: rgba(255,255,255,0.14);
+  background: var(--surface-raised);
+  color: var(--ink);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .zone-layout__review-badge {
-  background: #b8771b;
-  border: 1px solid #e0a040;
+  background: color-mix(in srgb, var(--status-partial) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--status-partial) 35%, transparent);
   padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
   font-family: var(--font-mono);
-  font-weight: 700;
-  color: #fff;
+  font-weight: var(--fw-bold);
+  color: var(--status-partial);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .zone-layout__score-badge {
-  background: #000;
-  border: 1px solid var(--zone-color);
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-size: 14px;
+  background: var(--surface-raised);
+  border: 1.5px solid var(--zone-color);
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-base);
   font-family: var(--font-mono);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   color: var(--zone-color);
-  letter-spacing: 0.08em;
-  box-shadow: inset 0 0 8px color-mix(in srgb, var(--zone-color) 20%, transparent);
+  letter-spacing: 0.04em;
   white-space: nowrap;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--zone-color) 8%, transparent);
 }
 
 .zone-layout__main {
@@ -156,6 +166,17 @@
   max-width: var(--container-max);
   margin: 0 auto;
   padding: var(--gap-lg) var(--gap-md);
+}
+
+/* Optional sub-toolbar slot */
+.zone-layout__toolbar {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--gap-sm) var(--gap-md) 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gap-sm);
 }
 
 @media (max-width: 720px) {
@@ -168,7 +189,7 @@
     width: 100%;
     justify-content: space-between;
   }
-  .zone-layout__title { font-size: 17px; }
+  .zone-layout__title { font-size: var(--fs-lg); }
 }
 
 @media (prefers-reduced-motion: reduce) {

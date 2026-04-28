@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import './ZoneLayout.css';
 
-// Zone number derived from id
 const ZONE_NUMBER = {
   'error-district':   1,
   'vv-headquarters':  2,
@@ -27,6 +26,7 @@ function ZoneLayout({
   scoreTotal = 200,
   subtitle,
   reviewMode = false,
+  toolbar,
   children,
 }) {
   const zoneNum = ZONE_NUMBER[zoneId];
@@ -65,6 +65,8 @@ function ZoneLayout({
           </span>
         </div>
       </header>
+
+      {toolbar ? <div className="zone-layout__toolbar">{toolbar}</div> : null}
 
       <main className="zone-layout__main">{children}</main>
     </div>

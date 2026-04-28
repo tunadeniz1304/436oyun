@@ -3,30 +3,44 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1.5px solid var(--pill-color);
-  background: #ffffff;
+  padding: 8px 16px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  border-radius: var(--r-pill);
+  border: 1.5px solid color-mix(in srgb, var(--pill-color) 32%, var(--border-subtle));
+  background: var(--surface-raised);
   color: var(--pill-color);
-  transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+  transition:
+    background var(--t-micro) var(--ease-out),
+    border-color var(--t-micro) var(--ease-out),
+    color var(--t-micro) var(--ease-out),
+    transform var(--t-micro) var(--ease-out),
+    box-shadow var(--t-micro) var(--ease-out);
   cursor: pointer;
   user-select: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .pill:hover:not(:disabled) {
   transform: translateY(-1px);
+  border-color: var(--pill-color);
+  box-shadow: var(--shadow-md);
 }
 
 .pill:focus-visible {
-  outline: 2px solid var(--pill-color);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--shadow-focus), var(--shadow-md);
 }
 
 .pill--selected {
   background: var(--pill-color);
   color: #ffffff;
+  border-color: var(--pill-color);
+  box-shadow: var(--shadow-md);
+}
+
+.pill--selected:hover:not(:disabled) {
+  filter: brightness(1.05);
 }
 
 .pill__check {
@@ -36,6 +50,6 @@
 }
 
 .pill:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }

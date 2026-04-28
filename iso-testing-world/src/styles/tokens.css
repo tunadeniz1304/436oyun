@@ -21,6 +21,14 @@
   --zone5-tint: #EEEDFE;
   --final-tint: #EEEDFE;
 
+  /* Zone subtle gradients (for headers / hero strips) */
+  --zone1-grad: linear-gradient(135deg, #FFFFFF 0%, #FAECE7 100%);
+  --zone2-grad: linear-gradient(135deg, #FFFFFF 0%, #E6F1FB 100%);
+  --zone3-grad: linear-gradient(135deg, #FFFFFF 0%, #EAF3DE 100%);
+  --zone4-grad: linear-gradient(135deg, #FFFFFF 0%, #FAEEDA 100%);
+  --zone5-grad: linear-gradient(135deg, #FFFFFF 0%, #EEEDFE 100%);
+  --final-grad: linear-gradient(135deg, #FFFFFF 0%, #EEEDFE 100%);
+
   /* Neutral */
   --ink:       #1a1a1a;
   --ink-soft:  #555555;
@@ -31,7 +39,14 @@
   --bg:        #fefcf7;   /* design export alias for --paper */
   --line:      #dddddd;
   --border:    #dddddd;   /* design export alias for --line */
-  --border-soft: rgba(0,0,0,0.06);
+  --border-soft:   rgba(0,0,0,0.06);
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-strong: rgba(26,26,26,0.14);
+
+  /* Surface system */
+  --surface-raised: #ffffff;
+  --surface-sunken: #f8f6ef;
+  --surface-overlay: rgba(255,255,255,0.92);
 
   /* Semantic */
   --success:          #28a745;
@@ -57,28 +72,59 @@
   --font-sans:    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono:    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
+  /* Typography scale */
+  --fs-xs:   11px;
+  --fs-sm:   13px;
+  --fs-base: 15px;
+  --fs-md:   16px;
+  --fs-lg:   18px;
+  --fs-xl:   22px;
+  --fs-2xl:  28px;
+  --fs-3xl:  36px;
+  --fs-4xl:  44px;
+
+  --lh-tight: 1.2;
+  --lh-snug:  1.35;
+  --lh-base:  1.5;
+  --lh-relaxed: 1.65;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semi:    600;
+  --fw-bold:    700;
+  --fw-black:   800;
+
   /* Radius — both naming conventions */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
   --r-sm:      4px;
   --r-md:      8px;
   --r-lg:      12px;
+  --r-xl:      16px;
+  --r-pill:    999px;
 
-  /* Shadow */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.10);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.10);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  /* Shadow — modern soft elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.04), 0 12px 28px rgba(0, 0, 0, 0.07);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.05), 0 24px 48px rgba(0, 0, 0, 0.10);
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-focus: 0 0 0 3px rgba(26,26,26,0.12);
 
   /* Motion */
   --t-micro:  150ms;
   --t-base:   250ms;
   --t-long:   400ms;
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Layout */
   --container-max: 1100px;
+  --container-wide: 1280px;
   --header-height: 64px;
 }
 
@@ -98,13 +144,27 @@
   display: inline-flex;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 3px 8px;
-  border-radius: 999px;
-  font-weight: 700;
+  border-radius: var(--r-pill);
+  font-weight: var(--fw-bold);
   color: #fff;
+}
+
+/* Reusable raised card surface */
+.surface-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-sunken {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
 }
 
 /* Spinner animation */
@@ -127,6 +187,16 @@
   0%   { transform: scale(0); opacity: 0; }
   70%  { transform: scale(1.18); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes iso-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes iso-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

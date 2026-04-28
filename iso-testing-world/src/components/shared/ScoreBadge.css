@@ -3,19 +3,21 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px 16px;
+  background: var(--surface-raised);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
-  min-width: 96px;
+  min-width: 110px;
 }
 
 .score-badge__label {
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--ink-muted);
+  font-weight: var(--fw-semi);
 }
 
 .score-badge__value {
@@ -28,18 +30,20 @@
 }
 
 .score-badge__current {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: -0.01em;
 }
 
 .score-badge__sep {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0 2px;
+  font-size: var(--fs-base);
+  color: var(--ink-muted);
+  margin: 0 3px;
+  font-weight: var(--fw-regular);
 }
 
 .score-badge__total {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink-muted);
 }
