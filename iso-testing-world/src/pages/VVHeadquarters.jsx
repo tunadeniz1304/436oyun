@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ZoneLayout from '../components/shared/ZoneLayout.jsx';
 import FeedbackModal from '../components/shared/FeedbackModal.jsx';
+import ConceptPrimer from '../components/shared/ConceptPrimer.jsx';
 import Button from '../components/shared/Button.jsx';
 import MissionCard from '../components/zone2/MissionCard.jsx';
 import RoutingButtons from '../components/zone2/RoutingButtons.jsx';
@@ -20,7 +21,11 @@ import {
   ORACLE_FULL_POINTS,
 } from '../data/zone2-missions.js';
 import { getISODefinition } from '../data/iso-definitions.js';
+import { getConceptPrimer } from '../data/concept-primers.js';
 import './VVHeadquarters.css';
+
+const ZONE_ID = 'vv-headquarters';
+const ZONE_COLOR = 'var(--zone2-color)';
 
 const TIMER_SECONDS = 30;
 const ROUTING_LABEL = {
@@ -31,7 +36,9 @@ const ROUTING_LABEL = {
 
 function VVHeadquarters() {
   const navigate = useNavigate();
-  const { state, isZoneUnlocked, completeZone, recordWrong, addOraclePoints } = useGame();
+  const { state, isZoneUnlocked, completeZone, recordWrong, addOraclePoints, hasSeenPrimer, markPrimerSeen, skipAllPrimers } = useGame();
+  const primer = getConceptPrimer(ZONE_ID);
+  const [primerOpen, setPrimerOpen] = useState(() => !hasSeenPrimer(ZONE_ID));
   const {
     current: feedbackCurrent,
     isOpen: feedbackIsOpen,
@@ -203,6 +210,16 @@ function VVHeadquarters() {
     }
   }, [finishedMissions, completed, missionScores, completeZone]);
 
+  const handlePrimerBegin = useCallback(() => {
+    markPrimerSeen(ZONE_ID);
+    setPrimerOpen(false);
+  }, [markPrimerSeen]);
+
+  const handleSkipAll = useCallback(() => {
+    skipAllPrimers();
+    setPrimerOpen(false);
+  }, [skipAllPrimers]);
+
   // Route guard
   if (!isZoneUnlocked('vv-headquarters')) {
     return <Navigate to="/" replace />;
@@ -212,6 +229,14 @@ function VVHeadquarters() {
   const completionRecorded = state.completedZones.has('vv-headquarters');
 
   return (
+    <>
+    <ConceptPrimer
+      isOpen={primerOpen}
+      primer={primer}
+      zoneColor={ZONE_COLOR}
+      onBegin={handlePrimerBegin}
+      onSkipAll={handleSkipAll}
+    />
     <ZoneLayout
       zoneId="vv-headquarters"
       zoneName="Zone 2 — V&V Headquarters"
@@ -305,6 +330,7 @@ function VVHeadquarters() {
         {...(feedbackCurrent ?? {})}
       />
     </ZoneLayout>
+    </>
   );
 }
 

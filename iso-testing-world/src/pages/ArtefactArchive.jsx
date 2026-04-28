@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ZoneLayout from '../components/shared/ZoneLayout.jsx';
 import FeedbackModal from '../components/shared/FeedbackModal.jsx';
+import ConceptPrimer from '../components/shared/ConceptPrimer.jsx';
 import Button from '../components/shared/Button.jsx';
 import TagSelector, { TAG_DEFINITIONS } from '../components/shared/TagSelector.jsx';
 import FileExplorer from '../components/zone4/FileExplorer.jsx';
@@ -18,7 +19,11 @@ import {
   ZONE4_HALF,
 } from '../data/zone4-artefacts.js';
 import { getISODefinition } from '../data/iso-definitions.js';
+import { getConceptPrimer } from '../data/concept-primers.js';
 import './ArtefactArchive.css';
+
+const ZONE_ID = 'artefact-archive';
+const ZONE_COLOR = 'var(--zone4-color)';
 
 function evaluateTags(artefact, picked) {
   const correct = artefact.correctTags;
@@ -54,8 +59,10 @@ function evaluateTags(artefact, picked) {
 
 function ArtefactArchive() {
   const navigate = useNavigate();
-  const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
+  const { state, isZoneUnlocked, completeZone, recordWrong, hasSeenPrimer, markPrimerSeen, skipAllPrimers } = useGame();
   const feedback = useFeedbackQueue();
+  const primer = getConceptPrimer(ZONE_ID);
+  const [primerOpen, setPrimerOpen] = useState(() => !hasSeenPrimer(ZONE_ID));
 
   const isReview = state.completedZones.has('artefact-archive');
   const [selectedId, setSelectedId] = useState(zone4Artefacts[0].id);
@@ -196,11 +203,29 @@ function ArtefactArchive() {
     }
   }, [allDone, completed, scoresById, completeZone]);
 
+  const handlePrimerBegin = useCallback(() => {
+    markPrimerSeen(ZONE_ID);
+    setPrimerOpen(false);
+  }, [markPrimerSeen]);
+
+  const handleSkipAll = useCallback(() => {
+    skipAllPrimers();
+    setPrimerOpen(false);
+  }, [skipAllPrimers]);
+
   if (!isZoneUnlocked('artefact-archive')) {
     return <Navigate to="/" replace />;
   }
 
   return (
+    <>
+    <ConceptPrimer
+      isOpen={primerOpen}
+      primer={primer}
+      zoneColor={ZONE_COLOR}
+      onBegin={handlePrimerBegin}
+      onSkipAll={handleSkipAll}
+    />
     <ZoneLayout
       zoneId="artefact-archive"
       zoneName="Zone 4 — Artefact Archive"
@@ -359,6 +384,7 @@ function ArtefactArchive() {
         {...(feedback.current ?? {})}
       />
     </ZoneLayout>
+    </>
   );
 }
 

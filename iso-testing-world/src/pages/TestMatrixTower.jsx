@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ZoneLayout from '../components/shared/ZoneLayout.jsx';
 import FeedbackModal from '../components/shared/FeedbackModal.jsx';
+import ConceptPrimer from '../components/shared/ConceptPrimer.jsx';
 import Button from '../components/shared/Button.jsx';
 import Matrix, { cellKey } from '../components/zone3/Matrix.jsx';
 import SingleCellChallenge from '../components/zone3/SingleCellChallenge.jsx';
@@ -16,7 +17,11 @@ import {
   ZONE3_HALF,
 } from '../data/zone3-scenarios.js';
 import { getISODefinition } from '../data/iso-definitions.js';
+import { getConceptPrimer } from '../data/concept-primers.js';
 import './TestMatrixTower.css';
+
+const ZONE_ID = 'matrix-tower';
+const ZONE_COLOR = 'var(--zone3-color)';
 
 function correctSet(scenario) {
   return new Set(scenario.correctCells.map((c) => cellKey(c.level, c.type)));
@@ -40,8 +45,10 @@ const TOTAL = zone3Scenarios.length;
 
 function TestMatrixTower() {
   const navigate = useNavigate();
-  const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
+  const { state, isZoneUnlocked, completeZone, recordWrong, hasSeenPrimer, markPrimerSeen, skipAllPrimers } = useGame();
   const { current: feedbackCurrent, isOpen: feedbackIsOpen, push: pushFeedback, pop: popFeedback } = useFeedbackQueue();
+  const primer = getConceptPrimer(ZONE_ID);
+  const [primerOpen, setPrimerOpen] = useState(() => !hasSeenPrimer(ZONE_ID));
 
   const isReview = state.completedZones.has('matrix-tower');
   const [idx, setIdx]           = useState(isReview ? zone3Scenarios.length : 0);
@@ -133,6 +140,16 @@ function TestMatrixTower() {
     completeZone('matrix-tower', Math.round(Math.min(ZONE3_FULL_SCORE, sum)));
   }, [completed, scores, completeZone]);
 
+  const handlePrimerBegin = useCallback(() => {
+    markPrimerSeen(ZONE_ID);
+    setPrimerOpen(false);
+  }, [markPrimerSeen]);
+
+  const handleSkipAll = useCallback(() => {
+    skipAllPrimers();
+    setPrimerOpen(false);
+  }, [skipAllPrimers]);
+
   if (!isZoneUnlocked('matrix-tower')) return <Navigate to="/" replace />;
 
   const submitDisabled = selected.size === 0 || !!verdict;
@@ -148,6 +165,14 @@ function TestMatrixTower() {
   const finalScore   = Math.round(scores.reduce((a, b) => a + b, 0));
 
   return (
+    <>
+    <ConceptPrimer
+      isOpen={primerOpen}
+      primer={primer}
+      zoneColor={ZONE_COLOR}
+      onBegin={handlePrimerBegin}
+      onSkipAll={handleSkipAll}
+    />
     <ZoneLayout
       zoneId="matrix-tower"
       zoneName="Test Matrix Tower"
@@ -257,6 +282,7 @@ function TestMatrixTower() {
         {...(feedbackCurrent ?? {})}
       />
     </ZoneLayout>
+    </>
   );
 }
 
