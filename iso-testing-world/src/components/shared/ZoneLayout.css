@@ -53,17 +53,18 @@
 }
 
 .zone-layout__zone-icon {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--zone-color) 12%, white);
   border: 1px solid color-mix(in srgb, var(--zone-color) 25%, transparent);
   color: var(--zone-color);
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: var(--fw-bold);
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm), 0 0 0 3px color-mix(in srgb, var(--zone-color) 8%, transparent);
 }
 
 .zone-layout__heading-text {
@@ -165,7 +166,7 @@
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: var(--gap-lg) var(--gap-md);
+  padding: var(--gap-xl) var(--gap-lg);
 }
 
 /* Optional sub-toolbar slot */

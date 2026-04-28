@@ -17,8 +17,10 @@
 
 .incident-card.is-dragging {
   cursor: grabbing;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
   border-color: var(--zone1-color);
+  transform: scale(1.03) rotate(1.2deg);
+  z-index: 10;
 }
 
 .incident-card.is-locked {

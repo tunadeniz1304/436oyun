@@ -1,11 +1,16 @@
 .mission-card {
-  background: #ffffff;
+  background: linear-gradient(160deg, #ffffff 0%, #f8fafd 100%);
   border: 1.5px solid var(--line);
   border-left: 4px solid var(--zone2-color);
   border-radius: var(--radius-lg);
-  padding: 22px 24px;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 240ms ease, box-shadow 240ms ease;
+  padding: 24px 26px;
+  box-shadow: var(--shadow-md);
+  transition: border-color 240ms ease, box-shadow 240ms ease, transform 200ms ease;
+}
+
+.mission-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .mission-card--correct {
