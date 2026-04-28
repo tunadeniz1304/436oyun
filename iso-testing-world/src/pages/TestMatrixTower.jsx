@@ -43,13 +43,14 @@ function TestMatrixTower() {
   const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
   const { current: feedbackCurrent, isOpen: feedbackIsOpen, push: pushFeedback, pop: popFeedback } = useFeedbackQueue();
 
-  const [idx, setIdx]           = useState(0);
+  const isReview = state.completedZones.has('matrix-tower');
+  const [idx, setIdx]           = useState(isReview ? zone3Scenarios.length : 0);
   const [selected, setSelected] = useState(() => new Set());
   const [showChallenge, setShowChallenge] = useState(false);
-  const [scores, setScores]     = useState([]);
-  const [results, setResults]   = useState([]);  // 'exact' | 'partial' | 'wrong'
+  const [scores, setScores]     = useState(isReview ? [state.zoneScores['matrix-tower']] : []);
+  const [results, setResults]   = useState([]);
   const [verdict, setVerdict]   = useState(null);
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState(isReview);
 
   const scenario = zone3Scenarios[idx];
 
@@ -154,6 +155,7 @@ function TestMatrixTower() {
       zoneBg="var(--zone3-bg)"
       subtitle="ISO/IEC/IEEE 29119-1 — §3.108 (level) × §3.130 (type)"
       scoreCurrent={state.zoneScores['matrix-tower']}
+      reviewMode={state.completedZones.has('matrix-tower')}
     >
       <div className="cmd-center">
         {!completed ? (

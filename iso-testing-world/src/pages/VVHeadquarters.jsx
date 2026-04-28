@@ -39,13 +39,14 @@ function VVHeadquarters() {
     pop: popFeedback,
   } = useFeedbackQueue();
 
-  const [idx, setIdx] = useState(0);
-  const [tentative, setTentative] = useState(null);  // 'verification' | 'validation' | 'both' | null
+  const isReview = state.completedZones.has('vv-headquarters');
+  const [idx, setIdx] = useState(isReview ? zone2Missions.length : 0);
+  const [tentative, setTentative] = useState(null);
   const [justification, setJustification] = useState('');
-  const [missionScores, setMissionScores] = useState([]);   // numeric per mission (filled left to right)
-  const [flash, setFlash] = useState(null);                  // 'correct' | 'wrong'
+  const [missionScores, setMissionScores] = useState(isReview ? [state.zoneScores['vv-headquarters']] : []);
+  const [flash, setFlash] = useState(null);
   const [oracleAnswered, setOracleAnswered] = useState(null);
-  const [completed, setCompleted] = useState(false);
+  const [completed, setCompleted] = useState(isReview);
   const [oracleAwarded, setOracleAwarded] = useState(false);
   const advanceTimerRef = useRef(null);
 
@@ -218,6 +219,7 @@ function VVHeadquarters() {
       zoneBg="var(--zone2-bg)"
       subtitle="ISO/IEC/IEEE 29119-1 — §4.1.3 (and §3.115 oracle prompt)"
       scoreCurrent={state.zoneScores['vv-headquarters']}
+      reviewMode={state.completedZones.has('vv-headquarters')}
     >
       <motion.section className="vv-hq" {...headerMotion}>
         {!showingComplete ? (

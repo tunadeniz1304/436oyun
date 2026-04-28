@@ -122,6 +122,20 @@
   background: rgba(255,255,255,0.14);
 }
 
+.zone-layout__review-badge {
+  background: #b8771b;
+  border: 1px solid #e0a040;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .zone-layout__score-badge {
   background: #000;
   border: 1px solid var(--zone-color);

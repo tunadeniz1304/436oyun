@@ -1,36 +1,73 @@
 .file-explorer {
-  background: #ffffff;
-  border: 1px solid var(--line);
+  background: var(--zone4-bg);
+  border: 1px solid #e8cfa0;
   border-radius: var(--radius-md);
-  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  overflow: hidden;
   height: fit-content;
+}
+
+.file-explorer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: #f0dfc0;
+  border-bottom: 1px solid #e8cfa0;
+}
+
+.file-explorer__header-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--zone4-color);
+  text-transform: uppercase;
+}
+
+.file-explorer__header-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.file-explorer__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .file-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px;
-  border-radius: var(--radius-sm);
+  padding: 10px 14px;
   cursor: pointer;
-  transition: background 140ms ease;
+  transition: background 120ms ease;
+  position: relative;
+  border-left: 3px solid transparent;
 }
 
 .file-row:hover {
-  background: color-mix(in srgb, var(--zone4-bg) 70%, white);
+  background: #f0dfc0;
 }
 
 .file-row:focus-visible {
-  outline: 2px solid var(--zone4-color);
-  outline-offset: -2px;
+  outline: none;
+  background: #f0dfc0;
+  border-left-color: var(--zone4-color);
 }
 
 .file-row.is-selected {
-  background: var(--zone4-bg);
-  box-shadow: inset 3px 0 0 var(--zone4-color);
+  background: #e8cfa0;
+  border-left-color: var(--zone4-color);
+}
+
+.file-row.is-trap .file-row__name {
+  color: var(--zone4-color);
 }
 
 .file-row__icon {
@@ -38,6 +75,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 20px;
 }
 
 .file-row__meta {
@@ -51,37 +89,50 @@
 .file-row__name {
   font-size: 13px;
   color: var(--ink);
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.file-row__status {
-  font-size: 10.5px;
+.file-row__trap-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--zone4-color);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  font-style: normal;
+  flex-shrink: 0;
 }
 
-.file-row__pill {
-  display: inline-block;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--muted);
+.file-row__type {
+  font-size: 10px;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
 }
 
-.file-row__pill.is-correct {
-  background: color-mix(in srgb, var(--status-correct) 18%, white);
-  color: var(--status-correct);
+/* Status dot — right side */
+.file-row__dot {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
 }
 
-.file-row__pill.is-partial {
-  background: color-mix(in srgb, var(--status-partial) 18%, white);
-  color: var(--status-partial);
-}
-
-.file-row__pill.is-wrong {
-  background: color-mix(in srgb, var(--status-review) 18%, white);
-  color: var(--status-review);
-}
+.file-row__dot.is-exact   { background: rgba(47, 122, 58, 0.18);  color: var(--status-correct); }
+.file-row__dot.is-partial { background: rgba(184, 119, 27, 0.18); color: var(--status-partial); }
+.file-row__dot.is-wrong   { background: rgba(176, 48, 48, 0.18);  color: var(--status-review); }

@@ -26,6 +26,7 @@ function ZoneLayout({
   scoreCurrent = 0,
   scoreTotal = 200,
   subtitle,
+  reviewMode = false,
   children,
 }) {
   const zoneNum = ZONE_NUMBER[zoneId];
@@ -51,6 +52,11 @@ function ZoneLayout({
         </div>
 
         <div className="zone-layout__actions">
+          {reviewMode && (
+            <span className="zone-layout__review-badge" aria-label="Review mode — score locked">
+              REVIEW MODE
+            </span>
+          )}
           <Link to="/" className="zone-layout__back" aria-label="Back to world map">
             ← BACK TO MAP
           </Link>
