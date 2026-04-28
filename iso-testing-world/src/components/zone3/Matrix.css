@@ -1,3 +1,5 @@
+/* ── Command Center Matrix ─────────────────────────────────────────── */
+
 .matrix-wrap {
   display: flex;
   flex-direction: column;
@@ -6,111 +8,153 @@
 
 .matrix {
   display: grid;
-  grid-template-columns: 130px repeat(4, 1fr);
-  border: 1px solid var(--line);
+  grid-template-columns: 160px repeat(4, 1fr);
+  border: 1px solid var(--ink);
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #ffffff;
+  background: var(--paper);
+  box-shadow: var(--shadow-md);
 }
 
+/* Corner cell */
 .matrix__corner {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   justify-content: center;
   padding: 8px 12px;
-  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--muted);
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
   background: var(--zone3-bg);
-  border-bottom: 1px solid var(--line);
-  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--ink);
+  border-right: 1px solid var(--ink);
 }
 
+/* Column headers */
 .matrix__col-head {
-  padding: 12px 8px;
+  padding: 14px 8px;
   text-align: center;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--zone3-color);
   background: var(--zone3-bg);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--ink);
   display: inline-flex;
   justify-content: center;
-  align-items: baseline;
+  align-items: center;
 }
 
+/* Row containers */
 .matrix__row {
   display: contents;
 }
 
+/* Row headers */
 .matrix__row-head {
-  padding: 0 12px;
+  padding: 8px 12px;
   text-align: right;
-  font-size: 12.5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--zone3-color);
-  background: color-mix(in srgb, var(--zone3-bg) 65%, white);
-  border-right: 1px solid var(--line);
+  background: var(--zone3-bg);
+  border-right: 1px solid var(--ink);
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
 }
 
+/* Cells */
 .matrix__cell {
   position: relative;
-  background: #ffffff;
+  background: var(--paper);
   border: 0;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  height: 60px;
+  border-right: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  height: 80px;
   cursor: pointer;
-  transition: background 180ms ease;
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .matrix__row:last-child .matrix__cell { border-bottom: 0; }
-.matrix__row .matrix__cell:last-child { border-right: 0; }
+.matrix__row .matrix__cell:last-child  { border-right: 0; }
 
 .matrix__cell:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--zone3-bg) 60%, white);
+  background: #f2f8ec;
 }
 
 .matrix__cell:focus-visible {
   outline: 2px solid var(--zone3-color);
   outline-offset: -2px;
+  z-index: 1;
 }
 
 .matrix__cell.is-selected {
-  background: var(--zone3-bg);
-  box-shadow: inset 0 0 0 2.5px var(--zone3-color);
+  background: #e0f0ce;
+  border-color: var(--zone3-color) !important;
+  box-shadow: inset 0 0 0 1.5px var(--zone3-color);
 }
 
+/* Checkmark badge */
 .matrix__check {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--zone3-color);
   color: #ffffff;
 }
 
+/* Disabled state */
+.matrix__cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Legend */
 .matrix__legend {
   display: flex;
   gap: var(--gap-md);
   flex-wrap: wrap;
-  font-size: 11.5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
   color: var(--ink-soft);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .matrix__legend strong {
-  color: var(--ink);
+  color: var(--zone3-color);
   font-weight: 600;
   margin-right: 2px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .matrix {
+    grid-template-columns: 80px repeat(4, 1fr);
+  }
+  .matrix__col-head,
+  .matrix__row-head {
+    font-size: 9px;
+    padding: 10px 4px;
+  }
+  .matrix__cell {
+    height: 60px;
+  }
 }
