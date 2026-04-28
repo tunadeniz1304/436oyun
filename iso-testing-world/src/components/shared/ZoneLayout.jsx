@@ -21,7 +21,6 @@ function ZoneLayout({
   zoneId,
   zoneName,
   zoneColor,
-  zoneBg,
   scoreCurrent = 0,
   scoreTotal = 200,
   subtitle,

@@ -75,21 +75,6 @@ const ZONE_DEFS = [
 
 /* ── Isometric map (from design-export) ───────────────────────────── */
 
-const ZONE_COLORS = {
-  1: { color: 'var(--zone1-color)', tint: 'var(--zone1-tint)' },
-  2: { color: 'var(--zone2-color)', tint: 'var(--zone2-tint)' },
-  3: { color: 'var(--zone3-color)', tint: 'var(--zone3-tint)' },
-  4: { color: 'var(--zone4-color)', tint: 'var(--zone4-tint)' },
-  5: { color: 'var(--zone5-color)', tint: 'var(--zone5-tint)' },
-};
-const ZONE_ICONS = { 1: '◬', 2: '◇', 3: '▦', 4: '▤', 5: '◈' };
-const ZONE_NAMES = {
-  1: 'Error District',
-  2: 'V&V Headquarters',
-  3: 'Test Matrix Tower',
-  4: 'Artefact Archive',
-  5: 'Final Inspection',
-};
 
 function lighten(hex) {
   const n = parseInt(hex.slice(1), 16);

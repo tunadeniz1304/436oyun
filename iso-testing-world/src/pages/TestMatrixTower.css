@@ -9,15 +9,21 @@
 /* ── Mission card ─────────────────────────────────────────────────── */
 
 .cmd-center__mission {
-  background: var(--paper);
+  background: linear-gradient(160deg, var(--paper) 0%, var(--zone3-bg) 100%);
   border: 1px solid #c8ddb8;
   border-left: 4px solid var(--zone3-color);
-  border-radius: var(--radius-md);
-  padding: 18px 22px;
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
   box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.cmd-center__mission:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .cmd-center__mission-top {

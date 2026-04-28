@@ -13,7 +13,9 @@
 .drop-column.is-over {
   border-color: var(--zone1-color);
   border-style: solid;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zone1-color) 18%, transparent);
+  background: color-mix(in srgb, var(--zone1-bg) 80%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--zone1-color) 22%, transparent),
+              inset 0 2px 8px color-mix(in srgb, var(--zone1-color) 8%, transparent);
 }
 
 .drop-column__header {
