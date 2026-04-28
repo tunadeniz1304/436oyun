@@ -36,8 +36,9 @@ function ErrorDistrict() {
   );
   const [shakeId, setShakeId] = useState(null);
   const [flashColumn, setFlashColumn] = useState(null);
-  const [zoneScore, setZoneScore] = useState(null); // computed once on completion
-  const [completed, setCompleted] = useState(false);
+  const isReview = state.completedZones.has('error-district');
+  const [zoneScore, setZoneScore] = useState(isReview ? state.zoneScores['error-district'] : null);
+  const [completed, setCompleted] = useState(isReview);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -148,6 +149,7 @@ function ErrorDistrict() {
       zoneBg="var(--zone1-bg)"
       subtitle="ISO/IEC/IEEE 29119-1 — §3.39, §3.40, §4.7"
       scoreCurrent={state.zoneScores['error-district']}
+      reviewMode={state.completedZones.has('error-district')}
     >
       <motion.section className="error-district" {...headerMotion}>
         <div className="error-district__brief">

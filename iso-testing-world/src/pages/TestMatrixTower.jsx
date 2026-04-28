@@ -6,10 +6,6 @@ import FeedbackModal from '../components/shared/FeedbackModal.jsx';
 import Button from '../components/shared/Button.jsx';
 import Matrix, { cellKey } from '../components/zone3/Matrix.jsx';
 import SingleCellChallenge from '../components/zone3/SingleCellChallenge.jsx';
-import CellJustifications, {
-  countWords,
-  MIN_WORDS,
-} from '../components/zone3/CellJustifications.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
@@ -35,45 +31,31 @@ function evaluate(scenario, selected) {
     else wrong += 1;
   });
   const exact = wrong === 0 && hits === correct.size;
-  if (exact) {
-    return { kind: 'exact', score: ZONE3_PER_SCENARIO, hits, wrong };
-  }
-  if (wrong > 0) {
-    return { kind: 'wrong', score: ZONE3_HALF, hits, wrong };
-  }
-  // strict subset
-  return {
-    kind: 'partial',
-    score: (hits / correct.size) * ZONE3_PER_SCENARIO,
-    hits,
-    wrong,
-  };
+  if (exact) return { kind: 'exact', score: ZONE3_PER_SCENARIO, hits, wrong };
+  if (wrong > 0) return { kind: 'wrong', score: ZONE3_HALF, hits, wrong };
+  return { kind: 'partial', score: (hits / correct.size) * ZONE3_PER_SCENARIO, hits, wrong };
 }
+
+const TOTAL = zone3Scenarios.length;
 
 function TestMatrixTower() {
   const navigate = useNavigate();
   const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
-  const {
-    current: feedbackCurrent,
-    isOpen: feedbackIsOpen,
-    push: pushFeedback,
-    pop: popFeedback,
-  } = useFeedbackQueue();
+  const { current: feedbackCurrent, isOpen: feedbackIsOpen, push: pushFeedback, pop: popFeedback } = useFeedbackQueue();
 
-  const [idx, setIdx] = useState(0);
+  const isReview = state.completedZones.has('matrix-tower');
+  const [idx, setIdx]           = useState(isReview ? zone3Scenarios.length : 0);
   const [selected, setSelected] = useState(() => new Set());
-  const [justifications, setJustifications] = useState({});
-  const [errors, setErrors] = useState(() => new Set());
   const [showChallenge, setShowChallenge] = useState(false);
-  const [scores, setScores] = useState([]);
-  const [verdict, setVerdict] = useState(null);   // 'exact' | 'partial' | 'wrong' | null
-  const [completed, setCompleted] = useState(false);
+  const [scores, setScores]     = useState(isReview ? [state.zoneScores['matrix-tower']] : []);
+  const [results, setResults]   = useState([]);
+  const [verdict, setVerdict]   = useState(null);
+  const [completed, setCompleted] = useState(isReview);
 
   const scenario = zone3Scenarios[idx];
-  const total = zone3Scenarios.length;
 
-  const headerMotion = useMotion({
-    initial: { opacity: 0, y: 6 },
+  const cardMotion = useMotion({
+    initial: { opacity: 0, y: 8 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.3 },
   });
@@ -88,27 +70,14 @@ function TestMatrixTower() {
         else next.add(k);
         return next;
       });
-      setJustifications((prev) => {
-        const next = { ...prev };
-        if (selected.has(k)) {
-          delete next[k];
-        }
-        return next;
-      });
-      setErrors((prev) => {
-        const next = new Set(prev);
-        next.delete(k);
-        return next;
-      });
     },
-    [verdict, completed, selected]
+    [verdict, completed]
   );
 
   const selectedArr = useMemo(() => Array.from(selected), [selected]);
 
   function handleSubmit() {
     if (selected.size === 0 || verdict) return;
-    // Single-cell challenge gate (only when correctCells.length > 1)
     if (selected.size === 1 && scenario.correctCells.length > 1) {
       setShowChallenge(true);
       return;
@@ -118,26 +87,9 @@ function TestMatrixTower() {
 
   function submitNow() {
     setShowChallenge(false);
-    // Validate justifications: every selected cell needs ≥ MIN_WORDS
-    const errs = new Set();
-    selectedArr.forEach((k) => {
-      if (countWords(justifications[k] ?? '') < MIN_WORDS) errs.add(k);
-    });
-    if (errs.size > 0) {
-      setErrors(errs);
-      // focus first invalid input
-      requestAnimationFrame(() => {
-        const first = errs.values().next().value;
-        if (first) {
-          const el = document.getElementById(`just-${first}`);
-          el?.focus();
-        }
-      });
-      return;
-    }
-
     const result = evaluate(scenario, selected);
     setScores((prev) => [...prev, result.score]);
+    setResults((prev) => [...prev, result.kind]);
     setVerdict(result.kind);
 
     if (result.kind !== 'exact') {
@@ -149,12 +101,10 @@ function TestMatrixTower() {
         note: def.note,
         playerAnswer:
           result.kind === 'wrong'
-            ? `${selected.size} cell(s) — ${result.wrong} wrong`
-            : `${selected.size} cell(s), but ${
-                scenario.correctCells.length - result.hits
-              } correct cell(s) missed`,
+            ? `${selected.size} cell(s) — ${result.wrong} wrong selection(s)`
+            : `${selected.size} cell(s), but ${scenario.correctCells.length - result.hits} correct cell(s) missed`,
         explanation: scenario.feedbackPartial,
-        title: result.kind === 'wrong' ? 'PARTIALLY WRONG' : 'PARTIAL ANSWER',
+        title: result.kind === 'wrong' ? 'WRONG CELLS SELECTED' : 'INCOMPLETE SELECTION',
         headerColor: 'var(--zone3-color)',
       });
       recordWrong({
@@ -166,114 +116,123 @@ function TestMatrixTower() {
       });
     }
 
-    // Advance after 1.5s OR after feedback dismissal
     setTimeout(() => {
-      if (idx + 1 >= total) {
+      if (idx + 1 >= TOTAL) {
         setCompleted(true);
       } else {
         setSelected(new Set());
-        setJustifications({});
-        setErrors(new Set());
         setVerdict(null);
         setIdx(idx + 1);
       }
     }, 1500);
   }
 
-  // Compute total and dispatch on completion
   useEffect(() => {
     if (!completed) return;
     const sum = scores.reduce((a, b) => a + b, 0);
     completeZone('matrix-tower', Math.round(Math.min(ZONE3_FULL_SCORE, sum)));
   }, [completed, scores, completeZone]);
 
-  if (!isZoneUnlocked('matrix-tower')) {
-    return <Navigate to="/" replace />;
-  }
+  if (!isZoneUnlocked('matrix-tower')) return <Navigate to="/" replace />;
 
   const submitDisabled = selected.size === 0 || !!verdict;
+
   const verdictLabel =
-    verdict === 'exact'
-      ? 'Exact match — full credit'
-      : verdict === 'partial'
-      ? 'Partial — missed some cells'
-      : verdict === 'wrong'
-      ? 'Includes wrong cell — half credit'
-      : null;
+    verdict === 'exact'   ? '✓ EXACT MATCH — FULL CREDIT' :
+    verdict === 'partial' ? '⚠ INCOMPLETE — PARTIAL CREDIT' :
+    verdict === 'wrong'   ? '✕ WRONG CELLS — HALF CREDIT' : null;
+
+  const exactCount   = results.filter((r) => r === 'exact').length;
+  const partialCount = results.filter((r) => r === 'partial').length;
+  const wrongCount   = results.filter((r) => r === 'wrong').length;
+  const finalScore   = Math.round(scores.reduce((a, b) => a + b, 0));
 
   return (
     <ZoneLayout
       zoneId="matrix-tower"
-      zoneName="Zone 3 — Test Matrix Tower"
+      zoneName="Test Matrix Tower"
       zoneColor="var(--zone3-color)"
       zoneBg="var(--zone3-bg)"
       subtitle="ISO/IEC/IEEE 29119-1 — §3.108 (level) × §3.130 (type)"
       scoreCurrent={state.zoneScores['matrix-tower']}
+      reviewMode={state.completedZones.has('matrix-tower')}
     >
-      <motion.section className="matrix-tower" {...headerMotion}>
+      <div className="cmd-center">
         {!completed ? (
           <>
-            <div className="matrix-tower__brief">
-              <div className="matrix-tower__brief-meta">
-                Scenario <strong>{idx + 1}</strong> / {total}
+            {/* Mission header */}
+            <motion.div className="cmd-center__mission" {...cardMotion}>
+              <div className="cmd-center__mission-top">
+                <span className="cmd-center__label">MISSION {idx + 1} / {TOTAL}</span>
+                <div className="cmd-center__dots" aria-hidden="true">
+                  {zone3Scenarios.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`cmd-center__dot ${i < idx ? 'is-done' : i === idx ? 'is-active' : ''}`}
+                    />
+                  ))}
+                </div>
               </div>
-              <p>{scenario.text}</p>
-              {verdictLabel ? (
-                <div
-                  className={`matrix-tower__verdict matrix-tower__verdict--${verdict}`}
-                >
+              <p className="cmd-center__scenario-text">{scenario.text}</p>
+              {verdictLabel && (
+                <div className={`cmd-center__verdict cmd-center__verdict--${verdict}`}>
                   {verdictLabel}
                 </div>
-              ) : null}
+              )}
+            </motion.div>
+
+            {/* Matrix */}
+            <div className="cmd-center__board">
+              <Matrix selected={selected} onToggle={onToggle} disabled={!!verdict} />
             </div>
 
-            <div className="matrix-tower__board">
-              <Matrix
-                selected={selected}
-                onToggle={onToggle}
-                disabled={!!verdict}
-              />
-
-              <CellJustifications
-                selected={selectedArr}
-                justifications={justifications}
-                onChange={(k, v) =>
-                  setJustifications((prev) => ({ ...prev, [k]: v }))
-                }
-                errors={errors}
-              />
-
-              <div className="matrix-tower__actions">
-                <span className="matrix-tower__counter">
-                  {selected.size} cell{selected.size === 1 ? '' : 's'} selected
-                </span>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  zoneColor="var(--zone3-color)"
-                  disabled={submitDisabled}
-                  onClick={handleSubmit}
-                >
-                  Submit selection →
-                </Button>
-              </div>
+            {/* Action bar */}
+            <div className="cmd-center__actions">
+              <span className="cmd-center__counter">
+                {selected.size} cell{selected.size === 1 ? '' : 's'} selected
+              </span>
+              <Button
+                variant="primary"
+                size="lg"
+                zoneColor="var(--zone3-color)"
+                disabled={submitDisabled}
+                onClick={handleSubmit}
+              >
+                DEPLOY TEST PLAN →
+              </Button>
             </div>
 
-            <div className="matrix-tower__scope-note">
-              <strong>⚐ Scope note:</strong> Test Practices (§4.2.4.5) form a
-              third axis in the standard but are Part 2 normative content —
-              intentionally outside this matrix.
-            </div>
+            {/* Scope note */}
+            <p className="cmd-center__scope-note">
+              <strong>⚐ SCOPE:</strong> Test Practices (§4.2.4.5) form a third axis in the
+              standard but are Part 2 normative content — intentionally outside this matrix.
+            </p>
           </>
         ) : (
-          <div className="matrix-tower__complete">
-            <h2>Zone 3 complete</h2>
-            <p>
-              Final score:{' '}
-              <strong>
-                {Math.round(scores.reduce((a, b) => a + b, 0))} / {ZONE3_FULL_SCORE}
-              </strong>
-            </p>
+          /* Completion screen */
+          <div className="cmd-center__complete">
+            <div className="cmd-center__complete-header">
+              <span className="cmd-center__label">MISSION COMPLETE</span>
+              <h2 className="cmd-center__complete-title">Test Plan Deployed</h2>
+            </div>
+            <div className="cmd-center__breakdown">
+              <div className="cmd-center__breakdown-row cmd-center__breakdown-row--exact">
+                <span>Exact matches</span>
+                <span className="cmd-center__breakdown-val">{exactCount} / {TOTAL}</span>
+              </div>
+              <div className="cmd-center__breakdown-row cmd-center__breakdown-row--partial">
+                <span>Partial selections</span>
+                <span className="cmd-center__breakdown-val">{partialCount} / {TOTAL}</span>
+              </div>
+              <div className="cmd-center__breakdown-row cmd-center__breakdown-row--wrong">
+                <span>Wrong cells</span>
+                <span className="cmd-center__breakdown-val">{wrongCount} / {TOTAL}</span>
+              </div>
+              <div className="cmd-center__breakdown-total">
+                <span>Final Score</span>
+                <span>{finalScore} / {ZONE3_FULL_SCORE}</span>
+              </div>
+            </div>
             <Button
               variant="primary"
               size="lg"
@@ -284,7 +243,7 @@ function TestMatrixTower() {
             </Button>
           </div>
         )}
-      </motion.section>
+      </div>
 
       <SingleCellChallenge
         open={showChallenge}

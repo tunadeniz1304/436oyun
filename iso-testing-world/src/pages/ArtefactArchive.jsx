@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ZoneLayout from '../components/shared/ZoneLayout.jsx';
 import FeedbackModal from '../components/shared/FeedbackModal.jsx';
 import Button from '../components/shared/Button.jsx';
-import TagSelector from '../components/shared/TagSelector.jsx';
+import TagSelector, { TAG_DEFINITIONS } from '../components/shared/TagSelector.jsx';
 import FileExplorer from '../components/zone4/FileExplorer.jsx';
 import Note1Callout from '../components/zone4/Note1Callout.jsx';
 import DependencyMap from '../components/zone4/DependencyMap.jsx';
@@ -57,13 +57,14 @@ function ArtefactArchive() {
   const { state, isZoneUnlocked, completeZone, recordWrong } = useGame();
   const feedback = useFeedbackQueue();
 
+  const isReview = state.completedZones.has('artefact-archive');
   const [selectedId, setSelectedId] = useState(zone4Artefacts[0].id);
-  const [draftTags, setDraftTags] = useState({}); // id → string[]
-  const [confirmedById, setConfirmedById] = useState({}); // id → 'exact' | 'partial' | 'wrong'
-  const [scoresById, setScoresById] = useState({});
+  const [draftTags, setDraftTags] = useState({});
+  const [confirmedById, setConfirmedById] = useState({});
+  const [scoresById, setScoresById] = useState(isReview ? { '__review__': state.zoneScores['artefact-archive'] } : {});
   const [note1Open, setNote1Open] = useState(false);
-  const [note1ShownFor, setNote1ShownFor] = useState(null); // tracks which artefact triggered it
-  const [completed, setCompleted] = useState(false);
+  const [note1ShownFor, setNote1ShownFor] = useState(null);
+  const [completed, setCompleted] = useState(isReview);
 
   const artefact = zone4Artefacts.find((a) => a.id === selectedId);
 
@@ -207,6 +208,7 @@ function ArtefactArchive() {
       zoneBg="var(--zone4-bg)"
       subtitle="ISO/IEC/IEEE 29119-1 — §3.84, §3.107, §3.78, §3.29"
       scoreCurrent={state.zoneScores['artefact-archive']}
+      reviewMode={state.completedZones.has('artefact-archive')}
     >
       <motion.section className="artefact-archive" {...headerMotion}>
         <div className="artefact-archive__brief">
@@ -240,18 +242,22 @@ function ArtefactArchive() {
                 <code className="artefact-archive__detail-name">
                   {artefact.name}
                 </code>
-                {isConfirmed ? (
-                  <span
-                    className={`artefact-archive__verdict artefact-archive__verdict--${confirmedById[selectedId]}`}
-                  >
-                    {confirmedById[selectedId] === 'exact'
-                      ? 'Exact'
-                      : confirmedById[selectedId] === 'partial'
-                      ? 'Partial'
-                      : 'Wrong'}
-                  </span>
-                ) : null}
+                <div className="artefact-archive__detail-head-right">
+                  <span className="artefact-archive__iso-ref">{artefact.isoRef}</span>
+                  {isConfirmed ? (
+                    <span
+                      className={`artefact-archive__verdict artefact-archive__verdict--${confirmedById[selectedId]}`}
+                    >
+                      {confirmedById[selectedId] === 'exact'
+                        ? '✓ Exact'
+                        : confirmedById[selectedId] === 'partial'
+                        ? '~ Partial'
+                        : '✕ Wrong'}
+                    </span>
+                  ) : null}
+                </div>
               </header>
+
               <p className="artefact-archive__detail-desc">{artefact.description}</p>
 
               <div className="artefact-archive__tags">
@@ -268,26 +274,56 @@ function ArtefactArchive() {
                 />
               </div>
 
-              <div className="artefact-archive__detail-actions">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  zoneColor="var(--zone4-color)"
-                  disabled={isConfirmed}
-                  onClick={handleSkipNoRole}
-                >
-                  Skip — no role
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  zoneColor="var(--zone4-color)"
-                  disabled={isConfirmed || currentTags.length === 0}
-                  onClick={handleConfirm}
-                >
-                  Confirm tags →
-                </Button>
-              </div>
+              {isConfirmed && confirmedById[selectedId] !== 'exact' && (
+                <div className="artefact-archive__answer-compare">
+                  <div className="artefact-archive__answer-row artefact-archive__answer-row--yours">
+                    <span className="artefact-archive__answer-label">Your answer</span>
+                    <span className="artefact-archive__answer-tags">
+                      {currentTags.length === 0
+                        ? <em>skipped — no role</em>
+                        : currentTags.map(t => (
+                            <span key={t} className="artefact-archive__tag-chip artefact-archive__tag-chip--wrong">
+                              {TAG_DEFINITIONS[t]?.label ?? t}
+                            </span>
+                          ))}
+                    </span>
+                  </div>
+                  <div className="artefact-archive__answer-row artefact-archive__answer-row--correct">
+                    <span className="artefact-archive__answer-label">Correct answer</span>
+                    <span className="artefact-archive__answer-tags">
+                      {artefact.correctTags.length === 0
+                        ? <em>no role (skip)</em>
+                        : artefact.correctTags.map(t => (
+                            <span key={t} className="artefact-archive__tag-chip artefact-archive__tag-chip--correct">
+                              {TAG_DEFINITIONS[t]?.label ?? t}
+                            </span>
+                          ))}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!isConfirmed && (
+                <div className="artefact-archive__detail-actions">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    zoneColor="var(--zone4-color)"
+                    onClick={handleSkipNoRole}
+                  >
+                    Skip — no role
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    zoneColor="var(--zone4-color)"
+                    disabled={currentTags.length === 0}
+                    onClick={handleConfirm}
+                  >
+                    Confirm tags →
+                  </Button>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

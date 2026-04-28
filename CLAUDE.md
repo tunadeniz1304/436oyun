@@ -1,8 +1,27 @@
-# CLAUDE.md — ISO Testing World
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 This file is the single source of truth for the AI assistant working on this
 project. **Read it end-to-end before writing any code.** When in doubt, this
 file overrides chat history.
+
+---
+
+## Commands
+
+The app lives in `iso-testing-world/`. All commands run from that directory.
+
+```bash
+cd iso-testing-world
+npm install          # first-time setup (React 18 + Vite + react-router-dom + @dnd-kit + framer-motion)
+npm run dev          # dev server → http://localhost:5173
+npm run build        # production build (use to verify no compile errors)
+npm run lint         # ESLint check
+npm run preview      # preview production build locally
+```
+
+There are no tests — Week 3 deliverable is a playable prototype, not test coverage (§14).
 
 ---
 
