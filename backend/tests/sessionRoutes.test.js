@@ -86,6 +86,7 @@ test('session routes create and read a game session', async () => {
     .expect(201);
 
   assert.equal(created.body.sessionId, '11111111-1111-4111-8111-111111111111');
+  assert.match(created.headers['set-cookie'][0], /iso_session_id=11111111-1111-4111-8111-111111111111/);
 
   const loaded = await request(app)
     .get(`/api/sessions/${created.body.sessionId}`)
@@ -94,6 +95,26 @@ test('session routes create and read a game session', async () => {
   assert.deepEqual(loaded.body.completedZones, []);
   assert.equal(loaded.body.totalScore, 0);
   assert.equal(loaded.body.playerName, 'Oğuzhan');
+});
+
+test('session routes read the current session from the session cookie', async () => {
+  const app = createApp({ repository: createFakeRepository() });
+
+  await request(app)
+    .get('/api/sessions/current')
+    .expect(404);
+
+  const created = await request(app)
+    .post('/api/sessions')
+    .send({})
+    .expect(201);
+
+  const loaded = await request(app)
+    .get('/api/sessions/current')
+    .set('Cookie', created.headers['set-cookie'])
+    .expect(200);
+
+  assert.equal(loaded.body.sessionId, created.body.sessionId);
 });
 
 test('session routes save progress snapshots', async () => {
