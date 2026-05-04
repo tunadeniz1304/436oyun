@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame.js';
@@ -7,10 +7,9 @@ import ProgressTracker from '../components/shared/ProgressTracker.jsx';
 import { Canvas } from '@react-three/fiber';
 import {
   OrbitControls, Html, ContactShadows, Sky,
-  Line, Float, useGLTF,
+  Line, Float,
 } from '@react-three/drei';
 import * as THREE from 'three';
-import { ParkedCars, Fountain } from '../three/SceneProps.jsx';
 import { normalizeScore } from '../context/scoreUtils.js';
 import './WorldMap.css';
 
@@ -73,10 +72,6 @@ const PATHS = [
   { from: [0.8, 3.2], to: [2.5, 4.8], fromId: 'matrix-tower'     },
   { from: [4.2, 3.2], to: [2.5, 4.8], fromId: 'artefact-archive' },
 ];
-
-useGLTF.preload('/models/fountain/scene.gltf');
-useGLTF.preload('/models/cars/car1/scene.gltf');
-useGLTF.preload('/models/cars/car2/scene.gltf');
 
 /* ── Colour helpers ─────────────────────────────────────────────────── */
 const hex2rgb = (hex) => {
@@ -574,10 +569,6 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
 
       {/* ── Ambient props ── */}
       <Trees />
-      <Suspense fallback={null}>
-        <ParkedCars />
-        <Fountain />
-      </Suspense>
 
       {/* ── Shadows / env ── */}
       <ContactShadows
