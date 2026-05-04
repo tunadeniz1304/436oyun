@@ -18,6 +18,7 @@ import {
 } from '../data/zone3-scenarios.js';
 import { getISODefinition } from '../data/iso-definitions.js';
 import { getConceptPrimer } from '../data/concept-primers.js';
+import { normalizeScore } from '../context/scoreUtils.js';
 import './TestMatrixTower.css';
 
 const ZONE_ID = 'matrix-tower';
@@ -137,7 +138,7 @@ function TestMatrixTower() {
   useEffect(() => {
     if (!completed) return;
     const sum = scores.reduce((a, b) => a + b, 0);
-    completeZone('matrix-tower', Math.round(Math.min(ZONE3_FULL_SCORE, sum)));
+    completeZone('matrix-tower', Math.min(ZONE3_FULL_SCORE, sum));
   }, [completed, scores, completeZone]);
 
   const handlePrimerBegin = useCallback(() => {
@@ -162,7 +163,7 @@ function TestMatrixTower() {
   const exactCount   = results.filter((r) => r === 'exact').length;
   const partialCount = results.filter((r) => r === 'partial').length;
   const wrongCount   = results.filter((r) => r === 'wrong').length;
-  const finalScore   = Math.round(scores.reduce((a, b) => a + b, 0));
+  const finalScore   = normalizeScore(Math.min(ZONE3_FULL_SCORE, scores.reduce((a, b) => a + b, 0)));
 
   return (
     <>

@@ -11,6 +11,7 @@ import {
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { ParkedCars, Fountain } from '../three/SceneProps.jsx';
+import { normalizeScore } from '../context/scoreUtils.js';
 import './WorldMap.css';
 
 /* ── Zone definitions ───────────────────────────────────────────────── */
@@ -706,7 +707,7 @@ function WorldMap() {
           <motion.div className="world-map__card world-map__card--score" variants={cardVariants}>
             <div className="world-map__card-label">Total Score</div>
             <div className="world-map__card-bigscore">
-              {state.totalScore}
+              {normalizeScore(state.totalScore)}
               <span className="world-map__card-max"> / 1000</span>
             </div>
           </motion.div>
