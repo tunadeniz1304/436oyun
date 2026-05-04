@@ -1,4 +1,6 @@
-import { createContext, useReducer, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useReducer, useEffect, useMemo, useCallback, useRef } from 'react';
+import { gameSessionApi, toProgressPayload } from '../services/gameSessionApi.js';
+import { sessionToGameState } from './gameStateSerialization.js';
 
 export const ZONE_ORDER = [
   'error-district',
@@ -54,6 +56,9 @@ function recomputeTotal(zoneScores) {
 
 function reducer(state, action) {
   switch (action.type) {
+    case 'HYDRATE_SESSION':
+      return sessionToGameState(action.session, state);
+
     case 'START_SESSION':
       return { ...state, sessionStarted: true };
 
@@ -150,6 +155,15 @@ export const GameContext = createContext(null);
 
 export function GameProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const backendSessionIdRef = useRef(null);
+  const backendReadyRef = useRef(false);
+  const skipNextBackendSaveRef = useRef(false);
+
+  const reportBackendError = useCallback((operation, error) => {
+    if (import.meta.env.DEV) {
+      console.warn(`Backend ${operation} failed`, error);
+    }
+  }, []);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -158,13 +172,62 @@ export function GameProvider({ children }) {
     }
   }, [state]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    gameSessionApi.getOrCreateSession()
+      .then((session) => {
+        if (cancelled) return;
+        backendSessionIdRef.current = session.sessionId;
+        backendReadyRef.current = true;
+        skipNextBackendSaveRef.current = true;
+        dispatch({ type: 'HYDRATE_SESSION', session });
+      })
+      .catch((error) => {
+        reportBackendError('session init', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reportBackendError]);
+
+  useEffect(() => {
+    if (!backendReadyRef.current || !backendSessionIdRef.current) return;
+    if (skipNextBackendSaveRef.current) {
+      skipNextBackendSaveRef.current = false;
+      return;
+    }
+
+    gameSessionApi.saveProgress(backendSessionIdRef.current, toProgressPayload(state))
+      .catch((error) => {
+        reportBackendError('progress sync', error);
+      });
+  }, [state, reportBackendError]);
+
   const completeZone = useCallback(
-    (zoneId, score) => dispatch({ type: 'COMPLETE_ZONE', zoneId, score }),
-    []
+    (zoneId, score) => {
+      dispatch({ type: 'COMPLETE_ZONE', zoneId, score });
+      if (backendSessionIdRef.current) {
+        gameSessionApi.completeZone(backendSessionIdRef.current, zoneId, score)
+          .catch((error) => {
+            reportBackendError('zone completion sync', error);
+          });
+      }
+    },
+    [reportBackendError]
   );
   const recordWrong = useCallback(
-    (payload) => dispatch({ type: 'RECORD_WRONG', payload }),
-    []
+    (payload) => {
+      dispatch({ type: 'RECORD_WRONG', payload });
+      if (backendSessionIdRef.current) {
+        gameSessionApi.recordWrongAnswer(backendSessionIdRef.current, payload)
+          .catch((error) => {
+            reportBackendError('wrong answer sync', error);
+          });
+      }
+    },
+    [reportBackendError]
   );
   const addOraclePoints = useCallback(
     (points) => dispatch({ type: 'ADD_ORACLE_POINTS', points }),
