@@ -31,7 +31,8 @@ There are no tests — Week 3 deliverable is a playable prototype, not test cove
 npm create vite@latest iso-testing-world -- --template react
 cd iso-testing-world
 npm install
-npm install react-router-dom @dnd-kit/core @dnd-kit/sortable framer-motion
+npm install react-router-dom @dnd-kit/core @dnd-kit/sortable framer-motion \
+            three @react-three/fiber @react-three/drei
 npm run dev   # opens http://localhost:5173
 ```
 
@@ -66,9 +67,19 @@ core pedagogical claim and must never be diluted.
 - React Router v6
 - @dnd-kit/core + @dnd-kit/sortable (Zone 1 only)
 - Framer Motion (entry/exit transitions, modal animations)
+- `three` — core 3D engine (**WorldMap only**)
+- `@react-three/fiber` — React renderer for three.js (**WorldMap only**)
+- `@react-three/drei` — helpers: `OrbitControls`, `Sky`, `Float`, `Html`, `ContactShadows`, `Line` (**WorldMap only**)
 - Plain CSS files with CSS variables — **no Tailwind, no styled-components, no UI lib**
 - JavaScript with JSDoc — **no TypeScript**
 - ESLint default config
+
+**3D scope rule:** Three.js is permitted **only on the WorldMap**
+([src/pages/WorldMap.jsx](iso-testing-world/src/pages/WorldMap.jsx)). All
+buildings, terrain, and ambient props are **procedural** — built from
+three.js geometry primitives in code, with no external GLTF assets. This
+keeps the bundle small, removes asset-licensing concerns, and forces every
+visual element to be intentional. See §14 for the zones-stay-2D rule.
 
 ---
 
@@ -520,6 +531,14 @@ pedagogical principle in §13.
 - **TypeScript** — JSDoc only.
 - **Tailwind / UI library** — plain CSS files only.
 - **localStorage / sessionStorage / IndexedDB.**
+- **3D inside zones** — Three.js is permitted **only** on the WorldMap.
+  Zones 1–4 and Final Inspection stay DOM-based. Pedagogical mechanics
+  (drag-drop, multi-select, tagging, justification fields) need accessible
+  HTML, not WebGL. See §13.5 (multi-select is first-class).
+- **External GLTF / FBX / OBJ models** — the WorldMap is procedural. No
+  `public/models/` folder, no `useGLTF()` calls, no asset downloads. Every
+  building, prop, and decoration is built from three.js geometry primitives
+  (`boxGeometry`, `cylinderGeometry`, `sphereGeometry`, etc.) in code.
 
 If the user (team member) explicitly wants any of the above, that is a
 Week 4+ decision and must be flagged before implementation.
@@ -542,6 +561,10 @@ Week 4+ decision and must be flagged before implementation.
 - **Never hardcode colours in JSX or CSS.** Use tokens from `tokens.css`.
 - **Never reach for a backend or browser-storage API.** State lives in
   React reducer memory only.
+- **Never call `useGLTF()` or load external 3D models.** The WorldMap is
+  procedural — every shape comes from three.js geometry primitives. No
+  `public/models/` folder. If you find a `useGLTF` import, delete it.
+- **Never put a `<Canvas>` outside the WorldMap.** Zones are DOM-only (§14).
 
 ---
 
