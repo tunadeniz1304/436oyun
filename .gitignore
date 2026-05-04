@@ -56,3 +56,4 @@ coverage/
 *.bak
 *.orig
 *.clean
+.code-review-graph/
