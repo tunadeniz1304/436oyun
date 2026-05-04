@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { normalizeScore } from '../../context/scoreUtils.js';
 import './ZoneLayout.css';
 
 const ZONE_NUMBER = {
@@ -30,7 +31,7 @@ function ZoneLayout({
 }) {
   const zoneNum = ZONE_NUMBER[zoneId];
   const icon    = ZONE_ICON[zoneId] ?? '◆';
-  const padded  = String(Math.round(scoreCurrent ?? 0)).padStart(3, '0');
+  const padded  = String(normalizeScore(scoreCurrent)).padStart(3, '0');
 
   return (
     <div

@@ -1,3 +1,5 @@
+import { normalizeScore, recomputeTotal } from './scoreUtils.js';
+
 function arrayToSet(value) {
   return new Set(Array.isArray(value) ? value : []);
 }
@@ -12,14 +14,18 @@ function hydrateHints(baseHints, savedHints = {}) {
 }
 
 export function sessionToGameState(session, baseState) {
+  const zoneScores = Object.fromEntries(
+    Object.entries({
+      ...baseState.zoneScores,
+      ...(session.zoneScores ?? {}),
+    }).map(([zoneId, score]) => [zoneId, normalizeScore(score)])
+  );
+
   return {
     ...baseState,
     completedZones: arrayToSet(session.completedZones),
-    zoneScores: {
-      ...baseState.zoneScores,
-      ...(session.zoneScores ?? {}),
-    },
-    totalScore: session.totalScore ?? baseState.totalScore,
+    zoneScores,
+    totalScore: normalizeScore(session.totalScore ?? recomputeTotal(zoneScores)),
     wrongAnswers: session.wrongAnswers ?? baseState.wrongAnswers,
     sessionStarted: true,
     primersSeen: arrayToSet(session.primersSeen),

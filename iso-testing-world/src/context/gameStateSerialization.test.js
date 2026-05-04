@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { normalizeScore, recomputeTotal } from './scoreUtils.js';
 import { sessionToGameState } from './gameStateSerialization.js';
 
 const baseState = {
@@ -41,4 +42,31 @@ test('sessionToGameState hydrates backend JSON into reducer state', () => {
   assert.equal(state.hintsUsed['error-district'].has('z1-s2'), true);
   assert.equal(state.hintsUsed['vv-headquarters'].size, 0);
   assert.equal(state.wrongAnswers.length, 1);
+});
+
+test('sessionToGameState drops fractional saved scores', () => {
+  const state = sessionToGameState({
+    completedZones: ['matrix-tower'],
+    zoneScores: { 'matrix-tower': 127.272727272 },
+    totalScore: 127.272727272,
+  }, baseState);
+
+  assert.equal(state.zoneScores['matrix-tower'], 127);
+  assert.equal(state.totalScore, 127);
+});
+
+test('recomputeTotal drops fractional score parts', () => {
+  const total = recomputeTotal({
+    'error-district': 200,
+    'vv-headquarters': 180,
+    'matrix-tower': 127.272727272,
+    'artefact-archive': 173,
+    'final-inspection': 200,
+  });
+
+  assert.equal(total, 880);
+});
+
+test('normalizeScore drops fractional score parts', () => {
+  assert.equal(normalizeScore(127.272727272), 127);
 });

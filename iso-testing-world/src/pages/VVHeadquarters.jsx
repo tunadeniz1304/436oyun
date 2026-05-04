@@ -22,6 +22,7 @@ import {
 } from '../data/zone2-missions.js';
 import { getISODefinition } from '../data/iso-definitions.js';
 import { getConceptPrimer } from '../data/concept-primers.js';
+import { normalizeScore } from '../context/scoreUtils.js';
 import './VVHeadquarters.css';
 
 const ZONE_ID = 'vv-headquarters';
@@ -225,8 +226,9 @@ function VVHeadquarters() {
     return <Navigate to="/" replace />;
   }
 
-  const finalScore = Math.min(ZONE2_FULL_SCORE, missionScores.reduce((a, b) => a + b, 0));
+  const finalScore = normalizeScore(Math.min(ZONE2_FULL_SCORE, missionScores.reduce((a, b) => a + b, 0)));
   const completionRecorded = state.completedZones.has('vv-headquarters');
+  const oracleScore = normalizeScore(state.zoneScores.oracle);
 
   return (
     <>
@@ -308,7 +310,7 @@ function VVHeadquarters() {
             <h2>Zone 2 complete</h2>
             <p>
               Final routing score: <strong>{finalScore} / {ZONE2_FULL_SCORE}</strong>.
-              Test-Oracle points so far: <strong>{state.zoneScores.oracle} / 200</strong>.
+              Test-Oracle points so far: <strong>{oracleScore} / 200</strong>.
             </p>
             <Button
               variant="primary"

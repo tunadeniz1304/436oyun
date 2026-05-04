@@ -1,4 +1,5 @@
 import { useCountUp } from '../../hooks/useCountUp.js';
+import { normalizeScore } from '../../context/scoreUtils.js';
 import './ScoreBadge.css';
 
 function ScoreBadge({
@@ -7,8 +8,9 @@ function ScoreBadge({
   zoneColor = 'var(--ink)',
   label = 'Score',
 }) {
-  const animated = useCountUp(current ?? 0, 600);
   const showCurrent = current === null || current === undefined;
+  const normalizedCurrent = normalizeScore(current);
+  const animated = useCountUp(showCurrent ? 0 : normalizedCurrent, 600);
   const display = showCurrent ? '—' : animated;
 
   return (
@@ -16,7 +18,7 @@ function ScoreBadge({
       className="score-badge"
       role="status"
       aria-live="polite"
-      aria-label={`${label}: ${showCurrent ? 'not started' : `${current} of ${total}`}`}
+      aria-label={`${label}: ${showCurrent ? 'not started' : `${normalizedCurrent} of ${total}`}`}
       style={{ '--badge-color': zoneColor }}
     >
       <span className="score-badge__label">{label}</span>

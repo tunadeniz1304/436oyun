@@ -7,6 +7,7 @@ import { useGame } from '../../hooks/useGame.js';
 import { useMotion } from '../../hooks/useMotion.js';
 import { useCountUp } from '../../hooks/useCountUp.js';
 import { REPORT_ROWS, ZONE_META } from '../../context/GameContext.jsx';
+import { normalizeScore, recomputeTotal } from '../../context/scoreUtils.js';
 import './IncidentReport.css';
 
 function escapeMarkdown(s) {
@@ -23,11 +24,11 @@ function generateMarkdown({ state, totals, durationMin }) {
   lines.push('');
 
   REPORT_ROWS.forEach((row) => {
-    const score = state.zoneScores[row.key] ?? 0;
+    const score = normalizeScore(state.zoneScores[row.key]);
     const errors = state.wrongAnswers.filter((w) => w.zoneId === keyToZone(row.key)).length;
     lines.push(`## ${row.label}`);
     lines.push(`- ${row.subLabel}`);
-    lines.push(`- Score: **${Math.round(score)} / 200**`);
+    lines.push(`- Score: **${score} / 200**`);
     lines.push(`- Errors recorded: ${errors}`);
     if (errors > 0) {
       lines.push('- Wrong-answer detail:');
@@ -69,8 +70,8 @@ function IncidentReport({ durationMin }) {
   const navigate = useNavigate();
   const { state, resetZone } = useGame();
 
-  const totals = Math.round(
-    REPORT_ROWS.reduce((sum, row) => sum + (state.zoneScores[row.key] ?? 0), 0)
+  const totals = recomputeTotal(
+    Object.fromEntries(REPORT_ROWS.map((row) => [row.key, state.zoneScores[row.key] ?? 0]))
   );
   const animatedTotal = useCountUp(totals, 1100);
 
@@ -111,7 +112,7 @@ function IncidentReport({ durationMin }) {
 
       <div className="incident-report__rows">
         {REPORT_ROWS.map((row, idx) => {
-          const score = state.zoneScores[row.key] ?? 0;
+          const score = normalizeScore(state.zoneScores[row.key]);
           const meta = ZONE_META[row.key] ?? {
             color: 'var(--final-color)',
             bg: 'var(--final-bg)',

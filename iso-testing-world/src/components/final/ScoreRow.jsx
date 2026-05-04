@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import Button from '../shared/Button.jsx';
 import { useMotion } from '../../hooks/useMotion.js';
 import { useCountUp } from '../../hooks/useCountUp.js';
+import { normalizeScore } from '../../context/scoreUtils.js';
 import './ScoreRow.css';
 
 function statusFor(score) {
@@ -22,9 +23,10 @@ function ScoreRow({
   onReplay,
   index = 0,
 }) {
-  const pct = Math.max(0, Math.min(1, score / total));
-  const status = statusFor(score);
-  const animatedScore = useCountUp(Math.round(score), 700);
+  const displayedScore = normalizeScore(score);
+  const pct = Math.max(0, Math.min(1, displayedScore / total));
+  const status = statusFor(displayedScore);
+  const animatedScore = useCountUp(displayedScore, 700);
 
   const fillMotion = useMotion({
     initial: { width: 0 },
@@ -62,7 +64,7 @@ function ScoreRow({
           ) : (
             <span className="score-row__clause score-row__clause--ok">no clause violations</span>
           )}
-          {onReplay && score < total ? (
+          {onReplay && displayedScore < total ? (
             <Button
               variant="ghost"
               size="sm"

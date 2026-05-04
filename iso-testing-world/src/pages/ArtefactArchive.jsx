@@ -20,6 +20,7 @@ import {
 } from '../data/zone4-artefacts.js';
 import { getISODefinition } from '../data/iso-definitions.js';
 import { getConceptPrimer } from '../data/concept-primers.js';
+import { normalizeScore } from '../context/scoreUtils.js';
 import './ArtefactArchive.css';
 
 const ZONE_ID = 'artefact-archive';
@@ -199,7 +200,7 @@ function ArtefactArchive() {
     if (allDone && !completed) {
       const total = Object.values(scoresById).reduce((a, b) => a + b, 0);
       setCompleted(true);
-      completeZone('artefact-archive', Math.round(Math.min(ZONE4_FULL_SCORE, total)));
+      completeZone('artefact-archive', Math.min(ZONE4_FULL_SCORE, total));
     }
   }, [allDone, completed, scoresById, completeZone]);
 
@@ -360,7 +361,7 @@ function ArtefactArchive() {
               <p>
                 Zone 4 complete — final score{' '}
                 <strong>
-                  {Math.round(Object.values(scoresById).reduce((a, b) => a + b, 0))} / {ZONE4_FULL_SCORE}
+                  {normalizeScore(Math.min(ZONE4_FULL_SCORE, Object.values(scoresById).reduce((a, b) => a + b, 0)))} / {ZONE4_FULL_SCORE}
                 </strong>
               </p>
               <Button
