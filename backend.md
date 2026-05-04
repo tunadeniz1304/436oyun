@@ -294,14 +294,77 @@ bir dosyada toplanir.
 
 ## Teknoloji Secimi
 
-Bu proje JavaScript/Vite/React kullandigi icin backend icin en pratik secim:
+Backend icin secilen stack:
 
 - Node.js
-- Express veya Fastify
-- Baslangicta SQLite veya PostgreSQL
+- Express
+- PostgreSQL
+- Docker Compose
+- `pg` database driver
+- `node:test` + `supertest`
 
-Eger hizli demo isteniyorsa SQLite yeterli olur. Eger deployment ve ekip
-calismasi dusunuluyorsa PostgreSQL daha dogru olur.
+Backend, frontend klasorunun icine gomulmedi. Repo kokunde ayri `backend/`
+klasoru olarak kuruldu. Bu sayede frontend `iso-testing-world/` icinde kalir,
+API ve database katmani ise ayrik gelisir.
+
+Yerel PostgreSQL icin repo kokundeki `docker-compose.yml` kullanilir.
+
+## Backend Dosya Yapisi
+
+```text
+backend/
+  src/
+    app.js
+    server.js
+    db/
+      pool.js
+      migrate.js
+      migrations/
+        001_create_session_tables.sql
+    repositories/
+      sessionRepository.js
+    routes/
+      sessionRoutes.js
+    services/
+      sessionService.js
+  tests/
+    sessionRoutes.test.js
+  .env.example
+  package.json
+```
+
+## Calistirma Komutlari
+
+PostgreSQL'i baslat:
+
+```bash
+docker compose up -d postgres
+```
+
+Backend bagimliliklarini kur:
+
+```bash
+cd backend
+npm install
+```
+
+Database tablolarini olustur:
+
+```bash
+npm run migrate
+```
+
+Backend'i development modunda baslat:
+
+```bash
+npm run dev
+```
+
+Testleri calistir:
+
+```bash
+npm test
+```
 
 ## Tavsiye Edilen Ilk Yaklasim
 
