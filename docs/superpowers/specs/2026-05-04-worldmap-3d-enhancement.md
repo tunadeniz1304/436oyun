@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-04
 **Author:** Tuna Deniz (with Claude Code)
-**Status:** Draft for user review
+**Status:** Approved — proceeding to implementation plan
 **Project:** ISO Testing World — OPUS team
 **Phase:** Post-prototype (Week 4+) — visual and pedagogical upgrade of the WorldMap.
 
@@ -636,28 +636,27 @@ The phase is complete and demoable when **all** of the following hold:
 
 ---
 
-## 11. Open Questions
+## 11. Resolved Decisions
 
-These are flagged for the user to resolve before or during implementation.
-None block plan-writing.
+The four questions raised during brainstorming have been answered by the
+user (2026-05-04):
 
-- **FQ-1: Hover card hint language — English (default) or Turkish?**
-  Affects `world/data/iso-hover-text.js`. Default = English to match
-  CLAUDE.md §14. One-file change if user picks Turkish.
+- **D-1: Hover card hint language — English.** Matches CLAUDE.md §14
+  ("English only for the prototype"). `world/data/iso-hover-text.js` will
+  contain the English hints shown in §4.4.
 
-- **FQ-2: Add `@react-three/postprocessing` (~80 kB gzip)?** Default = yes,
-  enables Bloom + Vignette + SMAA. If post-build the chunk exceeds 1.5 MB
-  raw, fallback strategies are in §9.
+- **D-2: `@react-three/postprocessing` is approved** for this phase. Adds
+  ~80 kB gzip. Bloom + Vignette + SMAA pipeline as described in §6.6. If
+  the post-build WorldMap chunk exceeds 1.5 MB raw, the fallback chain in
+  §9 applies: drop Bloom + Vignette first, then Bloom alone, keeping SMAA.
 
-- **FQ-3: Replay UX for completed zones.** When a user clicks a completed
-  building, the WorldMap zooms + routes — same behaviour as an unlocked
-  zone. The zone page itself decides what to show on replay. **This spec
-  does not modify zone pages.** Out of scope here, flagged for a future
-  spec if desired.
+- **D-3: Replay UX is a WorldMap-only decision.** Clicking a completed
+  building zooms + routes, same as any unlocked zone. Zone pages are not
+  modified by this phase. If the team later wants a different replay
+  experience (e.g. a "review answers" mode), that's a separate spec.
 
-- **FQ-4: Hover-card content tone.** The placeholder hints in §4.4 are
-  short and didactic. The user may want to tighten / rewrite them during
-  the implementation phase. Not a blocker.
+- **D-4: Hover-hint tone is approved as-shown** in §4.4. Short, didactic,
+  ISO-precise. No rewrite needed.
 
 ---
 
@@ -703,4 +702,4 @@ This spec is consistent with CLAUDE.md as of 2026-05-04:
 
 ---
 
-*Spec version 1 — 2026-05-04. Awaiting user review before plan phase.*
+*Spec version 1 — 2026-05-04. Approved by user — proceeding to plan phase.*
