@@ -19,6 +19,8 @@ function ConceptPrimer({
   zoneColor = 'var(--ink)',
   onBegin,
   onSkipAll,
+  skipZoneLabel,
+  onSkipZone,
 }) {
   const dialogRef = useRef(null);
   const beginRef = useRef(null);
@@ -133,6 +135,16 @@ function ConceptPrimer({
               >
                 Skip all primers
               </button>
+              {skipZoneLabel && onSkipZone ? (
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  zoneColor={zoneColor}
+                  onClick={onSkipZone}
+                >
+                  {skipZoneLabel}
+                </Button>
+              ) : null}
               <Button
                 ref={beginRef}
                 variant="primary"

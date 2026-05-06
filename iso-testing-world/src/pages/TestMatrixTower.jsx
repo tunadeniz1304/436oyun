@@ -10,6 +10,7 @@ import SingleCellChallenge from '../components/zone3/SingleCellChallenge.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
+import { getZoneSkipTarget } from '../context/zoneNavigation.js';
 import {
   zone3Scenarios,
   ZONE3_FULL_SCORE,
@@ -23,6 +24,7 @@ import './TestMatrixTower.css';
 
 const ZONE_ID = 'matrix-tower';
 const ZONE_COLOR = 'var(--zone3-color)';
+const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
 
 function correctSet(scenario) {
   return new Set(scenario.correctCells.map((c) => cellKey(c.level, c.type)));
@@ -151,6 +153,14 @@ function TestMatrixTower() {
     setPrimerOpen(false);
   }, [skipAllPrimers]);
 
+  const handleSkipZone = useCallback(() => {
+    if (!SKIP_TARGET) return;
+    if (!state.completedZones.has(ZONE_ID)) {
+      completeZone(ZONE_ID, 0);
+    }
+    navigate(SKIP_TARGET.route);
+  }, [completeZone, navigate, state.completedZones]);
+
   if (!isZoneUnlocked('matrix-tower')) return <Navigate to="/" replace />;
 
   const submitDisabled = selected.size === 0 || !!verdict;
@@ -173,6 +183,8 @@ function TestMatrixTower() {
       zoneColor={ZONE_COLOR}
       onBegin={handlePrimerBegin}
       onSkipAll={handleSkipAll}
+      skipZoneLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     />
     <ZoneLayout
       zoneId="matrix-tower"
@@ -182,6 +194,8 @@ function TestMatrixTower() {
       subtitle="ISO/IEC/IEEE 29119-1 — §3.108 (level) × §3.130 (type)"
       scoreCurrent={state.zoneScores['matrix-tower']}
       reviewMode={state.completedZones.has('matrix-tower')}
+      skipLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     >
       <div className="cmd-center">
         {!completed ? (

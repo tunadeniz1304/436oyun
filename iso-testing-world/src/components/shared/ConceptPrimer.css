@@ -132,6 +132,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--gap-md);
   padding-top: var(--gap-md);
   border-top: 1px solid var(--border-subtle);

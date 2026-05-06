@@ -133,6 +133,36 @@
   box-shadow: var(--shadow-sm);
 }
 
+.zone-layout__skip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--zone-color);
+  background: color-mix(in srgb, var(--zone-color) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--zone-color) 34%, var(--border-subtle));
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  transition: all var(--t-micro) var(--ease-out);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zone-layout__skip:hover {
+  background: color-mix(in srgb, var(--zone-color) 14%, white);
+  border-color: var(--zone-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.zone-layout__skip:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus), var(--shadow-sm);
+}
+
 .zone-layout__review-badge {
   background: color-mix(in srgb, var(--status-partial) 12%, white);
   border: 1px solid color-mix(in srgb, var(--status-partial) 35%, transparent);
@@ -194,5 +224,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .zone-layout__back { transition: none; }
+  .zone-layout__back,
+  .zone-layout__skip { transition: none; }
 }

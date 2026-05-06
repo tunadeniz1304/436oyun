@@ -12,6 +12,7 @@ import DependencyMap from '../components/zone4/DependencyMap.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
+import { getZoneSkipTarget } from '../context/zoneNavigation.js';
 import {
   zone4Artefacts,
   ZONE4_FULL_SCORE,
@@ -25,6 +26,7 @@ import './ArtefactArchive.css';
 
 const ZONE_ID = 'artefact-archive';
 const ZONE_COLOR = 'var(--zone4-color)';
+const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
 
 function evaluateTags(artefact, picked) {
   const correct = artefact.correctTags;
@@ -214,6 +216,14 @@ function ArtefactArchive() {
     setPrimerOpen(false);
   }, [skipAllPrimers]);
 
+  const handleSkipZone = useCallback(() => {
+    if (!SKIP_TARGET) return;
+    if (!state.completedZones.has(ZONE_ID)) {
+      completeZone(ZONE_ID, 0);
+    }
+    navigate(SKIP_TARGET.route);
+  }, [completeZone, navigate, state.completedZones]);
+
   if (!isZoneUnlocked('artefact-archive')) {
     return <Navigate to="/" replace />;
   }
@@ -226,6 +236,8 @@ function ArtefactArchive() {
       zoneColor={ZONE_COLOR}
       onBegin={handlePrimerBegin}
       onSkipAll={handleSkipAll}
+      skipZoneLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     />
     <ZoneLayout
       zoneId="artefact-archive"
@@ -235,6 +247,8 @@ function ArtefactArchive() {
       subtitle="ISO/IEC/IEEE 29119-1 — §3.84, §3.107, §3.78, §3.29"
       scoreCurrent={state.zoneScores['artefact-archive']}
       reviewMode={state.completedZones.has('artefact-archive')}
+      skipLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     >
       <motion.section className="artefact-archive" {...headerMotion}>
         <div className="artefact-archive__brief">

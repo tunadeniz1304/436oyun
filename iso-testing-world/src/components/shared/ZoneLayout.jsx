@@ -26,6 +26,8 @@ function ZoneLayout({
   scoreTotal = 200,
   subtitle,
   reviewMode = false,
+  skipLabel,
+  onSkipZone,
   toolbar,
   children,
 }) {
@@ -60,6 +62,16 @@ function ZoneLayout({
           <Link to="/" className="zone-layout__back" aria-label="Back to world map">
             ← BACK TO MAP
           </Link>
+          {skipLabel && onSkipZone ? (
+            <button
+              type="button"
+              className="zone-layout__skip"
+              onClick={onSkipZone}
+              aria-label={skipLabel}
+            >
+              {skipLabel}
+            </button>
+          ) : null}
           <span className="zone-layout__score-badge" aria-label={`Score: ${padded} of ${scoreTotal}`}>
             {padded} / {scoreTotal}
           </span>

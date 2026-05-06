@@ -14,6 +14,7 @@ import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useTimer } from '../hooks/useTimer.js';
 import { useMotion } from '../hooks/useMotion.js';
+import { getZoneSkipTarget } from '../context/zoneNavigation.js';
 import {
   zone2Missions,
   ZONE2_FULL_SCORE,
@@ -27,6 +28,7 @@ import './VVHeadquarters.css';
 
 const ZONE_ID = 'vv-headquarters';
 const ZONE_COLOR = 'var(--zone2-color)';
+const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
 
 const TIMER_SECONDS = 30;
 const ROUTING_LABEL = {
@@ -221,6 +223,14 @@ function VVHeadquarters() {
     setPrimerOpen(false);
   }, [skipAllPrimers]);
 
+  const handleSkipZone = useCallback(() => {
+    if (!SKIP_TARGET) return;
+    if (!state.completedZones.has(ZONE_ID)) {
+      completeZone(ZONE_ID, 0);
+    }
+    navigate(SKIP_TARGET.route);
+  }, [completeZone, navigate, state.completedZones]);
+
   // Route guard
   if (!isZoneUnlocked('vv-headquarters')) {
     return <Navigate to="/" replace />;
@@ -238,6 +248,8 @@ function VVHeadquarters() {
       zoneColor={ZONE_COLOR}
       onBegin={handlePrimerBegin}
       onSkipAll={handleSkipAll}
+      skipZoneLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     />
     <ZoneLayout
       zoneId="vv-headquarters"
@@ -247,6 +259,8 @@ function VVHeadquarters() {
       subtitle="ISO/IEC/IEEE 29119-1 — §4.1.3 (and §3.115 oracle prompt)"
       scoreCurrent={state.zoneScores['vv-headquarters']}
       reviewMode={state.completedZones.has('vv-headquarters')}
+      skipLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     >
       <motion.section className="vv-hq" {...headerMotion}>
         {!showingComplete ? (

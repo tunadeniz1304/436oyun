@@ -12,6 +12,7 @@ import CausalChain from '../components/zone1/CausalChain.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
+import { getZoneSkipTarget } from '../context/zoneNavigation.js';
 import {
   zone1Scenarios,
   COLUMN_DEFS,
@@ -24,6 +25,7 @@ import './ErrorDistrict.css';
 
 const ZONE_ID = 'error-district';
 const ZONE_COLOR = 'var(--zone1-color)';
+const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
 
 function ErrorDistrict() {
   const navigate = useNavigate();
@@ -153,6 +155,14 @@ function ErrorDistrict() {
     setPrimerOpen(false);
   }, [skipAllPrimers]);
 
+  const handleSkipZone = useCallback(() => {
+    if (!SKIP_TARGET) return;
+    if (!state.completedZones.has(ZONE_ID)) {
+      completeZone(ZONE_ID, 0);
+    }
+    navigate(SKIP_TARGET.route);
+  }, [completeZone, navigate, state.completedZones]);
+
   // Route guard
   if (!isZoneUnlocked('error-district')) {
     return <Navigate to="/" replace />;
@@ -166,6 +176,8 @@ function ErrorDistrict() {
       zoneColor={ZONE_COLOR}
       onBegin={handlePrimerBegin}
       onSkipAll={handleSkipAll}
+      skipZoneLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     />
     <ZoneLayout
       zoneId="error-district"
@@ -175,6 +187,8 @@ function ErrorDistrict() {
       subtitle="ISO/IEC/IEEE 29119-1 — §3.39, §3.40, §4.7"
       scoreCurrent={state.zoneScores['error-district']}
       reviewMode={state.completedZones.has('error-district')}
+      skipLabel={SKIP_TARGET?.label}
+      onSkipZone={handleSkipZone}
     >
       <motion.section className="error-district" {...headerMotion}>
         <div className="error-district__brief">
