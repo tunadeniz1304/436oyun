@@ -215,27 +215,27 @@ export default function OfficeInterior() {
       initialPos,
     });
 
-  // Smooth camera follow
+  const [scale, setScale] = useState(1);
+
+  // Scale map to perfectly fit the screen 100%
   useEffect(() => {
-    let animationFrameId;
-    const updateScroll = () => {
+    const updateScale = () => {
       const vp = viewportRef.current;
       if (!vp) return;
-      const px = playerCol * TILE_PX + TILE_PX / 2;
-      const py = playerRow * TILE_PX + TILE_PX / 2;
-      const targetScrollX = px - vp.clientWidth / 2;
-      const targetScrollY = py - vp.clientHeight / 2;
       
-      // Simple lerp for buttery smooth tracking
-      vp.scrollLeft += (targetScrollX - vp.scrollLeft) * 0.1;
-      vp.scrollTop += (targetScrollY - vp.scrollTop) * 0.1;
+      // Calculate how much we need to scale down/up to fit
+      // We add a tiny bit of padding (0.95) so it doesn't touch the absolute edges
+      const scaleX = vp.clientWidth / mapW;
+      const scaleY = vp.clientHeight / mapH;
+      const bestFit = Math.min(scaleX, scaleY) * 0.98;
       
-      animationFrameId = requestAnimationFrame(updateScroll);
+      setScale(bestFit);
     };
-    
-    updateScroll();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [playerCol, playerRow]);
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [mapW, mapH]);
 
   const activeNpc = dialogOpen && activeNpcId
     ? layout.npcs.find(n => n.id === activeNpcId)
@@ -252,63 +252,73 @@ export default function OfficeInterior() {
 
       <div className="office__viewport" ref={viewportRef}>
         <div className="office__lighting-overlay" />
-        <div className="office__map" style={{ width: mapW, height: mapH }}>
+        
+        <div style={{
+          width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="office__map" style={{ 
+            width: mapW, height: mapH,
+            transform: `scale(${scale})`,
+            transformOrigin: 'center center'
+          }}>
 
-          {/* Tile layer */}
-          {layout.map.flatMap((row, rIdx) =>
-            [...row].map((tile, cIdx) => (
-              <div
-                key={`t-${rIdx}-${cIdx}`}
-                className="office__tile"
-                style={{
-                  left: cIdx * TILE_PX,
-                  top: rIdx * TILE_PX,
-                  width: TILE_PX,
-                  height: TILE_PX,
-                }}
-              >
-                {renderTile(tile, cIdx, rIdx)}
-              </div>
-            ))
-          )}
+            {/* Tile layer */}
+            {layout.map.flatMap((row, rIdx) =>
+              [...row].map((tile, cIdx) => (
+                <div
+                  key={`t-${rIdx}-${cIdx}`}
+                  className="office__tile"
+                  style={{
+                    left: cIdx * TILE_PX,
+                    top: rIdx * TILE_PX,
+                    width: TILE_PX,
+                    height: TILE_PX,
+                  }}
+                >
+                  {renderTile(tile, cIdx, rIdx)}
+                </div>
+              ))
+            )}
 
-          {/* Player */}
-          <div
-            className="office__entity"
-            style={{
-              left: playerCol * TILE_PX + TILE_PX / 2,
-              top: playerRow * TILE_PX + TILE_PX,
-            }}
-          >
-            <PixelCharacter
-              type="player"
-              facing={playerFacing}
-              label="You"
-              color={layout.color}
-            />
-          </div>
-
-          {/* NPCs */}
-          {layout.npcs.map(npc => (
+            {/* Player */}
             <div
-              key={npc.id}
               className="office__entity"
               style={{
-                left: npc.col * TILE_PX + TILE_PX / 2,
-                top: npc.row * TILE_PX + TILE_PX,
+                left: playerCol * TILE_PX + TILE_PX / 2,
+                top: playerRow * TILE_PX + TILE_PX,
               }}
             >
               <PixelCharacter
-                type={npc.type === 'main' ? 'npc-main' : 'npc-worker'}
-                facing={npc.facing}
-                label={npc.name}
+                type="player"
+                facing={playerFacing}
+                label="You"
                 color={layout.color}
-                isNear={nearMainNpcId === npc.id && nearMainNpc}
-                bubble={npc.bubble}
               />
             </div>
-          ))}
 
+            {/* NPCs */}
+            {layout.npcs.map(npc => (
+              <div
+                key={npc.id}
+                className="office__entity"
+                style={{
+                  left: npc.col * TILE_PX + TILE_PX / 2,
+                  top: npc.row * TILE_PX + TILE_PX,
+                }}
+              >
+                <PixelCharacter
+                  type={npc.type === 'main' ? 'npc-main' : 'npc-worker'}
+                  facing={npc.facing}
+                  label={npc.name}
+                  color={layout.color}
+                  isNear={nearMainNpcId === npc.id && nearMainNpc}
+                  bubble={npc.bubble}
+                />
+              </div>
+            ))}
+
+          </div>
         </div>
       </div>
 
