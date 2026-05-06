@@ -10,57 +10,138 @@ const TILE_PX = 48;
 
 const BOOK_COLORS = ['#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', '#e67e22'];
 
-function DeskTile() {
+// Simple deterministic random
+function random(col, row, seed) {
+  return Math.sin(col * 12.9898 + row * 78.233 + seed) * 43758.5453 % 1;
+}
+
+function DeskTile({ col, row }) {
+  const rnd = Math.abs(random(col, row, 1));
+  const hasItem = rnd > 0.3;
+  const isCoffee = rnd > 0.8;
+  const isPaper = rnd > 0.5 && rnd <= 0.8;
+  const isPlant = rnd <= 0.5;
+
   return (
-    <div className="desk-tile">
-      <div className="desk-tile__surface" />
-      <div className="desk-tile__monitor">
-        <div className="desk-tile__screen" />
-      </div>
-      <div className="desk-tile__keyboard" />
-      <div className="desk-tile__item" />
+    <div className="svg-tile">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        {/* Desk Shadow */}
+        <rect x="2" y="8" width="44" height="34" rx="4" fill="rgba(15, 23, 42, 0.08)" />
+        {/* Desk Surface */}
+        <rect x="2" y="4" width="44" height="32" rx="4" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" />
+        
+        {/* Keyboard */}
+        <rect x="14" y="24" width="20" height="6" rx="1.5" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1" />
+        
+        {/* Monitor Stand */}
+        <path d="M 22 16 L 26 16 L 28 20 L 20 20 Z" fill="#94a3b8" />
+        {/* Monitor Screen */}
+        <rect x="8" y="6" width="32" height="10" rx="2" fill="#0f172a" />
+        <rect x="10" y="7" width="28" height="8" rx="1" fill="#38bdf8" opacity="0.8" />
+        
+        {/* Items */}
+        {hasItem && isCoffee && (
+          <g transform="translate(36, 22)">
+            <circle cx="0" cy="0" r="4" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+            <circle cx="0" cy="0" r="2.5" fill="#78350f" />
+          </g>
+        )}
+        {hasItem && isPaper && (
+          <g transform="translate(6, 22) rotate(-15)">
+            <rect x="0" y="0" width="8" height="10" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+            <line x1="2" y1="3" x2="6" y2="3" stroke="#94a3b8" strokeWidth="0.5" />
+            <line x1="2" y1="5" x2="6" y2="5" stroke="#94a3b8" strokeWidth="0.5" />
+            <line x1="2" y1="7" x2="4" y2="7" stroke="#94a3b8" strokeWidth="0.5" />
+          </g>
+        )}
+        {hasItem && isPlant && (
+          <g transform="translate(36, 12)">
+            <circle cx="0" cy="0" r="4" fill="#f59e0b" />
+            <path d="M 0 0 Q -4 -4 0 -8 Q 4 -4 0 0" fill="#10b981" />
+            <path d="M 0 0 Q -6 -2 -4 -6 Q -1 -3 0 0" fill="#34d399" />
+            <path d="M 0 0 Q 6 -2 4 -6 Q 1 -3 0 0" fill="#059669" />
+          </g>
+        )}
+      </svg>
     </div>
   );
 }
 
 function ChairTile() {
   return (
-    <div className="chair-tile">
-      <div className="chair-tile__back" />
-      <div className="chair-tile__seat" />
+    <div className="svg-tile">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        {/* Shadow */}
+        <circle cx="24" cy="28" r="12" fill="rgba(15, 23, 42, 0.08)" />
+        {/* Base / Wheels */}
+        <path d="M 24 24 L 16 28 M 24 24 L 32 28 M 24 24 L 24 34 M 24 24 L 18 18 M 24 24 L 30 18" stroke="#64748b" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="16" cy="28" r="2" fill="#334155" />
+        <circle cx="32" cy="28" r="2" fill="#334155" />
+        <circle cx="24" cy="34" r="2" fill="#334155" />
+        <circle cx="18" cy="18" r="2" fill="#334155" />
+        <circle cx="30" cy="18" r="2" fill="#334155" />
+        
+        {/* Seat */}
+        <rect x="14" y="20" width="20" height="14" rx="4" fill="#334155" />
+        {/* Arm rests */}
+        <rect x="12" y="22" width="4" height="10" rx="2" fill="#1e293b" />
+        <rect x="32" y="22" width="4" height="10" rx="2" fill="#1e293b" />
+        {/* Back */}
+        <rect x="16" y="14" width="16" height="6" rx="3" fill="#1e293b" />
+      </svg>
     </div>
   );
 }
 
-function PlantTile() {
+function PlantTile({ col, row }) {
+  const rnd = Math.abs(random(col, row, 2));
+  const rot = (rnd * 360).toFixed(1);
+  
   return (
-    <div className="plant-tile">
-      <div className="plant-tile__leaves">
-        <div className="plant-tile__leaf plant-tile__leaf--1" />
-        <div className="plant-tile__leaf plant-tile__leaf--2" />
-        <div className="plant-tile__leaf plant-tile__leaf--3" />
-      </div>
-      <div className="plant-tile__pot" />
+    <div className="svg-tile plant-sway">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        <circle cx="24" cy="28" r="12" fill="rgba(15, 23, 42, 0.08)" />
+        <circle cx="24" cy="24" r="10" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+        <circle cx="24" cy="24" r="7" fill="#334155" />
+        
+        <g transform={`rotate(${rot} 24 24)`}>
+          <path d="M 24 24 C 10 10, 10 20, 24 24" fill="#10b981" />
+          <path d="M 24 24 C 38 10, 38 20, 24 24" fill="#059669" />
+          <path d="M 24 24 C 10 38, 20 38, 24 24" fill="#34d399" />
+          <path d="M 24 24 C 38 38, 20 38, 24 24" fill="#10b981" />
+          <path d="M 24 24 C 24 8, 14 14, 24 24" fill="#34d399" />
+          <path d="M 24 24 C 24 40, 34 34, 24 24" fill="#059669" />
+        </g>
+      </svg>
     </div>
   );
 }
 
 function ShelfTile() {
   return (
-    <div className="shelf-tile">
-      <div className="shelf-tile__row">
-        {[4,3,5,3,4,4,3].map((w, i) => (
-          <div key={i} className="shelf-tile__book"
-            style={{ width: w, background: BOOK_COLORS[i % BOOK_COLORS.length] }} />
-        ))}
-      </div>
-      <div className="shelf-tile__divider" />
-      <div className="shelf-tile__row">
-        {[3,5,3,4,3,5,4].map((w, i) => (
-          <div key={i} className="shelf-tile__book"
-            style={{ width: w, background: BOOK_COLORS[(i + 2) % BOOK_COLORS.length] }} />
-        ))}
-      </div>
+    <div className="svg-tile">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        <rect x="4" y="4" width="40" height="40" rx="2" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+        <line x1="4" y1="24" x2="44" y2="24" stroke="#cbd5e1" strokeWidth="2" />
+        
+        {/* Books Top Row */}
+        <rect x="8" y="10" width="4" height="14" fill="#ef4444" />
+        <rect x="13" y="12" width="4" height="12" fill="#3b82f6" />
+        <rect x="18" y="8" width="5" height="16" fill="#10b981" />
+        <rect x="25" y="10" width="3" height="14" fill="#f59e0b" />
+        <g transform="translate(30, 24) rotate(-20) translate(-30, -24)">
+          <rect x="30" y="10" width="4" height="14" fill="#8b5cf6" />
+        </g>
+        
+        {/* Books Bottom Row */}
+        <rect x="8" y="30" width="5" height="14" fill="#8b5cf6" />
+        <rect x="14" y="28" width="4" height="16" fill="#f59e0b" />
+        <rect x="19" y="32" width="6" height="12" fill="#ef4444" />
+        <rect x="27" y="28" width="4" height="16" fill="#3b82f6" />
+        <g transform="translate(34, 44) rotate(-15) translate(-34, -44)">
+          <rect x="34" y="30" width="4" height="14" fill="#10b981" />
+        </g>
+      </svg>
     </div>
   );
 }
@@ -71,12 +152,13 @@ function WallTile({ isOuter }) {
 
 function DoorTile() {
   return (
-    <div className="door-tile">
-      <div className="door-tile__frame">
-        <div className="door-tile__panel" />
-        <div className="door-tile__knob" />
-      </div>
-      <span className="door-tile__label">EXIT</span>
+    <div className="svg-tile door-tile-wrap">
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        <rect x="4" y="0" width="40" height="12" fill="#cbd5e1" />
+        <rect x="14" y="0" width="20" height="12" fill="#f1f5f9" />
+        <rect x="22" y="4" width="8" height="4" rx="2" fill="#94a3b8" />
+        <text x="24" y="28" fontSize="10" fontWeight="bold" fill="#ef4444" textAnchor="middle" fontFamily="sans-serif">EXIT</text>
+      </svg>
     </div>
   );
 }
@@ -96,9 +178,9 @@ function isCarpet(col, row) {
 function renderTile(tile, col, row) {
   if (tile === '#') return <WallTile isOuter />;
   if (tile === 'W') return <WallTile isOuter={false} />;
-  if (tile === 'D') return <DeskTile />;
+  if (tile === 'D') return <DeskTile col={col} row={row} />;
   if (tile === 'C') return <ChairTile />;
-  if (tile === 'P') return <PlantTile />;
+  if (tile === 'P') return <PlantTile col={col} row={row} />;
   if (tile === 'B') return <ShelfTile />;
   if (tile === 'X') return <DoorTile />;
   return <FloorTile isCarpet={isCarpet(col, row)} />;
@@ -133,15 +215,26 @@ export default function OfficeInterior() {
       initialPos,
     });
 
-  // Keep player centered in the viewport
+  // Smooth camera follow
   useEffect(() => {
-    const vp = viewportRef.current;
-    if (!vp) return;
-    const px = playerCol * TILE_PX + TILE_PX / 2;
-    const py = playerRow * TILE_PX + TILE_PX / 2;
-    const scrollX = px - vp.clientWidth / 2;
-    const scrollY = py - vp.clientHeight / 2;
-    vp.scrollTo({ left: scrollX, top: scrollY, behavior: 'smooth' });
+    let animationFrameId;
+    const updateScroll = () => {
+      const vp = viewportRef.current;
+      if (!vp) return;
+      const px = playerCol * TILE_PX + TILE_PX / 2;
+      const py = playerRow * TILE_PX + TILE_PX / 2;
+      const targetScrollX = px - vp.clientWidth / 2;
+      const targetScrollY = py - vp.clientHeight / 2;
+      
+      // Simple lerp for buttery smooth tracking
+      vp.scrollLeft += (targetScrollX - vp.scrollLeft) * 0.1;
+      vp.scrollTop += (targetScrollY - vp.scrollTop) * 0.1;
+      
+      animationFrameId = requestAnimationFrame(updateScroll);
+    };
+    
+    updateScroll();
+    return () => cancelAnimationFrame(animationFrameId);
   }, [playerCol, playerRow]);
 
   const activeNpc = dialogOpen && activeNpcId
@@ -158,6 +251,7 @@ export default function OfficeInterior() {
       </div>
 
       <div className="office__viewport" ref={viewportRef}>
+        <div className="office__lighting-overlay" />
         <div className="office__map" style={{ width: mapW, height: mapH }}>
 
           {/* Tile layer */}
