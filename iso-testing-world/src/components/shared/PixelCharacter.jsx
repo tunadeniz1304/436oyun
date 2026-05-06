@@ -53,18 +53,11 @@ export default function PixelCharacter({
       {/* Quest Indicator */}
       {hasQuest && (
         <div className="vector-char__quest-indicator">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <defs>
-              <filter id="glow-quest" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
-            <path d="M12 2 L12 14 M12 18 L12 20" stroke="#facc15" strokeWidth="4" strokeLinecap="round" filter="url(#glow-quest)" />
-          </svg>
+          <div className="quest-exclamation">
+            <div className="quest-exclamation__top"></div>
+            <div className="quest-exclamation__dot"></div>
+          </div>
+          <div className="quest-glow-ring"></div>
         </div>
       )}
 

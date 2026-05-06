@@ -299,6 +299,7 @@ export default function OfficeInterior() {
                     top: rIdx * TILE_PX,
                     width: TILE_PX,
                     height: TILE_PX,
+                    zIndex: rIdx * 10,
                   }}
                 >
                   {renderTile(tile, cIdx, rIdx)}
@@ -312,6 +313,7 @@ export default function OfficeInterior() {
               style={{
                 left: playerCol * TILE_PX + TILE_PX / 2,
                 top: playerRow * TILE_PX + TILE_PX,
+                zIndex: playerRow * 10 + 5,
               }}
             >
               <PixelCharacter
@@ -332,6 +334,7 @@ export default function OfficeInterior() {
                   style={{
                     left: npc.col * TILE_PX + TILE_PX / 2,
                     top: npc.row * TILE_PX + TILE_PX,
+                    zIndex: npc.row * 10 + 5,
                   }}
                 >
                   <PixelCharacter
