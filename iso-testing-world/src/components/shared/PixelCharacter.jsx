@@ -23,6 +23,7 @@ export default function PixelCharacter({
   bubble,
   sitting = false,
   hasQuest = false,
+  isMoving = false,
   hair = '#1e293b', // Modern dark slate hair by default
   skin = '#fcd34d', // Warm skin tone
 }) {
@@ -35,7 +36,7 @@ export default function PixelCharacter({
 
   return (
     <div
-      className={`vector-char vector-char--${type} vector-char--${facing} ${sitting ? 'vector-char--sitting' : ''} ${isNear ? 'vector-char--near' : ''}`}
+      className={`vector-char vector-char--${type} vector-char--${facing} ${sitting ? 'vector-char--sitting' : ''} ${isNear ? 'vector-char--near' : ''} ${isMoving ? 'vector-char--moving' : ''}`}
       style={{ '--char-accent': accentColor }}
     >
       {/* Interaction Hint */}
@@ -87,17 +88,21 @@ export default function PixelCharacter({
             {!sitting && (
               <g className="vector-char__legs">
                 {/* Left Leg */}
-                <rect x="22" y="56" width="6" height="14" rx="3" fill="#334155" />
-                <rect x="20" y="66" width="8" height="6" rx="2" fill="#0f172a" />
+                <g className="vc-leg-l">
+                  <rect x="22" y="56" width="6" height="14" rx="3" fill="#334155" />
+                  <rect x="20" y="66" width="8" height="6" rx="2" fill="#0f172a" />
+                </g>
                 {/* Right Leg */}
-                <rect x="36" y="56" width="6" height="14" rx="3" fill="#334155" />
-                <rect x="36" y="66" width="8" height="6" rx="2" fill="#0f172a" />
+                <g className="vc-leg-r">
+                  <rect x="36" y="56" width="6" height="14" rx="3" fill="#334155" />
+                  <rect x="36" y="66" width="8" height="6" rx="2" fill="#0f172a" />
+                </g>
               </g>
             )}
 
             {/* Torso */}
             {sitting ? (
-              <path d="M 18 36 C 18 28, 46 28, 46 36 L 48 56 C 48 60, 16 60, 16 56 Z" fill={`url(#shirtGrad-${type})`} />
+              <path d="M 18 36 C 18 28, 46 28, 46 36 L 48 54 C 48 58, 16 58, 16 54 Z" fill={`url(#shirtGrad-${type})`} />
             ) : (
               <path d="M 20 36 C 20 28, 44 28, 44 36 L 46 58 C 46 62, 18 62, 18 58 Z" fill={`url(#shirtGrad-${type})`} />
             )}
@@ -128,12 +133,23 @@ export default function PixelCharacter({
             )}
 
             {/* Arms */}
-            <g className="vector-char__arms">
-              <rect x="14" y="38" width="6" height="16" rx="3" fill={type === 'player' ? '#f8fafc' : accentColor} />
-              <circle cx="17" cy="54" r="3" fill={skin} />
-              <rect x="44" y="38" width="6" height="16" rx="3" fill={type === 'player' ? '#f8fafc' : accentColor} />
-              <circle cx="47" cy="54" r="3" fill={skin} />
-            </g>
+            {sitting ? (
+              <g className="vector-char__arms-sitting">
+                {/* Left arm reaching forward to keyboard */}
+                <path d="M 17 38 L 17 48 L 26 48" fill="none" stroke={type === 'player' ? '#f8fafc' : accentColor} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="27" cy="48" r="3" fill={skin} />
+                {/* Right arm reaching forward */}
+                <path d="M 47 38 L 47 48 L 38 48" fill="none" stroke={type === 'player' ? '#f8fafc' : accentColor} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="37" cy="48" r="3" fill={skin} />
+              </g>
+            ) : (
+              <g className="vector-char__arms">
+                <rect x="14" y="38" width="6" height="16" rx="3" fill={type === 'player' ? '#f8fafc' : accentColor} />
+                <circle cx="17" cy="54" r="3" fill={skin} />
+                <rect x="44" y="38" width="6" height="16" rx="3" fill={type === 'player' ? '#f8fafc' : accentColor} />
+                <circle cx="47" cy="54" r="3" fill={skin} />
+              </g>
+            )}
           </g>
         </svg>
       </div>

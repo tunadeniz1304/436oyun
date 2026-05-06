@@ -249,5 +249,33 @@
 }
 
 .vector-char--sitting .vector-char__svg {
-  transform: translateY(12px) scaleY(0.95);
+  transform: translateY(18px) scaleY(0.95);
+}
+
+/* ── Walk Animation ── */
+.vector-char--moving .vc-leg-l {
+  animation: walk-leg-l 0.3s infinite alternate ease-in-out;
+  transform-origin: 25px 56px;
+}
+.vector-char--moving .vc-leg-r {
+  animation: walk-leg-r 0.3s infinite alternate ease-in-out;
+  transform-origin: 39px 56px;
+}
+.vector-char--moving .vector-char__body-group {
+  animation: walk-bounce 0.3s infinite alternate ease-in-out;
+}
+
+@keyframes walk-leg-l {
+  0% { transform: translateY(-2px) rotate(20deg); }
+  100% { transform: translateY(0px) rotate(-20deg); }
+}
+
+@keyframes walk-leg-r {
+  0% { transform: translateY(0px) rotate(-20deg); }
+  100% { transform: translateY(-2px) rotate(20deg); }
+}
+
+@keyframes walk-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
 }

@@ -205,7 +205,7 @@ export default function OfficeInterior() {
 
   const initialPos = getPlayerStart(layout.map);
 
-  const { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId } =
+  const { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isMoving } =
     usePlayerMovement({
       map: layout.map,
       npcs: layout.npcs,
@@ -321,6 +321,7 @@ export default function OfficeInterior() {
                 facing={playerFacing}
                 label="You"
                 color={layout.color}
+                isMoving={isMoving}
               />
             </div>
 

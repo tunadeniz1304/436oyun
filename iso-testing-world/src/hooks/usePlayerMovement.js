@@ -17,6 +17,7 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   const [playerFacing, setPlayerFacing] = useState('down');
   const [nearMainNpc, setNearMainNpc] = useState(false);
   const [nearMainNpcId, setNearMainNpcId] = useState(null);
+  const [isMoving, setIsMoving] = useState(false);
 
   // Keep a stable ref to always-current values so the keydown handler
   // never goes stale without needing to re-register itself.
@@ -25,6 +26,7 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
 
   // Throttle movement speed
   const lastMoveRef = useRef(0);
+  const moveTimeoutRef = useRef(null);
 
   // Stable ref to npcs so we don't recreate npcBlocked on every render
   const npcsRef = useRef(npcs);
@@ -91,6 +93,10 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
       const tile = currentMap[newRow][newCol];
 
       setPlayerFacing(facing);
+      
+      setIsMoving(true);
+      clearTimeout(moveTimeoutRef.current);
+      moveTimeoutRef.current = setTimeout(() => setIsMoving(false), 150);
 
       if (tile === 'X') {
         onExitDoorRef.current();
@@ -119,5 +125,5 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId };
+  return { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isMoving };
 }
