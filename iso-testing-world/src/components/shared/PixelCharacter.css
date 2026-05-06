@@ -1,0 +1,272 @@
+.px-char {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+/* ── Figure ── */
+.px-char__figure {
+  width: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+}
+
+/* ── Head ── */
+.px-char__head {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  background: #f5c8a0;
+  border-radius: 3px 3px 2px 2px;
+  border: 1px solid #d4a070;
+  flex-shrink: 0;
+}
+
+/* Hair strip */
+.px-char__head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 1px;
+  right: 1px;
+  height: 4px;
+  background: #5a3a1a;
+  border-radius: 2px 2px 0 0;
+}
+
+.px-char__eyes {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+}
+
+.px-char__eye {
+  width: 2px;
+  height: 2px;
+  background: #222;
+  display: block;
+  border-radius: 1px;
+}
+
+/* ── Torso ── */
+.px-char__torso {
+  width: 14px;
+  height: 10px;
+  border-radius: 1px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Collar line */
+.px-char__torso::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 1px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 1px;
+}
+
+.px-char--player .px-char__torso {
+  background: color-mix(in srgb, var(--char-accent) 65%, #fff);
+  border: 1px solid color-mix(in srgb, var(--char-accent) 85%, #000);
+}
+
+.px-char--npc-main .px-char__torso {
+  background: var(--char-accent);
+  border: 1px solid color-mix(in srgb, var(--char-accent) 80%, #000);
+}
+
+.px-char--npc-worker .px-char__torso {
+  background: #7a8fa8;
+  border: 1px solid #5a6f88;
+}
+
+/* ── Legs ── */
+.px-char__legs {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.px-char__leg {
+  width: 5px;
+  height: 8px;
+  background: #2a2a40;
+  border-radius: 1px;
+  display: block;
+}
+
+/* ── Feet ── */
+.px-char__feet {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.px-char__foot {
+  width: 7px;
+  height: 4px;
+  background: #111;
+  border-radius: 2px 2px 1px 1px;
+  display: block;
+}
+
+/* ── Shadow ── */
+.px-char__shadow {
+  width: 14px;
+  height: 4px;
+  background: rgba(0,0,0,0.18);
+  border-radius: 50%;
+  margin-top: 1px;
+}
+
+/* ── Facing ── */
+.px-char--left .px-char__figure {
+  transform: scaleX(-1);
+}
+
+/* ── Label ── */
+.px-char__label {
+  font-size: 8px;
+  color: #444;
+  margin-top: 1px;
+  white-space: nowrap;
+  text-align: center;
+  font-family: monospace;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+
+/* ── Bubble ── */
+.px-char__bubble {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #333;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  animation: px-fadein 0.3s ease;
+  pointer-events: none;
+}
+
+.px-char__bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #d8d8d8;
+}
+
+.px-char__bubble::before {
+  content: '';
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #fff;
+  z-index: 1;
+}
+
+/* ── [E] hint ── */
+.px-char__hint {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--char-accent);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  animation: px-bounce 0.9s ease-in-out infinite;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--char-accent) 40%, transparent);
+  pointer-events: none;
+}
+
+/* ── Animations ── */
+@keyframes px-idle {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-2px); }
+}
+
+@keyframes px-sway {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50%       { transform: rotate(1.5deg); }
+}
+
+@keyframes px-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+@keyframes px-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-5px); }
+}
+
+@keyframes px-fadein {
+  from { opacity: 0; transform: translateY(5px) translateX(-50%); }
+  to   { opacity: 1; transform: translateY(0)   translateX(-50%); }
+}
+
+.px-char--player .px-char__figure {
+  animation: px-idle 1.6s ease-in-out infinite;
+}
+
+.px-char--npc-worker .px-char__figure {
+  animation: px-sway 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.px-char--npc-main .px-char__figure {
+  animation: px-pulse 2s ease-in-out infinite;
+}
+
+/* Left-facing: combine scaleX(-1) with animation */
+.px-char--left.px-char--player .px-char__figure {
+  animation: px-idle 1.6s ease-in-out infinite;
+  transform: scaleX(-1);
+}
+
+.px-char--left.px-char--npc-worker .px-char__figure {
+  animation: px-sway 2.4s ease-in-out infinite;
+  transform-origin: bottom center;
+  transform: scaleX(-1);
+}
+
+.px-char--left.px-char--npc-main .px-char__figure {
+  animation: px-pulse 2s ease-in-out infinite;
+  transform: scaleX(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-char__figure,
+  .px-char__hint,
+  .px-char__bubble {
+    animation: none !important;
+  }
+}

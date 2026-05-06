@@ -1,0 +1,449 @@
+.office {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #1a1a2e;
+}
+
+/* ── HUD ── */
+.office__hud {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #0f0f1a;
+  border-bottom: 2px solid var(--office-accent);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.office__back {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.office__back:hover { color: var(--office-accent); }
+
+.office__hud-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--office-accent);
+  text-transform: uppercase;
+}
+
+.office__hud-hint {
+  font-size: 11px;
+  color: #666;
+  font-family: monospace;
+}
+
+/* ── Viewport: scrollable window into the map ── */
+.office__viewport {
+  flex: 1;
+  overflow: auto;
+  /* hide scrollbars but keep scrolling */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: default;
+}
+.office__viewport::-webkit-scrollbar { display: none; }
+
+/* ── Map canvas ── */
+.office__map {
+  position: relative;
+  /* size set inline via JS */
+  background: #111;
+}
+
+/* ── Tile (absolute positioned) ── */
+.office__tile {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ── Entity (absolute, centered on tile) ── */
+.office__entity {
+  position: absolute;
+  transform: translateX(-50%) translateY(-100%);
+  z-index: 10;
+  pointer-events: none;
+  /* smooth movement */
+  transition: left 0.08s linear, top 0.08s linear;
+}
+
+/* ════════════════════════════════════════════
+   FLOOR TILES
+════════════════════════════════════════════ */
+.floor-tile {
+  width: 100%;
+  height: 100%;
+  background: #f0ede4;
+  border-right: 1px solid rgba(0,0,0,0.055);
+  border-bottom: 1px solid rgba(0,0,0,0.055);
+  box-sizing: border-box;
+}
+
+.floor-tile--carpet {
+  background: #e2d8c8;
+  border-right: 1px solid rgba(0,0,0,0.07);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  /* subtle diamond pattern */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px,
+      transparent 1px, transparent 8px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px,
+      transparent 1px, transparent 8px
+    );
+}
+
+/* ════════════════════════════════════════════
+   WALL TILES
+════════════════════════════════════════════ */
+.wall-tile {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.wall-tile--outer {
+  background: #5a5a6a;
+  border-right: 1px solid #3a3a48;
+  border-bottom: 1px solid #3a3a48;
+  /* brick-like texture */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px,
+      transparent 1px, transparent 24px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px,
+      transparent 1px, transparent 12px
+    );
+}
+
+/* top-face highlight to give wall a 3D ledge feel */
+.wall-tile--outer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: rgba(255,255,255,0.12);
+}
+
+.wall-tile--inner {
+  background: #c8c4bc;
+  border: 1px solid #aeaaa2;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.25),
+              inset 0 -2px 0 rgba(0,0,0,0.1);
+}
+
+/* ════════════════════════════════════════════
+   DESK TILES
+════════════════════════════════════════════ */
+.desk-tile {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #d4a96a 0%, #b8883e 100%);
+  border: 1px solid #8a6030;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 3px 3px;
+}
+
+/* wood grain lines */
+.desk-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      92deg,
+      rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px,
+      transparent 1px, transparent 7px
+    );
+  pointer-events: none;
+}
+
+.desk-tile__surface {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: rgba(255,255,255,0.15);
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.desk-tile__monitor {
+  width: 26px;
+  height: 18px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  border: 1.5px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.desk-tile__screen {
+  width: 80%;
+  height: 65%;
+  background: linear-gradient(135deg, #1a4a7a 0%, #0a2a4a 100%);
+  /* fake "screen glow" lines */
+  background-image:
+    linear-gradient(135deg, #1a4a7a 0%, #0a2a4a 100%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px,
+      transparent 1px, transparent 3px
+    );
+}
+
+.desk-tile__keyboard {
+  width: 28px;
+  height: 5px;
+  background: #2a2a3a;
+  border-radius: 1px;
+  border: 1px solid #111;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  /* key rows */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 2px,
+      transparent 2px, transparent 4px
+    );
+}
+
+.desk-tile__item {
+  width: 8px;
+  height: 8px;
+  background: #8a4444;
+  border-radius: 1px;
+  border: 1px solid #6a2424;
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+}
+
+/* ════════════════════════════════════════════
+   CHAIR TILES
+════════════════════════════════════════════ */
+.chair-tile {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+  background: transparent;
+}
+
+.chair-tile__back {
+  width: 28px;
+  height: 14px;
+  background: linear-gradient(180deg, #7a8898 0%, #606878 100%);
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #4a5868;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+
+.chair-tile__seat {
+  width: 32px;
+  height: 12px;
+  background: linear-gradient(180deg, #8a9aaa 0%, #6a7a8a 100%);
+  border-radius: 3px;
+  border: 1px solid #4a5868;
+  margin-top: -2px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+/* ════════════════════════════════════════════
+   PLANT TILES
+════════════════════════════════════════════ */
+.plant-tile {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 2px;
+  position: relative;
+}
+
+.plant-tile__pot {
+  width: 20px;
+  height: 14px;
+  background: linear-gradient(180deg, #9a6a3a 0%, #7a4a1a 100%);
+  border-radius: 2px 2px 4px 4px;
+  border: 1px solid #5a3010;
+  flex-shrink: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.plant-tile__leaves {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 28px;
+}
+
+.plant-tile__leaf {
+  position: absolute;
+  border-radius: 50% 50% 50% 0;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.plant-tile__leaf--1 {
+  width: 16px;
+  height: 22px;
+  bottom: 0;
+  left: 0;
+  transform: rotate(-30deg);
+  background: linear-gradient(135deg, #3a8a3a 0%, #2a6a2a 100%);
+}
+
+.plant-tile__leaf--2 {
+  width: 18px;
+  height: 26px;
+  bottom: 2px;
+  left: 9px;
+  background: linear-gradient(135deg, #5aaa5a 0%, #3a8a3a 100%);
+  border-radius: 50% 50% 50% 10%;
+}
+
+.plant-tile__leaf--3 {
+  width: 15px;
+  height: 20px;
+  bottom: 1px;
+  left: 20px;
+  transform: rotate(25deg);
+  background: linear-gradient(135deg, #4a9a4a 0%, #3a7a3a 100%);
+}
+
+/* ════════════════════════════════════════════
+   SHELF / BOOKCASE TILES
+════════════════════════════════════════════ */
+.shelf-tile {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #5a3418 0%, #3a1a08 100%);
+  border: 1px solid #2a1008;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 4px 3px;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.shelf-tile__row {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  height: 13px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 1px;
+  padding: 1px;
+  overflow: hidden;
+}
+
+.shelf-tile__book {
+  flex-shrink: 0;
+  border-radius: 0 1px 1px 0;
+  box-shadow: inset -1px 0 rgba(255,255,255,0.15);
+  min-width: 3px;
+}
+
+.shelf-tile__divider {
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 1px;
+  margin: 0 1px;
+}
+
+/* ════════════════════════════════════════════
+   DOOR TILE
+════════════════════════════════════════════ */
+.door-tile {
+  width: 100%;
+  height: 100%;
+  background: color-mix(in srgb, var(--office-accent) 15%, #f0ede4);
+  border: 2px solid var(--office-accent);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.door-tile__frame {
+  width: 20px;
+  height: 28px;
+  border: 2px solid var(--office-accent);
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  background: color-mix(in srgb, var(--office-accent) 8%, #fff);
+}
+
+.door-tile__panel {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--office-accent) 30%, transparent);
+  border-radius: 1px;
+}
+
+.door-tile__knob {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--office-accent);
+}
+
+.door-tile__label {
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--office-accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
