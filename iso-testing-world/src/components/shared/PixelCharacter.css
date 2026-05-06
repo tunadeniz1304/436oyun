@@ -189,3 +189,22 @@
     animation: none !important;
   }
 }
+
+.vector-char__quest-indicator {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce-quest 2s ease-in-out infinite;
+  z-index: 15;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
+@keyframes bounce-quest {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+.vector-char--sitting .vector-char__svg {
+  transform: translateY(12px) scaleY(0.95);
+}

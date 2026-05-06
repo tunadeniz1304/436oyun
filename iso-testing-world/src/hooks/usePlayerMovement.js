@@ -23,6 +23,9 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   const stateRef = useRef({});
   stateRef.current = { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isDialogOpen };
 
+  // Throttle movement speed
+  const lastMoveRef = useRef(0);
+
   // Stable ref to npcs so we don't recreate npcBlocked on every render
   const npcsRef = useRef(npcs);
   npcsRef.current = npcs;
@@ -72,6 +75,10 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
       if (dCol === 0 && dRow === 0) return;
 
       e.preventDefault();
+
+      const now = Date.now();
+      if (now - lastMoveRef.current < 120) return; // Speed limit (120ms per step)
+      lastMoveRef.current = now;
 
       const newCol = playerCol + dCol;
       const newRow = playerRow + dRow;

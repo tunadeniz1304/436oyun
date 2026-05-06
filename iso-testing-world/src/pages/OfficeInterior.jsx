@@ -217,17 +217,16 @@ export default function OfficeInterior() {
 
   const [scale, setScale] = useState(1);
 
-  // Scale map to perfectly fit the screen 100%
+  // Scale map to perfectly fit the screen (cover) without gaps
   useEffect(() => {
     const updateScale = () => {
       const vp = viewportRef.current;
       if (!vp) return;
       
-      // Calculate how much we need to scale down/up to fit
-      // We add a tiny bit of padding (0.95) so it doesn't touch the absolute edges
       const scaleX = vp.clientWidth / mapW;
       const scaleY = vp.clientHeight / mapH;
-      const bestFit = Math.min(scaleX, scaleY) * 0.98;
+      // Use Math.max to ensure no black bars (covers entire screen)
+      const bestFit = Math.max(scaleX, scaleY);
       
       setScale(bestFit);
     };
@@ -236,6 +235,31 @@ export default function OfficeInterior() {
     window.addEventListener('resize', updateScale);
     return () => window.removeEventListener('resize', updateScale);
   }, [mapW, mapH]);
+
+  // Smooth camera follow
+  useEffect(() => {
+    let animationFrameId;
+    const updateScroll = () => {
+      const vp = viewportRef.current;
+      if (!vp) return;
+      
+      // Calculate scaled player position
+      const px = (playerCol * TILE_PX + TILE_PX / 2) * scale;
+      const py = (playerRow * TILE_PX + TILE_PX / 2) * scale;
+      
+      const targetScrollX = px - vp.clientWidth / 2;
+      const targetScrollY = py - vp.clientHeight / 2;
+      
+      // Smooth lerp
+      vp.scrollLeft += (targetScrollX - vp.scrollLeft) * 0.15;
+      vp.scrollTop += (targetScrollY - vp.scrollTop) * 0.15;
+      
+      animationFrameId = requestAnimationFrame(updateScroll);
+    };
+    
+    updateScroll();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [playerCol, playerRow, scale]);
 
   const activeNpc = dialogOpen && activeNpcId
     ? layout.npcs.find(n => n.id === activeNpcId)
@@ -254,13 +278,14 @@ export default function OfficeInterior() {
         <div className="office__lighting-overlay" />
         
         <div style={{
-          width: '100%', height: '100%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          width: mapW * scale, 
+          height: mapH * scale,
+          position: 'relative'
         }}>
           <div className="office__map" style={{ 
             width: mapW, height: mapH,
             transform: `scale(${scale})`,
-            transformOrigin: 'center center'
+            transformOrigin: '0 0'
           }}>
 
             {/* Tile layer */}
@@ -298,25 +323,30 @@ export default function OfficeInterior() {
             </div>
 
             {/* NPCs */}
-            {layout.npcs.map(npc => (
-              <div
-                key={npc.id}
-                className="office__entity"
-                style={{
-                  left: npc.col * TILE_PX + TILE_PX / 2,
-                  top: npc.row * TILE_PX + TILE_PX,
-                }}
-              >
-                <PixelCharacter
-                  type={npc.type === 'main' ? 'npc-main' : 'npc-worker'}
-                  facing={npc.facing}
-                  label={npc.name}
-                  color={layout.color}
-                  isNear={nearMainNpcId === npc.id && nearMainNpc}
-                  bubble={npc.bubble}
-                />
-              </div>
-            ))}
+            {layout.npcs.map(npc => {
+              const isSitting = layout.map[npc.row]?.[npc.col] === 'C';
+              return (
+                <div
+                  key={npc.id}
+                  className="office__entity"
+                  style={{
+                    left: npc.col * TILE_PX + TILE_PX / 2,
+                    top: npc.row * TILE_PX + TILE_PX,
+                  }}
+                >
+                  <PixelCharacter
+                    type={npc.type === 'main' ? 'npc-main' : 'npc-worker'}
+                    facing={npc.facing}
+                    label={npc.name}
+                    color={layout.color}
+                    isNear={nearMainNpcId === npc.id && nearMainNpc}
+                    bubble={npc.bubble}
+                    sitting={isSitting}
+                    hasQuest={npc.type === 'main'}
+                  />
+                </div>
+              );
+            })}
 
           </div>
         </div>
