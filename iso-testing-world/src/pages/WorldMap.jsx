@@ -610,8 +610,7 @@ function WorldMap() {
   };
 
   const handleSelect = (zoneId) => {
-    const def = ZONE_DEFS.find((z) => z.id === zoneId);
-    if (def) navigate(def.route);
+    navigate(`/office/${zoneId}`);
   };
 
   return (
