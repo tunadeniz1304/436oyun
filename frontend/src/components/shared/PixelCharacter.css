@@ -1,0 +1,281 @@
+.vector-char {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+/* ── Figure ── */
+.vector-char__figure {
+  width: 40px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 2;
+  transform-origin: bottom center;
+}
+
+/* ── Label ── */
+.vector-char__label {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 3px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  z-index: 3;
+}
+
+/* ── Bubble ── */
+.vector-char__bubble {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  color: #0f172a;
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+  animation: vc-bubble-spring 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+  z-index: 10;
+  transform-origin: bottom center;
+}
+
+.vector-char__bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(226, 232, 240, 0.8);
+}
+
+.vector-char__bubble::before {
+  content: '';
+  position: absolute;
+  top: calc(100% - 1.5px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.95);
+  z-index: 1;
+}
+
+@keyframes vc-bubble-spring {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.6) translateY(10px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+/* ── [E] hint ── */
+.vector-char__hint {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--char-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  animation: vc-hint-bounce 1.5s ease-in-out infinite;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--char-accent) 40%, transparent);
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vector-char__key {
+  background: rgba(255,255,255,0.25);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.vector-char__hint::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--char-accent);
+}
+
+@keyframes vc-hint-bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* ── Pulse ring around NPC Main when near ── */
+.vector-char--npc-main::before {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--char-accent);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.vector-char--near::before {
+  animation: vc-ring-pulse 1.5s ease-out infinite;
+}
+
+@keyframes vc-ring-pulse {
+  0% { transform: translateX(-50%) scale(0.8); opacity: 1; }
+  100% { transform: translateX(-50%) scale(2); opacity: 0; }
+}
+
+/* ── Animations ── */
+@keyframes vc-idle {
+  0%, 100% { transform: scaleY(1); }
+  50%       { transform: scaleY(0.96) translateY(1px); }
+}
+
+@keyframes vc-worker-type {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%       { transform: translateY(1px) rotate(2deg); }
+}
+
+.vector-char--player .vector-char__body-group {
+  animation: vc-idle 2s ease-in-out infinite;
+  transform-origin: center 50px;
+}
+
+.vector-char--npc-worker .vector-char__body-group {
+  animation: vc-worker-type 1.5s ease-in-out infinite;
+  transform-origin: center 50px;
+}
+
+.vector-char--npc-main .vector-char__body-group {
+  animation: vc-idle 2.5s ease-in-out infinite;
+  transform-origin: center 50px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vector-char__body-group,
+  .vector-char__hint,
+  .vector-char__bubble,
+  .vector-char--npc-main::before {
+    animation: none !important;
+  }
+}
+
+.vector-char__quest-indicator {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 15;
+  animation: float-quest 2s ease-in-out infinite;
+}
+
+.quest-exclamation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.quest-exclamation__top {
+  width: 6px;
+  height: 14px;
+  background: #fbbf24;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.8);
+}
+
+.quest-exclamation__dot {
+  width: 6px;
+  height: 6px;
+  background: #fbbf24;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.8), inset 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.quest-glow-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(251, 191, 36, 0.5);
+  animation: pulse-quest-ring 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float-quest {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+@keyframes pulse-quest-ring {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+.vector-char--sitting .vector-char__svg {
+  transform: translateY(18px) scaleY(0.95);
+}
+
+/* ── Walk Animation ── */
+.vector-char--moving .vc-leg-l {
+  animation: walk-leg-l 0.3s infinite alternate ease-in-out;
+  transform-origin: 25px 56px;
+}
+.vector-char--moving .vc-leg-r {
+  animation: walk-leg-r 0.3s infinite alternate ease-in-out;
+  transform-origin: 39px 56px;
+}
+.vector-char--moving .vector-char__body-group {
+  animation: walk-bounce 0.3s infinite alternate ease-in-out;
+}
+
+@keyframes walk-leg-l {
+  0% { transform: translateY(-2px) rotate(20deg); }
+  100% { transform: translateY(0px) rotate(-20deg); }
+}
+
+@keyframes walk-leg-r {
+  0% { transform: translateY(0px) rotate(-20deg); }
+  100% { transform: translateY(-2px) rotate(20deg); }
+}
+
+@keyframes walk-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}

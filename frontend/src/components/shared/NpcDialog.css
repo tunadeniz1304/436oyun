@@ -1,0 +1,179 @@
+.npc-dialog {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0 0 20px 0;
+}
+
+.npc-dialog__inner {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.npc-dialog__card {
+  background: #ffffff;
+  border-radius: 14px 14px 0 0;
+  border-top: 4px solid var(--dialog-color);
+  box-shadow: 0 -6px 32px rgba(0,0,0,0.16);
+  padding: 16px 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Header ── */
+.npc-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.npc-dialog__avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dialog-color) 12%, #fff);
+  border: 2px solid color-mix(in srgb, var(--dialog-color) 30%, #fff);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.npc-dialog__meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.npc-dialog__name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--dialog-color);
+  letter-spacing: 0.01em;
+}
+
+.npc-dialog__role {
+  font-size: 11px;
+  color: var(--ink-soft, #666);
+  font-family: monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.npc-dialog__close {
+  background: none;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  color: var(--ink-soft, #555);
+  cursor: pointer;
+  padding: 4px 9px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.npc-dialog__close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+/* ── Speech bubble indicator ── */
+.npc-dialog__divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0 -4px;
+}
+
+/* ── Text ── */
+.npc-dialog__text {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink, #1a1a1a);
+  min-height: 52px;
+  padding: 4px 0;
+}
+
+/* Highlight ISO clause references inline */
+.npc-dialog__text strong,
+.npc-dialog__iso-ref {
+  color: var(--dialog-color);
+  font-weight: 600;
+}
+
+/* ── Footer ── */
+.npc-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.npc-dialog__progress {
+  font-size: 11px;
+  color: var(--ink-soft, #666);
+  font-family: monospace;
+  letter-spacing: 0.06em;
+}
+
+/* Dot indicators */
+.npc-dialog__dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.npc-dialog__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: background 0.2s;
+}
+
+.npc-dialog__dot--active {
+  background: var(--dialog-color);
+  width: 18px;
+  border-radius: 3px;
+}
+
+.npc-dialog__btn {
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--ink, #1a1a1a);
+  color: #fff;
+  transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.npc-dialog__btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.npc-dialog__btn:active {
+  transform: translateY(0);
+}
+
+.npc-dialog__btn--enter {
+  background: var(--dialog-color);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--dialog-color) 35%, transparent);
+}
+
+/* Keyboard hint */
+.npc-dialog__key-hint {
+  font-size: 10px;
+  color: #aaa;
+  font-family: monospace;
+  align-self: flex-end;
+  padding-bottom: 2px;
+}
