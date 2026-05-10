@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const PASSABLE = new Set(['.', 'C', 'X']);
+const PASSABLE = new Set(['.', 'C', 'X', 'R']);
 
 /**
  * @param {Object} params
@@ -15,38 +15,33 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   const [playerCol, setPlayerCol] = useState(initialPos.col);
   const [playerRow, setPlayerRow] = useState(initialPos.row);
   const [playerFacing, setPlayerFacing] = useState('down');
-  const [nearMainNpc, setNearMainNpc] = useState(false);
-  const [nearMainNpcId, setNearMainNpcId] = useState(null);
+  const [nearNpc, setNearNpc] = useState(false);
+  const [nearNpcId, setNearNpcId] = useState(null);
   const [isMoving, setIsMoving] = useState(false);
 
-  // Keep a stable ref to always-current values so the keydown handler
-  // never goes stale without needing to re-register itself.
   const stateRef = useRef({});
-  stateRef.current = { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isDialogOpen };
+  stateRef.current = { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, isDialogOpen };
 
-  // Throttle movement speed
   const lastMoveRef = useRef(0);
   const moveTimeoutRef = useRef(null);
 
-  // Stable ref to npcs so we don't recreate npcBlocked on every render
   const npcsRef = useRef(npcs);
   npcsRef.current = npcs;
 
   const checkNearby = useCallback((col, row) => {
-    const mainNpcs = npcsRef.current.filter(n => n.type === 'main');
-    for (const npc of mainNpcs) {
+    const interactable = npcsRef.current.filter(n => n.interactable === true);
+    for (const npc of interactable) {
       const dist = Math.max(Math.abs(col - npc.col), Math.abs(row - npc.row));
       if (dist <= 1) {
-        setNearMainNpc(true);
-        setNearMainNpcId(npc.id);
+        setNearNpc(true);
+        setNearNpcId(npc.id);
         return;
       }
     }
-    setNearMainNpc(false);
-    setNearMainNpcId(null);
-  }, []); // stable — reads from ref
+    setNearNpc(false);
+    setNearNpcId(null);
+  }, []);
 
-  // Stable callbacks
   const onExitDoorRef = useRef(onExitDoor);
   onExitDoorRef.current = onExitDoor;
   const onInteractRef = useRef(onInteract);
@@ -54,13 +49,13 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isDialogOpen } = stateRef.current;
+      const { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, isDialogOpen } = stateRef.current;
 
       if (isDialogOpen) return;
 
       if (e.key === 'e' || e.key === 'E') {
-        if (nearMainNpc && nearMainNpcId) {
-          onInteractRef.current(nearMainNpcId);
+        if (nearNpc && nearNpcId) {
+          onInteractRef.current(nearNpcId);
         }
         return;
       }
@@ -79,21 +74,19 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
       e.preventDefault();
 
       const now = Date.now();
-      if (now - lastMoveRef.current < 120) return; // Speed limit (120ms per step)
+      if (now - lastMoveRef.current < 120) return;
       lastMoveRef.current = now;
 
       const newCol = playerCol + dCol;
       const newRow = playerRow + dRow;
 
-      const currentMap = map; // map is stable (from layout data)
+      if (newRow < 0 || newRow >= map.length) return;
+      if (newCol < 0 || newCol >= map[newRow].length) return;
 
-      if (newRow < 0 || newRow >= currentMap.length) return;
-      if (newCol < 0 || newCol >= currentMap[newRow].length) return;
-
-      const tile = currentMap[newRow][newCol];
+      const tile = map[newRow][newCol];
 
       setPlayerFacing(facing);
-      
+
       setIsMoving(true);
       clearTimeout(moveTimeoutRef.current);
       moveTimeoutRef.current = setTimeout(() => setIsMoving(false), 150);
@@ -105,7 +98,6 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
 
       if (!PASSABLE.has(tile)) return;
 
-      // Block movement into any NPC's tile
       const blocked = npcsRef.current.some(n => n.col === newCol && n.row === newRow);
       if (blocked) return;
 
@@ -116,7 +108,6 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  // Register once — reads all mutable values through refs
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, checkNearby]);
 
@@ -125,5 +116,6 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { playerCol, playerRow, playerFacing, nearMainNpc, nearMainNpcId, isMoving };
+  // Backwards-compat aliases so existing consumers still work
+  return { playerCol, playerRow, playerFacing, nearMainNpc: nearNpc, nearMainNpcId: nearNpcId, nearNpc, nearNpcId, isMoving };
 }
