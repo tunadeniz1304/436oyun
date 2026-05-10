@@ -283,28 +283,31 @@
 
 /* ── Walk Animation ── */
 .vector-char--moving .vc-leg-l {
-  animation: walk-leg-l 0.3s infinite alternate ease-in-out;
-  transform-origin: 25px 56px;
+  animation: walk-leg-l 0.4s infinite ease-in-out;
 }
 .vector-char--moving .vc-leg-r {
-  animation: walk-leg-r 0.3s infinite alternate ease-in-out;
-  transform-origin: 39px 56px;
+  animation: walk-leg-r 0.4s infinite ease-in-out;
 }
 .vector-char--moving .vector-char__body-group {
-  animation: walk-bounce 0.3s infinite alternate ease-in-out;
+  animation: walk-body 0.4s infinite ease-in-out;
 }
 
 @keyframes walk-leg-l {
-  0% { transform: translateY(-2px) rotate(20deg); }
-  100% { transform: translateY(0px) rotate(-20deg); }
+  0%   { transform: translateX(-3px) translateY(0px); }
+  50%  { transform: translateX(3px)  translateY(-2px); }
+  100% { transform: translateX(-3px) translateY(0px); }
 }
 
 @keyframes walk-leg-r {
-  0% { transform: translateY(0px) rotate(-20deg); }
-  100% { transform: translateY(-2px) rotate(20deg); }
+  0%   { transform: translateX(3px)  translateY(-2px); }
+  50%  { transform: translateX(-3px) translateY(0px); }
+  100% { transform: translateX(3px)  translateY(-2px); }
 }
 
-@keyframes walk-bounce {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-4px); }
+@keyframes walk-body {
+  0%   { transform: translateY(0px); }
+  25%  { transform: translateY(-2px); }
+  50%  { transform: translateY(0px); }
+  75%  { transform: translateY(-2px); }
+  100% { transform: translateY(0px); }
 }

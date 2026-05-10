@@ -367,7 +367,7 @@ export default function OfficeInterior() {
                     top: rIdx * TILE_PX,
                     width: TILE_PX,
                     height: TILE_PX,
-                    zIndex: rIdx * 10,
+                    zIndex: rIdx * 10 + (['#','W','B','M','F'].includes(tile) ? 8 : 0),
                   }}
                 >
                   {renderTile(tile, cIdx, rIdx)}

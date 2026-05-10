@@ -76,7 +76,7 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
       e.preventDefault();
 
       const now = Date.now();
-      if (now - lastMoveRef.current < 120) return;
+      if (now - lastMoveRef.current < 150) return;
       lastMoveRef.current = now;
 
       const newCol = playerCol + dCol;
