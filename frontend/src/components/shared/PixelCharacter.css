@@ -130,8 +130,9 @@
   50%       { transform: translateX(-50%) translateY(-6px); }
 }
 
-/* ── Pulse ring around NPC Main when near ── */
-.vector-char--npc-main::before {
+/* ── Pulse ring around interactable NPC when near ── */
+.vector-char--npc-main::before,
+.vector-char--npc-worker::before {
   content: '';
   position: absolute;
   bottom: 12px;
@@ -185,11 +186,13 @@
   .vector-char__body-group,
   .vector-char__hint,
   .vector-char__bubble,
-  .vector-char--npc-main::before {
+  .vector-char--npc-main::before,
+  .vector-char--npc-worker::before {
     animation: none !important;
   }
 }
 
+/* ── Quest indicator (yellow !) ── */
 .vector-char__quest-indicator {
   position: absolute;
   top: -36px;
@@ -246,6 +249,32 @@
 @keyframes pulse-quest-ring {
   0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
   100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
+/* ── Quest done (green ✓) ── */
+.vector-char__quest-done {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+  animation: quest-done-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes quest-done-pop {
+  0% { transform: translateX(-50%) scale(0); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 .vector-char--sitting .vector-char__svg {
