@@ -125,6 +125,16 @@
   white-space: nowrap;
 }
 
+.zone-layout__back--office {
+  background: color-mix(in srgb, var(--zone-color) 10%, var(--surface-sunken));
+  border-color: color-mix(in srgb, var(--zone-color) 30%, transparent);
+  color: var(--zone-color);
+}
+
+.zone-layout__back--office:hover {
+  background: color-mix(in srgb, var(--zone-color) 18%, var(--surface-sunken));
+}
+
 .zone-layout__back:hover {
   background: var(--surface-raised);
   color: var(--ink);

@@ -97,15 +97,28 @@ function QuizBody({ quiz, onComplete, zoneColor }) {
  * @param {{
  *   npc: object,
  *   zoneColor: string,
+ *   currentStage?: string,
  *   onClose: ()=>void,
- *   onEnterZone?: ()=>void,
  *   onQuestComplete?: (npcId:string)=>void,
  * }} props
  */
-export default function NpcDialog({ npc, zoneColor, onClose, onEnterZone, onQuestComplete }) {
+export default function NpcDialog({ npc, zoneColor, currentStage, onClose, onQuestComplete }) {
   const [idx, setIdx] = useState(0);
+
   const isQuizMode = !!npc.quiz;
-  const isLast = !isQuizMode && idx === npc.lines.length - 1;
+  const isManagerMode = npc.type === 'main' && !!npc.managerStages;
+
+  // Resolve lines for this dialog session
+  const lines = isManagerMode
+    ? (npc.managerStages[currentStage] ?? npc.managerStages['briefing'] ?? [])
+    : (npc.lines ?? []);
+
+  const isLast = !isQuizMode && idx === lines.length - 1;
+
+  // Footer button label for manager stages
+  const btnLabel = isManagerMode
+    ? (isLast ? 'Got it →' : 'Continue →')
+    : (isLast ? 'Got it →' : 'Continue →');
 
   // Resolve NPC visual variant
   const variant = npc.variantId ? NPC_VARIANTS[npc.variantId] : null;
@@ -114,16 +127,16 @@ export default function NpcDialog({ npc, zoneColor, onClose, onEnterZone, onQues
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === 'Escape') { onClose(); return; }
-      if (isQuizMode) return; // quiz uses click-only
+      if (isQuizMode) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        if (isLast) onEnterZone?.();
+        if (isLast) onClose();
         else setIdx(i => i + 1);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose, onEnterZone, isLast, isQuizMode]);
+  }, [onClose, isLast, isQuizMode]);
 
   const handleQuestComplete = () => {
     onQuestComplete?.(npc.id);
@@ -177,13 +190,13 @@ export default function NpcDialog({ npc, zoneColor, onClose, onEnterZone, onQues
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
                 >
-                  {npc.lines[idx]}
+                  {lines[idx]}
                 </motion.div>
               </AnimatePresence>
 
               <div className="npc-dialog__footer">
                 <div className="npc-dialog__dots">
-                  {npc.lines.map((_, i) => (
+                  {lines.map((_, i) => (
                     <div
                       key={i}
                       className={`npc-dialog__dot${i === idx ? ' npc-dialog__dot--active' : ''}`}
@@ -192,9 +205,9 @@ export default function NpcDialog({ npc, zoneColor, onClose, onEnterZone, onQues
                 </div>
                 <button
                   className={`npc-dialog__btn${isLast ? ' npc-dialog__btn--enter' : ''}`}
-                  onClick={isLast ? onEnterZone : () => setIdx(i => i + 1)}
+                  onClick={isLast ? onClose : () => setIdx(i => i + 1)}
                 >
-                  {isLast ? 'Enter Zone →' : 'Continue →'}
+                  {btnLabel}
                 </button>
               </div>
             </>

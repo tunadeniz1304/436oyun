@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // 'R' (rug) is passable floor; 'C' (chair) allows standing on it briefly
+// '@' (player desk+PC) is NOT passable — player stands adjacent and presses E
 const PASSABLE = new Set(['.', 'C', 'X', 'R']);
 
 /**
@@ -10,18 +11,20 @@ const PASSABLE = new Set(['.', 'C', 'X', 'R']);
  * @param {boolean} params.isDialogOpen
  * @param {()=>void} params.onExitDoor
  * @param {(npcId:string)=>void} params.onInteract
+ * @param {()=>void} [params.onComputerInteract]
  * @param {{col:number,row:number}} params.initialPos
  */
-export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInteract, initialPos }) {
+export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInteract, onComputerInteract, initialPos }) {
   const [playerCol, setPlayerCol] = useState(initialPos.col);
   const [playerRow, setPlayerRow] = useState(initialPos.row);
   const [playerFacing, setPlayerFacing] = useState('down');
   const [nearNpc, setNearNpc] = useState(false);
   const [nearNpcId, setNearNpcId] = useState(null);
+  const [nearComputer, setNearComputer] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
 
   const stateRef = useRef({});
-  stateRef.current = { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, isDialogOpen };
+  stateRef.current = { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, nearComputer, isDialogOpen };
 
   const lastMoveRef = useRef(0);
   const moveTimeoutRef = useRef(null);
@@ -29,35 +32,59 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   const npcsRef = useRef(npcs);
   npcsRef.current = npcs;
 
+  const mapRef = useRef(map);
+  mapRef.current = map;
+
   const checkNearby = useCallback((col, row) => {
-    // Any NPC with interactable: true counts
+    // Any NPC with interactable: true counts — NPCs take priority over computer
     const interactable = npcsRef.current.filter(n => n.interactable === true);
     for (const npc of interactable) {
       const dist = Math.max(Math.abs(col - npc.col), Math.abs(row - npc.row));
       if (dist <= 1) {
         setNearNpc(true);
         setNearNpcId(npc.id);
+        setNearComputer(false);
         return;
       }
     }
     setNearNpc(false);
     setNearNpcId(null);
+
+    // Check adjacency to '@' tile (player desk+PC)
+    const currentMap = mapRef.current;
+    let foundComputer = false;
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        const r = row + dr;
+        const c = col + dc;
+        if (r >= 0 && r < currentMap.length && c >= 0 && c < currentMap[r].length) {
+          if (currentMap[r][c] === '@') { foundComputer = true; break; }
+        }
+      }
+      if (foundComputer) break;
+    }
+    setNearComputer(foundComputer);
   }, []);
 
   const onExitDoorRef = useRef(onExitDoor);
   onExitDoorRef.current = onExitDoor;
   const onInteractRef = useRef(onInteract);
   onInteractRef.current = onInteract;
+  const onComputerInteractRef = useRef(onComputerInteract);
+  onComputerInteractRef.current = onComputerInteract;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, isDialogOpen } = stateRef.current;
+      const { playerCol, playerRow, playerFacing, nearNpc, nearNpcId, nearComputer, isDialogOpen } = stateRef.current;
 
       if (isDialogOpen) return;
 
       if (e.key === 'e' || e.key === 'E') {
         if (nearNpc && nearNpcId) {
           onInteractRef.current(nearNpcId);
+        } else if (nearComputer && onComputerInteractRef.current) {
+          onComputerInteractRef.current();
         }
         return;
       }
@@ -118,10 +145,9 @@ export function usePlayerMovement({ map, npcs, isDialogOpen, onExitDoor, onInter
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Expose old names as aliases for backwards-compat with OfficeInterior
   return {
     playerCol, playerRow, playerFacing, isMoving,
-    nearNpc, nearNpcId,
+    nearNpc, nearNpcId, nearComputer,
     // legacy aliases
     nearMainNpc: nearNpc,
     nearMainNpcId: nearNpcId,

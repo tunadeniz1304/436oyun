@@ -30,6 +30,7 @@ function ZoneLayout({
   onSkipZone,
   toolbar,
   children,
+  showReturnToOffice = false,
 }) {
   const zoneNum = ZONE_NUMBER[zoneId];
   const icon    = ZONE_ICON[zoneId] ?? '◆';
@@ -58,6 +59,11 @@ function ZoneLayout({
             <span className="zone-layout__review-badge" aria-label="Review mode — score locked">
               REVIEW MODE
             </span>
+          )}
+          {showReturnToOffice && zoneId && (
+            <Link to={`/office/${zoneId}`} className="zone-layout__back zone-layout__back--office" aria-label="Return to office">
+              ← RETURN TO OFFICE
+            </Link>
           )}
           <Link to="/" className="zone-layout__back" aria-label="Back to world map">
             ← BACK TO MAP

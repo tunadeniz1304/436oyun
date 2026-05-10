@@ -1,0 +1,263 @@
+.retro-desktop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: retro-fade-in 0.15s ease-out;
+}
+
+@keyframes retro-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Window ── */
+.retro-desktop__window {
+  width: 560px;
+  height: 420px;
+  background: #008080;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 4px 0 #000, inset 2px 2px 0 #fff, inset -2px -2px 0 #808080;
+  border: 2px solid #000;
+  animation: retro-window-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes retro-window-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* ── Title bar ── */
+.retro-desktop__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  padding: 3px 4px 3px 6px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.retro-desktop__titlebar-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.retro-desktop__titlebar-text {
+  flex: 1;
+}
+
+.retro-desktop__titlebar-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.retro-desktop__wbtn {
+  width: 18px;
+  height: 14px;
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-size: 9px;
+  font-weight: bold;
+  font-family: 'MS Sans Serif', Arial, sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  padding: 0;
+}
+
+.retro-desktop__wbtn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-desktop__wbtn--close {
+  background: #c0c0c0;
+  font-size: 10px;
+}
+
+/* ── Canvas (teal desktop) ── */
+.retro-desktop__canvas {
+  flex: 1;
+  background: #008080;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+}
+
+/* ── Folder icon ── */
+.retro-desktop__folder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.retro-desktop__folder:hover {
+  background: rgba(0, 0, 128, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.retro-desktop__folder--selected {
+  background: #000080;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.retro-desktop__folder--launching {
+  animation: folder-open 0.4s ease-out forwards;
+}
+
+@keyframes folder-open {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(0) translateY(-40px); opacity: 0; }
+}
+
+.retro-desktop__folder-icon {
+  position: relative;
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.4));
+}
+
+.retro-desktop__folder--corrupted .retro-desktop__folder-icon {
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.4)) hue-rotate(180deg);
+}
+
+.retro-desktop__folder-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  border: 2px solid #fff;
+  filter: none;
+}
+
+.retro-desktop__folder-badge--done {
+  background: #10b981;
+  font-size: 11px;
+}
+
+.retro-desktop__folder-label {
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  max-width: 140px;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.retro-desktop__folder--selected .retro-desktop__folder-label {
+  background: #000080;
+  color: #fff;
+}
+
+/* ── Hint text ── */
+.retro-desktop__hint {
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: 1px 1px 0 #000;
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.retro-desktop__hint--done {
+  color: #86efac;
+}
+
+/* ── Taskbar ── */
+.retro-desktop__taskbar {
+  height: 28px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.retro-desktop__start {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 8px;
+  cursor: pointer;
+  color: #000;
+}
+
+.retro-desktop__start:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-desktop__taskbar-spacer {
+  flex: 1;
+}
+
+.retro-desktop__tray {
+  border: 1px inset #808080;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  padding: 2px 6px;
+  background: #c0c0c0;
+}
+
+.retro-desktop__clock {
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+}

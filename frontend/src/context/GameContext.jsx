@@ -29,6 +29,7 @@ export const REPORT_ROWS = [
 
 const initialState = {
   completedZones: new Set(),
+  completedQuests: new Set(),
   zoneScores: {
     'error-district':    0,
     'vv-headquarters':   0,
@@ -129,10 +130,17 @@ function reducer(state, action) {
       };
     }
 
+    case 'COMPLETE_QUEST': {
+      const completedQuests = new Set(state.completedQuests);
+      completedQuests.add(action.questId);
+      return { ...state, completedQuests };
+    }
+
     case 'RESET':
       return {
         ...initialState,
         completedZones: new Set(),
+        completedQuests: new Set(),
         primersSeen: new Set(),
         hintsUsed: {
           'error-district':    new Set(),
@@ -239,6 +247,10 @@ export function GameProvider({ children }) {
     (zoneId) => dispatch({ type: 'RESET_ZONE', zoneId }),
     []
   );
+  const completeQuest = useCallback(
+    (questId) => dispatch({ type: 'COMPLETE_QUEST', questId }),
+    []
+  );
   const resetGame = useCallback(() => dispatch({ type: 'RESET' }), []);
   const startSession = useCallback(() => dispatch({ type: 'START_SESSION' }), []);
 
@@ -282,6 +294,7 @@ export function GameProvider({ children }) {
     () => ({
       state,
       completeZone,
+      completeQuest,
       recordWrong,
       addOraclePoints,
       setOraclePoints,
@@ -298,6 +311,7 @@ export function GameProvider({ children }) {
     [
       state,
       completeZone,
+      completeQuest,
       recordWrong,
       addOraclePoints,
       setOraclePoints,

@@ -3,8 +3,10 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { OFFICE_LAYOUTS, getPlayerStart } from '../data/office-layouts.js';
 import { NPC_VARIANTS } from '../data/npc-variants.js';
 import { usePlayerMovement } from '../hooks/usePlayerMovement.js';
+import { useGame } from '../hooks/useGame.js';
 import PixelCharacter from '../components/shared/PixelCharacter.jsx';
 import NpcDialog from '../components/shared/NpcDialog.jsx';
+import RetroDesktop from '../components/shared/RetroDesktop.jsx';
 import './OfficeInterior.css';
 
 const TILE_PX = 48;
@@ -17,7 +19,6 @@ function DeskTile({ col, row }) {
   const rnd = Math.abs(random(col, row, 1));
   const isCoffee = rnd > 0.8;
   const isPaper = rnd > 0.5 && rnd <= 0.8;
-
   return (
     <div className="svg-tile">
       <svg viewBox="0 0 48 48" width="100%" height="100%">
@@ -129,25 +130,20 @@ function FloorTile({ variant }) {
   return <div className="floor-tile" />;
 }
 
-/* ── New tile types ── */
-
 function MonitorWallTile() {
   return (
     <div className="svg-tile monitor-wall-tile">
       <svg viewBox="0 0 48 48" width="100%" height="100%">
         <rect x="0" y="0" width="48" height="48" fill="#0f172a" />
         <rect x="2" y="2" width="44" height="44" rx="2" fill="#0f172a" stroke="#1e293b" strokeWidth="1" />
-        {/* Screen panels */}
         <rect x="4" y="4" width="18" height="18" rx="1" fill="#0c1a2e" stroke="#1e4080" strokeWidth="0.5" />
         <rect x="26" y="4" width="18" height="18" rx="1" fill="#0c1a2e" stroke="#1e4080" strokeWidth="0.5" />
         <rect x="4" y="26" width="18" height="18" rx="1" fill="#0c1a2e" stroke="#1e4080" strokeWidth="0.5" />
         <rect x="26" y="26" width="18" height="18" rx="1" fill="#0c1a2e" stroke="#1e4080" strokeWidth="0.5" />
-        {/* Graph traces */}
         <polyline points="5,18 8,14 11,16 14,10 17,13 20,8" fill="none" stroke="#38bdf8" strokeWidth="1" opacity="0.9" />
         <polyline points="27,18 30,12 33,15 36,9 39,13 42,7" fill="none" stroke="#f59e0b" strokeWidth="1" opacity="0.9" />
         <polyline points="5,40 8,36 11,38 14,32 17,35 20,30" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.9" />
         <polyline points="27,40 30,35 33,37 36,31 39,34 42,29" fill="none" stroke="#ef4444" strokeWidth="1" opacity="0.9" />
-        {/* Status dots */}
         <circle cx="19" cy="9" r="1.5" fill="#ef4444" />
         <circle cx="41" cy="8" r="1.5" fill="#f59e0b" />
       </svg>
@@ -241,7 +237,48 @@ function RugTile() {
   return <div className="floor-tile floor-tile--rug" />;
 }
 
-function renderTile(tile, col, row) {
+function PlayerDeskTile({ nearComputer, zoneDone }) {
+  return (
+    <div className={`svg-tile player-desk-tile ${nearComputer ? 'player-desk-tile--active' : ''}`}>
+      <svg viewBox="0 0 48 48" width="100%" height="100%">
+        {/* Desk shadow */}
+        <rect x="2" y="10" width="44" height="34" rx="4" fill="rgba(15, 23, 42, 0.12)" />
+        {/* Desk surface */}
+        <rect x="2" y="6" width="44" height="30" rx="4" fill="#f0f9ff" stroke="#7dd3fc" strokeWidth="1.5" />
+        {/* CRT monitor body */}
+        <rect x="10" y="4" width="28" height="20" rx="3" fill="#1e293b" />
+        {/* Screen */}
+        <rect x="12" y="6" width="24" height="16" rx="2" fill={zoneDone ? '#052e16' : '#0a0a0a'} />
+        {/* Screen content */}
+        {zoneDone ? (
+          <text x="24" y="17" fontSize="9" fontWeight="bold" fill="#4ade80" textAnchor="middle" fontFamily="monospace">✓ DONE</text>
+        ) : (
+          <>
+            <text x="24" y="13" fontSize="6" fill="#22c55e" textAnchor="middle" fontFamily="monospace">C:\&gt;_</text>
+            <text x="24" y="20" fontSize="5" fill="#16a34a" textAnchor="middle" fontFamily="monospace" opacity="0.7">ZONE TASK</text>
+          </>
+        )}
+        {/* Monitor base */}
+        <rect x="20" y="24" width="8" height="4" rx="1" fill="#334155" />
+        <rect x="16" y="28" width="16" height="3" rx="1" fill="#1e293b" />
+        {/* Keyboard */}
+        <rect x="8" y="30" width="32" height="6" rx="2" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1" />
+        <rect x="10" y="31" width="28" height="3" rx="1" fill="#f1f5f9" />
+        {/* E hint glow when near */}
+        {nearComputer && (
+          <rect x="0" y="0" width="48" height="48" rx="4" fill="none" stroke="#7dd3fc" strokeWidth="2" opacity="0.8" />
+        )}
+      </svg>
+      {nearComputer && (
+        <div className="player-desk-tile__hint">
+          <span className="player-desk-tile__key">E</span> Open
+        </div>
+      )}
+    </div>
+  );
+}
+
+function renderTile(tile, col, row, extraProps = {}) {
   if (tile === '#') return <WallTile isOuter />;
   if (tile === 'W') return <WallTile isOuter={false} />;
   if (tile === 'D') return <DeskTile col={col} row={row} />;
@@ -256,17 +293,27 @@ function renderTile(tile, col, row) {
   if (tile === 'K') return <CoffeeStationTile />;
   if (tile === 'L') return <LampTile />;
   if (tile === 'R') return <RugTile />;
+  if (tile === '@') return <PlayerDeskTile nearComputer={extraProps.nearComputer} zoneDone={extraProps.zoneDone} />;
   return <FloorTile variant="plain" />;
 }
+
+const STAGE_BREADCRUMBS = {
+  briefing:        { step: 1, total: 4, label: 'Talk to Manager' },
+  'workers-pending': { step: 2, total: 4, label: 'Help Workers' },
+  'workers-done':  { step: 3, total: 4, label: 'Return to Manager → Your Desk' },
+  'zone-done':     { step: 4, total: 4, label: 'Mission Complete · Head to Exit' },
+};
 
 export default function OfficeInterior() {
   const { zoneId } = useParams();
   const navigate = useNavigate();
   const layout = OFFICE_LAYOUTS[zoneId];
+  const { state, completeQuest } = useGame();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeNpcId, setActiveNpcId] = useState(null);
-  const [completedQuests, setCompletedQuests] = useState(new Set());
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [computerLockedToast, setComputerLockedToast] = useState(false);
 
   const viewportRef = useRef(null);
 
@@ -279,13 +326,40 @@ export default function OfficeInterior() {
 
   const initialPos = getPlayerStart(layout.map);
 
-  const { playerCol, playerRow, playerFacing, nearMainNpcId, nearMainNpc, isMoving } =
+  // Derive office stage from global state
+  const completedQuests = state.completedQuests;
+  const zoneDone = state.completedZones.has(zoneId);
+  const requiredQuestIds = layout.npcs.filter(n => n.quiz).map(n => n.id);
+  const allQuestsDone = requiredQuestIds.every(id => completedQuests.has(id));
+  const anyQuestDone = requiredQuestIds.some(id => completedQuests.has(id));
+
+  const officeStage = zoneDone
+    ? 'zone-done'
+    : allQuestsDone
+      ? 'workers-done'
+      : anyQuestDone
+        ? 'workers-pending'
+        : 'briefing';
+
+  const breadcrumb = STAGE_BREADCRUMBS[officeStage];
+
+  const handleComputerInteract = () => {
+    if (officeStage === 'workers-done' || officeStage === 'zone-done') {
+      setDesktopOpen(true);
+    } else {
+      setComputerLockedToast(true);
+      setTimeout(() => setComputerLockedToast(false), 2500);
+    }
+  };
+
+  const { playerCol, playerRow, playerFacing, nearMainNpcId, nearMainNpc, nearComputer, isMoving } =
     usePlayerMovement({
       map: layout.map,
       npcs: layout.npcs,
-      isDialogOpen: dialogOpen,
+      isDialogOpen: dialogOpen || desktopOpen,
       onExitDoor: () => navigate('/'),
       onInteract: (npcId) => { setActiveNpcId(npcId); setDialogOpen(true); },
+      onComputerInteract: handleComputerInteract,
       initialPos,
     });
 
@@ -323,12 +397,11 @@ export default function OfficeInterior() {
     ? layout.npcs.find(n => n.id === activeNpcId)
     : null;
 
-  // Count available quizzes for HUD chip
   const quizNpcs = layout.npcs.filter(n => n.quiz);
   const doneCount = quizNpcs.filter(n => completedQuests.has(n.id)).length;
 
   const handleQuestComplete = (npcId) => {
-    setCompletedQuests(prev => new Set([...prev, npcId]));
+    completeQuest(npcId);
   };
 
   return (
@@ -343,11 +416,21 @@ export default function OfficeInterior() {
             Quizzes: {doneCount}/{quizNpcs.length}
           </div>
         )}
-        <span className="office__hud-hint">WASD / Arrow keys · E to talk</span>
+        <div className="office__hud-breadcrumb">
+          <span className="office__hud-breadcrumb-step">{breadcrumb.step}/{breadcrumb.total}</span>
+          <span className="office__hud-breadcrumb-label">{breadcrumb.label}</span>
+        </div>
+        <span className="office__hud-hint">WASD · E to interact</span>
       </div>
 
       <div className="office__viewport" ref={viewportRef}>
         <div className="office__lighting-overlay" />
+
+        {computerLockedToast && (
+          <div className="office__toast">
+            💬 The computer is locked. Talk to your manager first.
+          </div>
+        )}
 
         <div style={{ width: mapW * scale, height: mapH * scale, position: 'relative' }}>
           <div className="office__map" style={{
@@ -356,7 +439,6 @@ export default function OfficeInterior() {
             transformOrigin: '0 0',
           }}>
 
-            {/* Tile layer */}
             {layout.map.flatMap((row, rIdx) =>
               [...row].map((tile, cIdx) => (
                 <div
@@ -370,7 +452,7 @@ export default function OfficeInterior() {
                     zIndex: rIdx * 10 + (['#','W','B','M','F'].includes(tile) ? 8 : 0),
                   }}
                 >
-                  {renderTile(tile, cIdx, rIdx)}
+                  {renderTile(tile, cIdx, rIdx, { nearComputer, zoneDone })}
                 </div>
               ))
             )}
@@ -398,8 +480,12 @@ export default function OfficeInterior() {
               const isSitting = layout.map[npc.row]?.[npc.col] === 'C';
               const variant = npc.variantId ? NPC_VARIANTS[npc.variantId] : null;
               const isNear = nearMainNpcId === npc.id && nearMainNpc;
-              const hasQuest = npc.type === 'main' || !!npc.quiz;
-              const questDone = completedQuests.has(npc.id);
+              const isManager = npc.type === 'main';
+              const managerNeedsAttention = isManager && (
+                officeStage === 'briefing' || officeStage === 'workers-done'
+              );
+              const hasQuest = !!npc.quiz && !completedQuests.has(npc.id);
+              const questDone = !!npc.quiz && completedQuests.has(npc.id);
 
               return (
                 <div
@@ -412,7 +498,7 @@ export default function OfficeInterior() {
                   }}
                 >
                   <PixelCharacter
-                    type={npc.type === 'main' ? 'npc-main' : 'npc-worker'}
+                    type={isManager ? 'npc-main' : 'npc-worker'}
                     facing={npc.facing}
                     label={npc.name}
                     color={layout.color}
@@ -424,8 +510,8 @@ export default function OfficeInterior() {
                     outfit={variant?.outfit || 'default'}
                     gender={variant?.gender || 'm'}
                     accessory={npc.accessory}
-                    hasQuest={hasQuest && !questDone}
-                    questDone={questDone}
+                    hasQuest={isManager ? managerNeedsAttention : hasQuest}
+                    questDone={isManager ? officeStage === 'zone-done' : questDone}
                   />
                 </div>
               );
@@ -439,9 +525,18 @@ export default function OfficeInterior() {
         <NpcDialog
           npc={activeNpc}
           zoneColor={layout.color}
+          currentStage={officeStage}
           onClose={() => { setDialogOpen(false); setActiveNpcId(null); }}
-          onEnterZone={() => navigate(layout.zoneRoute)}
           onQuestComplete={handleQuestComplete}
+        />
+      )}
+
+      {desktopOpen && (
+        <RetroDesktop
+          zoneId={zoneId}
+          zoneDone={zoneDone}
+          onLaunchZone={() => { setDesktopOpen(false); navigate(layout.zoneRoute); }}
+          onClose={() => setDesktopOpen(false)}
         />
       )}
 
