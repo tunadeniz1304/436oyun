@@ -4,6 +4,7 @@ import { OFFICE_LAYOUTS, getPlayerStart } from '../data/office-layouts.js';
 import { NPC_VARIANTS } from '../data/npc-variants.js';
 import { usePlayerMovement } from '../hooks/usePlayerMovement.js';
 import { useGame } from '../hooks/useGame.js';
+import { ZONE_ORDER } from '../context/GameContext.jsx';
 import PixelCharacter from '../components/shared/PixelCharacter.jsx';
 import NpcDialog from '../components/shared/NpcDialog.jsx';
 import RetroDesktop from '../components/shared/RetroDesktop.jsx';
@@ -534,7 +535,8 @@ export default function OfficeInterior() {
       {desktopOpen && (
         <RetroDesktop
           zoneId={zoneId}
-          zoneDone={zoneDone}
+          completedZones={state.completedZones}
+          zoneOrder={ZONE_ORDER}
           onLaunchZone={() => { setDesktopOpen(false); navigate(layout.zoneRoute); }}
           onClose={() => setDesktopOpen(false)}
         />

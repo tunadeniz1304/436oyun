@@ -104,6 +104,17 @@
   position: relative;
 }
 
+/* ── Folder grid (5 folders in a row) ── */
+.retro-desktop__folder-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+}
+
 /* ── Folder icon ── */
 .retro-desktop__folder {
   display: flex;
@@ -116,11 +127,26 @@
   border-radius: 2px;
   user-select: none;
   transition: background 0.1s;
+  width: 90px;
 }
 
-.retro-desktop__folder:hover {
+.retro-desktop__folder--current {
+  cursor: pointer;
+}
+
+.retro-desktop__folder--current:hover {
   background: rgba(0, 0, 128, 0.3);
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+.retro-desktop__folder--done {
+  opacity: 0.75;
+}
+
+.retro-desktop__folder--locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
 }
 
 .retro-desktop__folder--selected {
@@ -140,7 +166,7 @@
 
 .retro-desktop__folder-icon {
   position: relative;
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1;
   filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.4));
 }

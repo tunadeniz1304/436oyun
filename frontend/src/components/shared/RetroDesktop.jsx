@@ -1,45 +1,56 @@
 import { useState } from 'react';
 import './RetroDesktop.css';
 
-const ZONE_FOLDERS = {
-  'error-district':   { label: 'Zone1_Incident047',  ext: '/',    icon: '📁' },
-  'vv-headquarters':  { label: 'Zone2_VVMissions',   ext: '/',    icon: '📁' },
-  'matrix-tower':     { label: 'Zone3_TestMatrix',   ext: '/',    icon: '📁' },
-  'artefact-archive': { label: 'Zone4_Artefacts',    ext: '/',    icon: '📁' },
-  'final-inspection': { label: 'FinalInspection',    ext: '.exe', icon: '💾' },
-};
+const ALL_FOLDERS = [
+  { zoneId: 'error-district',   label: 'Zone1_Incident047', ext: '/',    icon: '📁' },
+  { zoneId: 'vv-headquarters',  label: 'Zone2_VVMissions',  ext: '/',    icon: '📁' },
+  { zoneId: 'matrix-tower',     label: 'Zone3_TestMatrix',  ext: '/',    icon: '📁' },
+  { zoneId: 'artefact-archive', label: 'Zone4_Artefacts',   ext: '/',    icon: '📁' },
+  { zoneId: 'final-inspection', label: 'FinalInspection',   ext: '.exe', icon: '💾' },
+];
 
 /**
  * @param {{
  *   zoneId: string,
- *   zoneDone: boolean,
+ *   completedZones: Set<string>,
+ *   zoneOrder: string[],
  *   onLaunchZone: ()=>void,
  *   onClose: ()=>void,
  * }} props
  */
-export default function RetroDesktop({ zoneId, zoneDone, onLaunchZone, onClose }) {
-  const [clicked, setClicked] = useState(false);
-  const [doubleClicked, setDoubleClicked] = useState(false);
+export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaunchZone, onClose }) {
+  const [selectedId, setSelectedId] = useState(null);
+  const [launchingId, setLaunchingId] = useState(null);
 
-  const folder = ZONE_FOLDERS[zoneId] ?? ZONE_FOLDERS['error-district'];
-  const folderName = folder.label + folder.ext + (zoneDone ? ' [RESOLVED]' : '');
+  const currentIdx = zoneOrder.indexOf(zoneId);
 
-  const handleFolderClick = () => setClicked(true);
+  const getFolderState = (fZoneId) => {
+    const fIdx = zoneOrder.indexOf(fZoneId);
+    if (completedZones.has(fZoneId)) return 'done';
+    if (fIdx === currentIdx) return 'current';
+    if (fIdx < currentIdx) return 'done'; // shouldn't happen but safe fallback
+    return 'locked';
+  };
 
-  const handleFolderDoubleClick = () => {
-    if (zoneDone) return;
-    setDoubleClicked(true);
-    setTimeout(() => onLaunchZone(), 400);
+  const handleSingleClick = (fZoneId) => {
+    setSelectedId(prev => prev === fZoneId ? null : fZoneId);
+  };
+
+  const handleDoubleClick = (fZoneId) => {
+    const st = getFolderState(fZoneId);
+    if (st !== 'current') return;
+    setLaunchingId(fZoneId);
+    setTimeout(() => onLaunchZone(), 420);
   };
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
   return (
-    <div className="retro-desktop" onClick={(e) => { if (e.target === e.currentTarget) setClicked(false); }}>
-
-      {/* Window chrome */}
+    <div className="retro-desktop" onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
       <div className="retro-desktop__window">
+
+        {/* Title bar */}
         <div className="retro-desktop__titlebar">
           <span className="retro-desktop__titlebar-icon">🖥</span>
           <span className="retro-desktop__titlebar-text">My Computer — Office Console</span>
@@ -50,53 +61,72 @@ export default function RetroDesktop({ zoneId, zoneDone, onLaunchZone, onClose }
           </div>
         </div>
 
-        {/* Desktop area */}
-        <div className="retro-desktop__canvas">
+        {/* Desktop canvas */}
+        <div className="retro-desktop__canvas" onClick={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
 
-          {/* Folder icon */}
-          <div
-            className={`retro-desktop__folder ${clicked ? 'retro-desktop__folder--selected' : ''} ${zoneDone ? 'retro-desktop__folder--done' : 'retro-desktop__folder--corrupted'} ${doubleClicked ? 'retro-desktop__folder--launching' : ''}`}
-            onClick={handleFolderClick}
-            onDoubleClick={handleFolderDoubleClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleFolderDoubleClick(); }}
-            aria-label={`Open ${folderName}`}
-          >
-            <div className="retro-desktop__folder-icon">
-              {folder.icon}
-              {!zoneDone && <span className="retro-desktop__folder-badge">!</span>}
-              {zoneDone && <span className="retro-desktop__folder-badge retro-desktop__folder-badge--done">✓</span>}
-            </div>
-            <div className="retro-desktop__folder-label">{folderName}</div>
+          <div className="retro-desktop__folder-grid">
+            {ALL_FOLDERS.map((f) => {
+              const st = getFolderState(f.zoneId);
+              const isSelected = selectedId === f.zoneId;
+              const isLaunching = launchingId === f.zoneId;
+              const displayLabel =
+                st === 'done'    ? f.label + f.ext + ' ✓' :
+                st === 'locked'  ? f.label + f.ext + ' 🔒' :
+                f.label + f.ext;
+
+              return (
+                <div
+                  key={f.zoneId}
+                  className={[
+                    'retro-desktop__folder',
+                    `retro-desktop__folder--${st}`,
+                    isSelected  ? 'retro-desktop__folder--selected'  : '',
+                    isLaunching ? 'retro-desktop__folder--launching'  : '',
+                  ].join(' ')}
+                  onClick={() => handleSingleClick(f.zoneId)}
+                  onDoubleClick={() => handleDoubleClick(f.zoneId)}
+                  role="button"
+                  tabIndex={st === 'locked' ? -1 : 0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleDoubleClick(f.zoneId); }}
+                  aria-label={displayLabel}
+                  aria-disabled={st === 'locked'}
+                >
+                  <div className="retro-desktop__folder-icon">
+                    {f.icon}
+                    {st === 'done'    && <span className="retro-desktop__folder-badge retro-desktop__folder-badge--done">✓</span>}
+                    {st === 'current' && <span className="retro-desktop__folder-badge retro-desktop__folder-badge--corrupt">!</span>}
+                    {st === 'locked'  && <span className="retro-desktop__folder-badge retro-desktop__folder-badge--lock">🔒</span>}
+                  </div>
+                  <div className="retro-desktop__folder-label">{displayLabel}</div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Double-click hint */}
-          {!zoneDone && (
-            <div className="retro-desktop__hint">
-              {doubleClicked ? 'Opening…' : 'Double-click to open'}
-            </div>
-          )}
-          {zoneDone && (
-            <div className="retro-desktop__hint retro-desktop__hint--done">
-              Task completed — folder is locked.
-            </div>
-          )}
-
+          {/* Status hint */}
+          <div className="retro-desktop__hint">
+            {launchingId
+              ? 'Opening…'
+              : selectedId
+                ? getFolderState(selectedId) === 'current'
+                  ? 'Double-click to open'
+                  : getFolderState(selectedId) === 'done'
+                    ? 'Task already completed.'
+                    : 'Complete previous zones to unlock.'
+                : 'Select a folder'}
+          </div>
         </div>
 
         {/* Taskbar */}
         <div className="retro-desktop__taskbar">
-          <button className="retro-desktop__start">
-            <span>⊞</span> Start
-          </button>
+          <button className="retro-desktop__start"><span>⊞</span> Start</button>
           <div className="retro-desktop__taskbar-spacer" />
           <div className="retro-desktop__tray">
             <span className="retro-desktop__clock">{timeStr}</span>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }
