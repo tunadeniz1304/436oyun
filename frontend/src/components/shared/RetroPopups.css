@@ -541,6 +541,14 @@
   margin: 4px 4px 0;
 }
 
+.retro-docs-folder__viewer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
 .retro-docs-folder__file-grid {
   display: flex;
   flex-wrap: wrap;
@@ -549,6 +557,7 @@
   align-content: flex-start;
   height: 100%;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .retro-docs-folder__file-btn {
@@ -639,7 +648,7 @@
   flex: 1;
   background: #fefcf7;
   overflow-y: auto;
-  max-height: 55vh;
+  min-height: 0;
   padding: 20px 24px;
   font-family: Georgia, serif;
   font-size: 13px;

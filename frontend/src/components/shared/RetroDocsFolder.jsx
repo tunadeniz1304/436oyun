@@ -39,21 +39,22 @@ export default function RetroDocsFolder({ onClose }) {
       </div>
 
       <div className="retro-docs-folder__file-area">
-        {openDocId ? (
-          <RetroDocViewer docId={openDocId} onClose={() => setOpenDocId(null)} />
-        ) : (
-          <div className="retro-docs-folder__file-grid">
-            {desktopDocuments.map((doc) => (
-              <button
-                key={doc.id}
-                className={`retro-docs-folder__file-btn${selectedDocId === doc.id ? ' retro-docs-folder__file-btn--selected' : ''}`}
-                onClick={(e) => handleFileClick(e, doc.id)}
-                aria-label={`Open ${doc.filename}`}
-              >
-                <span className="retro-docs-folder__file-icon">{doc.icon}</span>
-                <span className="retro-docs-folder__file-name">{doc.filename}</span>
-              </button>
-            ))}
+        <div className="retro-docs-folder__file-grid">
+          {desktopDocuments.map((doc) => (
+            <button
+              key={doc.id}
+              className={`retro-docs-folder__file-btn${selectedDocId === doc.id ? ' retro-docs-folder__file-btn--selected' : ''}`}
+              onClick={(e) => handleFileClick(e, doc.id)}
+              aria-label={`Open ${doc.filename}`}
+            >
+              <span className="retro-docs-folder__file-icon">{doc.icon}</span>
+              <span className="retro-docs-folder__file-name">{doc.filename}</span>
+            </button>
+          ))}
+        </div>
+        {openDocId && (
+          <div className="retro-docs-folder__viewer-overlay">
+            <RetroDocViewer docId={openDocId} onClose={() => setOpenDocId(null)} />
           </div>
         )}
       </div>
