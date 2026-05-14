@@ -141,14 +141,15 @@ function pickQuiz() {
 }
 
 export default function RetroSnake({ onClose }) {
-  const [phase, setPhase] = useState('loading');
+  const [phase, setPhase] = useState('loading'); // 'loading' | 'start' | 'howto' | 'playing' | 'gameover'
   const [score, setScore] = useState(0);
   const [length, setLength] = useState(3);
   const [tps, setTps] = useState(Math.round(1000 / START_TICK_MS));
   const [lives, setLives] = useState(1);
-  const [feedback, setFeedback] = useState(null); // damage/info modal
-  const [quiz, setQuiz] = useState(null);          // heart quiz
+  const [feedback, setFeedback] = useState(null);
+  const [quiz, setQuiz] = useState(null);
   const [endReason, setEndReason] = useState(null);
+  const [wrapWalls, setWrapWalls] = useState(false); // chosen on PLAY
 
   const gameRef = useRef(makeInitial());
   const dirRef = useRef('right');
@@ -161,17 +162,18 @@ export default function RetroSnake({ onClose }) {
   const rafRef = useRef(0);
   const canvasRef = useRef(null);
   const phaseRef = useRef('loading');
-  const pausedRef = useRef(false); // true while a modal is open
+  const pausedRef = useRef(false);
+  const wrapWallsRef = useRef(false);
 
-  // Sync refs with state for the loop's conditionals
   useEffect(() => { phaseRef.current = phase; }, [phase]);
   useEffect(() => { pausedRef.current = !!(feedback || quiz); }, [feedback, quiz]);
   useEffect(() => { livesRef.current = lives; }, [lives]);
+  useEffect(() => { wrapWallsRef.current = wrapWalls; }, [wrapWalls]);
 
-  // Loading → playing
+  // Loading → start screen
   useEffect(() => {
     if (phase !== 'loading') return;
-    const id = setTimeout(() => setPhase('playing'), 900);
+    const id = setTimeout(() => setPhase('start'), 900);
     return () => clearTimeout(id);
   }, [phase]);
 
@@ -198,21 +200,26 @@ export default function RetroSnake({ onClose }) {
     setPhase('playing');
   }, [resetState]);
 
-  // Respawn snake at center after losing a life
-  const respawnSnake = useCallback(() => {
+  // Resume play after losing a life — keep the snake where it is (just back
+  // off the offending move). For wall hits, the head was never advanced; for
+  // self/bug hits, also keep the snake intact and let the player react.
+  const resumeAfterDamage = useCallback((reasonKey) => {
     const g = gameRef.current;
-    const snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-    // re-roll bugs and food so the snake doesn't immediately collide again
-    const bugs = spawnBugs(snake);
-    const food = randomEmptyCell([...snake, ...bugs]);
-    // keep current heart if any
-    const heart = g.heart && !snake.some(c => cellsEqual(c, g.heart)) && !bugs.some(b => cellsEqual(b, g.heart)) && !cellsEqual(food, g.heart)
-      ? g.heart : null;
-    gameRef.current = { snake, bugs, food, heart };
-    dirRef.current = 'right';
-    queuedDirRef.current = null;
+    if (reasonKey === 'bug') {
+      // remove the bug we just hit so the cell is safe to occupy / pass over
+      const head = g.snake[0];
+      const dir = dirRef.current;
+      const nextHead = {
+        x: head.x + (dir === 'left' ? -1 : dir === 'right' ? 1 : 0),
+        y: head.y + (dir === 'up' ? -1 : dir === 'down' ? 1 : 0),
+      };
+      gameRef.current = {
+        ...g,
+        bugs: g.bugs.filter(b => !cellsEqual(b, nextHead)),
+      };
+    }
+    // wall / self: snake state unchanged; player just keeps playing.
     lastTickRef.current = 0;
-    setLength(snake.length);
   }, []);
 
   // Keyboard
@@ -419,9 +426,15 @@ export default function RetroSnake({ onClose }) {
 
       // Wall
       if (nextHead.x < 0 || nextHead.x >= GRID || nextHead.y < 0 || nextHead.y >= GRID) {
-        takeDamage('wall', '§3.39');
-        draw();
-        return;
+        if (wrapWallsRef.current) {
+          // wrap around: exit one side, enter the opposite
+          nextHead.x = (nextHead.x + GRID) % GRID;
+          nextHead.y = (nextHead.y + GRID) % GRID;
+        } else {
+          takeDamage('wall', '§3.39');
+          draw();
+          return;
+        }
       }
       // Self
       if (g.snake.slice(0, -1).some(c => cellsEqual(c, nextHead))) {
@@ -489,8 +502,8 @@ export default function RetroSnake({ onClose }) {
       setPhase('gameover');
       return;
     }
-    respawnSnake();
-  }, [feedback, respawnSnake]);
+    resumeAfterDamage(reason);
+  }, [feedback, resumeAfterDamage]);
 
   // Quiz answer handler
   const handleQuizAnswer = useCallback((idx) => {
@@ -507,6 +520,20 @@ export default function RetroSnake({ onClose }) {
     }
     setQuiz(null);
   }, [quiz]);
+
+  const handlePlay = useCallback((wrap) => {
+    setWrapWalls(wrap);
+    wrapWallsRef.current = wrap;
+    setPhase('playing');
+  }, []);
+
+  if (phase === 'start') {
+    return <StartScreen onPlay={handlePlay} onHowTo={() => setPhase('howto')} onClose={onClose} />;
+  }
+
+  if (phase === 'howto') {
+    return <HowToScreen onBack={() => setPhase('start')} />;
+  }
 
   if (phase === 'loading') {
     return (
@@ -589,6 +616,9 @@ export default function RetroSnake({ onClose }) {
           <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--food" /> TC</span>
           <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--bug" /> Defect</span>
           <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--heart" /> Life</span>
+          <span className="snake__legend snake__legend--mode">
+            {wrapWalls ? '🔁 walls wrap' : '🧱 walls block'}
+          </span>
         </div>
       </div>
 
@@ -705,6 +735,86 @@ function QuizOverlay({ quiz, onAnswer, onDismiss }) {
             Continue →
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function StartScreen({ onPlay, onHowTo, onClose }) {
+  const [wrap, setWrap] = useState(false);
+  return (
+    <div className="snake snake--start">
+      <div className="snake__start-card">
+        <div className="snake__start-logo">🐍</div>
+        <div className="snake__start-title">SNAKE</div>
+        <div className="snake__start-subtitle">An ISO/IEC/IEEE 29119-1 mini-game</div>
+
+        <fieldset className="snake__start-fieldset">
+          <legend>Wall mode</legend>
+          <label className="snake__start-radio">
+            <input
+              type="radio"
+              name="wallmode"
+              checked={!wrap}
+              onChange={() => setWrap(false)}
+            />
+            <span><strong>Walls block</strong> — hitting a wall costs a life</span>
+          </label>
+          <label className="snake__start-radio">
+            <input
+              type="radio"
+              name="wallmode"
+              checked={wrap}
+              onChange={() => setWrap(true)}
+            />
+            <span><strong>Walls wrap</strong> — exit one side, enter the opposite</span>
+          </label>
+        </fieldset>
+
+        <div className="snake__start-btns">
+          <button className="snake__btn snake__btn--primary snake__btn--big" onClick={() => onPlay(wrap)}>
+            ▶ PLAY
+          </button>
+          <button className="snake__btn snake__btn--big" onClick={onHowTo}>
+            ? HOW TO PLAY
+          </button>
+        </div>
+
+        <button className="snake__start-quit" onClick={onClose}>Exit</button>
+      </div>
+    </div>
+  );
+}
+
+function HowToScreen({ onBack }) {
+  return (
+    <div className="snake snake--start">
+      <div className="snake__start-card snake__start-card--howto">
+        <div className="snake__start-title">HOW TO PLAY</div>
+
+        <div className="snake__howto-grid">
+          <div className="snake__howto-icon">⬆ ⬇ ⬅ ➡</div>
+          <div>Move with <strong>arrow keys</strong> or <strong>WASD</strong>. The snake cannot reverse on itself.</div>
+
+          <div className="snake__howto-icon">🟡</div>
+          <div>Eat <strong>TC</strong> (test case) discs to grow and score points. Every 5 foods the snake speeds up.</div>
+
+          <div className="snake__howto-icon">🟥</div>
+          <div>Avoid <strong>defects</strong> (red squares). Hitting one costs a life and shows the relevant ISO clause.</div>
+
+          <div className="snake__howto-icon">♥</div>
+          <div>Catch the pulsing <strong>heart</strong> to trigger an ISO quiz. Answer correctly to earn an extra life (max 2 total).</div>
+
+          <div className="snake__howto-icon">🧱</div>
+          <div><strong>Wall mode</strong> is chosen on the start screen — walls can either block (life lost) or wrap around the board.</div>
+
+          <div className="snake__howto-icon">💀</div>
+          <div>When all lives are gone, the game ends. After losing a life mid-game, play continues from where you left off.</div>
+        </div>
+
+        <button className="snake__btn snake__btn--primary snake__btn--big" onClick={onBack}>
+          ← Back
+        </button>
       </div>
     </div>
   );

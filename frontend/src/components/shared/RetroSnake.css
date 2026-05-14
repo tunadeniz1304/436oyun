@@ -227,6 +227,143 @@
   cursor: default;
 }
 
+.snake__btn--big {
+  padding: 8px 22px;
+  font-size: 13px;
+  min-width: 140px;
+}
+
+/* ── Start / How-to screens ─────────────────────────────────────── */
+.snake--start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.snake__start-card {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
+  padding: 24px 28px;
+  min-width: 360px;
+  max-width: 460px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  position: relative;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+}
+
+.snake__start-card--howto {
+  max-width: 540px;
+  align-items: stretch;
+}
+
+.snake__start-logo {
+  font-size: 56px;
+  line-height: 1;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.3));
+}
+
+.snake__start-title {
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 6px;
+  color: #2f7a3a;
+  text-shadow: 2px 2px 0 #0d3a16;
+  margin: 2px 0;
+  text-align: center;
+}
+
+.snake__start-subtitle {
+  font-size: 11px;
+  color: var(--ink-soft, #555);
+  font-style: italic;
+}
+
+.snake__start-fieldset {
+  border: 1px solid #808080;
+  padding: 10px 14px 12px;
+  margin: 6px 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.snake__start-fieldset legend {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 0 6px;
+  color: #000080;
+}
+
+.snake__start-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  cursor: pointer;
+  color: var(--ink, #1a1a1a);
+}
+
+.snake__start-radio input { margin-top: 2px; flex-shrink: 0; }
+
+.snake__start-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.snake__start-quit {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  color: var(--ink-soft, #555);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.snake__start-quit:hover { color: #000; }
+
+.snake__howto-grid {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink, #1a1a1a);
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+.snake__howto-icon {
+  font-size: 22px;
+  text-align: center;
+  line-height: 1.2;
+  align-self: start;
+}
+
+.snake__start-card--howto .snake__btn--big {
+  align-self: center;
+}
+
 /* ── Canvas ─────────────────────────────────────────────────────── */
 .snake__canvas-wrap {
   flex: 1;
