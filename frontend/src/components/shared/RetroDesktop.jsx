@@ -19,7 +19,7 @@ const SHORTCUTS = [
   { id: 'recycle-bin',  label: 'Recycle Bin',      icon: '🗑️',  msg: 'Recycle Bin\n\nDeleted incidents archive — empty.\n(Audit policy: incidents are never deleted.)' },
   { id: 'ie',           label: 'Internet Explorer', icon: '🌐', msg: '' },
   { id: 'outlook',      label: 'Outlook Express',  icon: '📧',  msg: 'Outlook Express\n\nInbox (3 unread):\n• Manager: "Did you classify yet?"\n• IT: "Password expires in 0 days"\n• HR: "Mandatory ISO 29119 training"' },
-  { id: 'bugsweeper',   label: 'BugSweeper.exe',   icon: '🐛',  msg: '' },
+  { id: 'bugsweeper',   label: 'TriageDesk.exe',   icon: '🗂️',  msg: '' },
 ];
 
 /**
