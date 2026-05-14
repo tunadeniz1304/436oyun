@@ -17,6 +17,14 @@ export default function RetroDocsFolder({ onClose }) {
     }
   }
 
+  if (openDocId) {
+    return (
+      <div className="retro-docs-folder">
+        <RetroDocViewer docId={openDocId} onClose={() => setOpenDocId(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className="retro-docs-folder">
       <div className="retro-browser__titlebar">
@@ -52,11 +60,6 @@ export default function RetroDocsFolder({ onClose }) {
             </button>
           ))}
         </div>
-        {openDocId && (
-          <div className="retro-docs-folder__viewer-overlay">
-            <RetroDocViewer docId={openDocId} onClose={() => setOpenDocId(null)} />
-          </div>
-        )}
       </div>
 
       <div className="retro-docs-folder__statusbar">
