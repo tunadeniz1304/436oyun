@@ -5,6 +5,7 @@ import RetroBrowser from './RetroBrowser.jsx';
 import RetroDocsFolder from './RetroDocsFolder.jsx';
 import RetroPipelineOps from './RetroPipelineOps.jsx';
 import RetroSnake from './RetroSnake.jsx';
+import RetroVSCode from './RetroVSCode.jsx';
 
 const ALL_FOLDERS = [
   { zoneId: 'error-district',   label: 'Zone1_Incident047', ext: '/',    icon: '📁' },
@@ -24,6 +25,7 @@ const SHORTCUTS = [
   { id: 'bugsweeper',    label: 'TriageDesk.exe',   icon: '🕵️',  msg: '' },
   { id: 'pipeline-ops', label: 'PipelineOps.exe',  icon: '⚡',  msg: '' },
   { id: 'snake',        label: 'Snake.exe',         icon: '🐍',  msg: '' },
+  { id: 'vscode',      label: 'VS Code',           icon: '🔵',  msg: '' },
 ];
 
 /**
@@ -101,6 +103,10 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
     }
     if (sc.id === 'snake') {
       setDialog({ title: 'Snake.exe', icon: '🐍', size: 'lg', content: <RetroSnake onClose={() => setDialog(null)} /> });
+      return;
+    }
+    if (sc.id === 'vscode') {
+      setDialog({ title: 'Visual Studio Code', icon: '🔵', size: 'lg', content: <RetroVSCode onClose={() => setDialog(null)} /> });
       return;
     }
     if (sc.id === 'bugsweeper') {
