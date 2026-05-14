@@ -3,13 +3,15 @@ import { isoDefinitions } from '../../data/iso-definitions.js';
 import './RetroSnake.css';
 
 const GRID = 20;
-const CELL = 22;                  // canvas cell px
-const CANVAS = GRID * CELL;       // 440 px
+const CELL = 22;
+const CANVAS = GRID * CELL;
 const START_TICK_MS = 180;
 const MIN_TICK_MS = 75;
 const SPEEDUP_EVERY = 5;
 const SPEEDUP_FACTOR = 0.88;
 const BUG_COUNT = 3;
+const MAX_LIVES = 2;
+const HEART_SPAWN_EVERY = 4; // every N foods, try to spawn a heart if lives < MAX
 
 const BUG_ISO_REFS = ['§3.39', '§3.84', '§3.130'];
 
@@ -21,6 +23,60 @@ const KEY_TO_DIR = {
   ArrowLeft: 'left', a: 'left', A: 'left',
   ArrowRight: 'right', d: 'right', D: 'right',
 };
+
+// ISO quiz pool — shown when player picks up a heart.
+const QUIZ_POOL = [
+  {
+    isoRef: '§3.84',
+    question: 'According to ISO/IEC/IEEE 29119-1 §3.84, the test basis is:',
+    choices: [
+      'Only a formally approved requirements document',
+      'Any information used as the basis for designing and implementing test cases — may even be an undocumented understanding',
+      'The output of dynamic testing only',
+    ],
+    correct: 1,
+  },
+  {
+    isoRef: '§3.130',
+    question: 'Per §3.130 Note 1, a test type (e.g. performance, security):',
+    choices: [
+      'Can only be performed at a single test level',
+      'Is the same thing as a test level',
+      'Can be performed at a single test level or across several test levels',
+    ],
+    correct: 2,
+  },
+  {
+    isoRef: '§4.1.3',
+    question: 'Which best describes the distinction between Verification and Validation?',
+    choices: [
+      'Verification is done by developers; validation is done by users',
+      'Verification checks conformance to a specification; validation checks fitness for intended use — either party can do either',
+      'Verification happens before coding; validation happens after release',
+    ],
+    correct: 1,
+  },
+  {
+    isoRef: '§3.115',
+    question: 'A test oracle is:',
+    choices: [
+      'A source of information for determining whether a test has passed or failed',
+      'A test management tool',
+      'A type of automated test runner',
+    ],
+    correct: 0,
+  },
+  {
+    isoRef: '§3.78',
+    question: 'Static testing means:',
+    choices: [
+      'Testing without executing the test item (e.g. reviews, static analysis)',
+      'Testing only on a stable production server',
+      'Manual testing as opposed to automated testing',
+    ],
+    correct: 0,
+  },
+];
 
 const cellsEqual = (a, b) => a.x === b.x && a.y === b.y;
 
@@ -36,6 +92,17 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
   ctx.lineTo(x, y + rr);
   ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+
+function drawHeart(ctx, cxp, cyp, size) {
+  const s = size;
+  ctx.beginPath();
+  ctx.moveTo(cxp, cyp + s * 0.3);
+  ctx.bezierCurveTo(cxp, cyp + s * 0.1, cxp - s * 0.5, cyp - s * 0.2, cxp - s * 0.5, cyp - s * 0.5);
+  ctx.bezierCurveTo(cxp - s * 0.5, cyp - s * 0.8, cxp - s * 0.15, cyp - s * 0.8, cxp, cyp - s * 0.5);
+  ctx.bezierCurveTo(cxp + s * 0.15, cyp - s * 0.8, cxp + s * 0.5, cyp - s * 0.8, cxp + s * 0.5, cyp - s * 0.5);
+  ctx.bezierCurveTo(cxp + s * 0.5, cyp - s * 0.2, cxp, cyp + s * 0.1, cxp, cyp + s * 0.3);
   ctx.closePath();
 }
 
@@ -66,19 +133,23 @@ function makeInitial() {
   const snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
   const bugs = spawnBugs(snake);
   const food = randomEmptyCell([...snake, ...bugs]);
-  return { snake, bugs, food };
+  return { snake, bugs, food, heart: null };
+}
+
+function pickQuiz() {
+  return QUIZ_POOL[Math.floor(Math.random() * QUIZ_POOL.length)];
 }
 
 export default function RetroSnake({ onClose }) {
   const [phase, setPhase] = useState('loading');
-  // React state is only for *displayed* values + things that gate render.
   const [score, setScore] = useState(0);
   const [length, setLength] = useState(3);
   const [tps, setTps] = useState(Math.round(1000 / START_TICK_MS));
-  const [feedback, setFeedback] = useState(null);
+  const [lives, setLives] = useState(1);
+  const [feedback, setFeedback] = useState(null); // damage/info modal
+  const [quiz, setQuiz] = useState(null);          // heart quiz
   const [endReason, setEndReason] = useState(null);
 
-  // All hot game state lives in refs — no re-renders per tick.
   const gameRef = useRef(makeInitial());
   const dirRef = useRef('right');
   const queuedDirRef = useRef(null);
@@ -86,14 +157,16 @@ export default function RetroSnake({ onClose }) {
   const lastTickRef = useRef(0);
   const foodsEatenRef = useRef(0);
   const scoreRef = useRef(0);
+  const livesRef = useRef(1);
   const rafRef = useRef(0);
   const canvasRef = useRef(null);
   const phaseRef = useRef('loading');
-  const feedbackRef = useRef(null);
+  const pausedRef = useRef(false); // true while a modal is open
 
-  // keep refs in sync with state for the loop's conditionals
+  // Sync refs with state for the loop's conditionals
   useEffect(() => { phaseRef.current = phase; }, [phase]);
-  useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
+  useEffect(() => { pausedRef.current = !!(feedback || quiz); }, [feedback, quiz]);
+  useEffect(() => { livesRef.current = lives; }, [lives]);
 
   // Loading → playing
   useEffect(() => {
@@ -103,18 +176,20 @@ export default function RetroSnake({ onClose }) {
   }, [phase]);
 
   const resetState = useCallback(() => {
-    const s = makeInitial();
-    gameRef.current = s;
+    gameRef.current = makeInitial();
     dirRef.current = 'right';
     queuedDirRef.current = null;
     tickMsRef.current = START_TICK_MS;
     lastTickRef.current = 0;
     foodsEatenRef.current = 0;
     scoreRef.current = 0;
+    livesRef.current = 1;
     setScore(0);
     setLength(3);
     setTps(Math.round(1000 / START_TICK_MS));
+    setLives(1);
     setFeedback(null);
+    setQuiz(null);
     setEndReason(null);
   }, []);
 
@@ -123,11 +198,28 @@ export default function RetroSnake({ onClose }) {
     setPhase('playing');
   }, [resetState]);
 
-  // Keyboard — bound once for the playing phase
+  // Respawn snake at center after losing a life
+  const respawnSnake = useCallback(() => {
+    const g = gameRef.current;
+    const snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+    // re-roll bugs and food so the snake doesn't immediately collide again
+    const bugs = spawnBugs(snake);
+    const food = randomEmptyCell([...snake, ...bugs]);
+    // keep current heart if any
+    const heart = g.heart && !snake.some(c => cellsEqual(c, g.heart)) && !bugs.some(b => cellsEqual(b, g.heart)) && !cellsEqual(food, g.heart)
+      ? g.heart : null;
+    gameRef.current = { snake, bugs, food, heart };
+    dirRef.current = 'right';
+    queuedDirRef.current = null;
+    lastTickRef.current = 0;
+    setLength(snake.length);
+  }, []);
+
+  // Keyboard
   useEffect(() => {
     if (phase !== 'playing') return undefined;
     const onKey = (e) => {
-      if (feedbackRef.current) return;
+      if (pausedRef.current) return;
       const next = KEY_TO_DIR[e.key];
       if (!next) return;
       e.preventDefault();
@@ -138,7 +230,25 @@ export default function RetroSnake({ onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [phase]);
 
-  // Single rAF loop — drives ticks AND draws. Only mounts when entering 'playing'.
+  // Take damage helper — sets feedback modal and handles game over.
+  // Returns true if game should end now.
+  const takeDamage = useCallback((reasonKey, isoRef) => {
+    const newLives = livesRef.current - 1;
+    livesRef.current = newLives;
+    setLives(newLives);
+    const def = isoRef ? isoDefinitions[isoRef] : null;
+    setFeedback({
+      kind: 'damage',
+      reasonKey,
+      isoRef: isoRef ?? '§4.7',
+      term: def?.term ?? 'incident',
+      definition: def?.definition ?? 'An incident is an anomalous or unexpected event during the life cycle of a project, product, service or system.',
+      note: def?.note ?? null,
+      fatal: newLives <= 0,
+    });
+  }, []);
+
+  // Single rAF loop
   useEffect(() => {
     if (phase !== 'playing') return undefined;
     const canvas = canvasRef.current;
@@ -149,17 +259,17 @@ export default function RetroSnake({ onClose }) {
     const cy = (c) => c.y * CELL + CELL / 2;
 
     const draw = () => {
-      const { snake, bugs, food } = gameRef.current;
+      const { snake, bugs, food, heart } = gameRef.current;
       const dir = dirRef.current;
 
-      // Arena background — soft vignette green
+      // Arena background
       const grad = ctx.createRadialGradient(CANVAS / 2, CANVAS / 2, CANVAS * 0.1, CANVAS / 2, CANVAS / 2, CANVAS * 0.75);
       grad.addColorStop(0, '#1a3d22');
       grad.addColorStop(1, '#0b1e0f');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, CANVAS, CANVAS);
 
-      // Dotted grid — small dots at intersections, much subtler than lines
+      // Dotted grid
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
       for (let y = 1; y < GRID; y++) {
         for (let x = 1; x < GRID; x++) {
@@ -167,9 +277,8 @@ export default function RetroSnake({ onClose }) {
         }
       }
 
-      // Food — yellow disc with shine + label
-      const fx = food.x * CELL, fy = food.y * CELL;
-      const fcx = fx + CELL / 2, fcy = fy + CELL / 2;
+      // Food
+      const fcx = food.x * CELL + CELL / 2, fcy = food.y * CELL + CELL / 2;
       const fr = CELL / 2 - 2;
       ctx.shadowColor = 'rgba(255, 213, 74, 0.55)';
       ctx.shadowBlur = 10;
@@ -178,41 +287,58 @@ export default function RetroSnake({ onClose }) {
       ctx.arc(fcx, fcy, fr, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
-      // shine
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.beginPath();
       ctx.arc(fcx - fr * 0.35, fcy - fr * 0.35, fr * 0.32, 0, Math.PI * 2);
       ctx.fill();
-      // label
       ctx.fillStyle = '#000080';
       ctx.font = 'bold 9px "Courier New", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('TC', fcx, fcy + 1);
 
-      // Bugs — rounded red squares with white ×
+      // Heart (pickup) — pulsing
+      if (heart) {
+        const hcx2 = heart.x * CELL + CELL / 2;
+        const hcy2 = heart.y * CELL + CELL / 2;
+        const pulse = 1 + Math.sin(performance.now() / 250) * 0.08;
+        const hs = (CELL - 4) * pulse;
+        ctx.shadowColor = 'rgba(255, 90, 110, 0.7)';
+        ctx.shadowBlur = 12;
+        drawHeart(ctx, hcx2, hcy2, hs);
+        ctx.fillStyle = '#ff5a6e';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#7a1d2b';
+        ctx.lineWidth = 1.5;
+        drawHeart(ctx, hcx2, hcy2, hs);
+        ctx.stroke();
+        // shine
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath();
+        ctx.arc(hcx2 - hs * 0.2, hcy2 - hs * 0.35, hs * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Bugs
       bugs.forEach(b => {
         const bx = b.x * CELL + 3;
         const by = b.y * CELL + 3;
         const bs = CELL - 6;
-        const br = 4;
         ctx.fillStyle = '#c0392b';
-        roundRect(ctx, bx, by, bs, bs, br);
+        roundRect(ctx, bx, by, bs, bs, 4);
         ctx.fill();
-        // top highlight
         ctx.fillStyle = 'rgba(255,255,255,0.18)';
-        roundRect(ctx, bx, by, bs, bs * 0.45, br);
+        roundRect(ctx, bx, by, bs, bs * 0.45, 4);
         ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 12px "Courier New", monospace';
         ctx.fillText('×', bx + bs / 2, by + bs / 2 + 1);
       });
 
-      // Snake — strokes a continuous rounded path through cell centers
+      // Snake
       if (snake.length > 0) {
         const bodyW = CELL - 4;
-
-        // outer dark outline
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.strokeStyle = '#0d3a16';
@@ -222,8 +348,6 @@ export default function RetroSnake({ onClose }) {
         for (let i = 1; i < snake.length; i++) ctx.lineTo(cx(snake[i]), cy(snake[i]));
         if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
         ctx.stroke();
-
-        // main body fill
         ctx.strokeStyle = '#4caf50';
         ctx.lineWidth = bodyW;
         ctx.beginPath();
@@ -231,8 +355,6 @@ export default function RetroSnake({ onClose }) {
         for (let i = 1; i < snake.length; i++) ctx.lineTo(cx(snake[i]), cy(snake[i]));
         if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
         ctx.stroke();
-
-        // glossy top highlight
         ctx.strokeStyle = 'rgba(255,255,255,0.18)';
         ctx.lineWidth = bodyW * 0.4;
         ctx.beginPath();
@@ -241,38 +363,25 @@ export default function RetroSnake({ onClose }) {
         if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
         ctx.stroke();
 
-        // Head — slightly larger circle, drawn on top with eyes
         const head = snake[0];
         const hcx = cx(head), hcy = cy(head);
         const hr = bodyW / 2 + 1;
-        // outline
         ctx.fillStyle = '#0d3a16';
         ctx.beginPath();
         ctx.arc(hcx, hcy, hr + 1.5, 0, Math.PI * 2);
         ctx.fill();
-        // head fill
         ctx.fillStyle = '#7dd66f';
         ctx.beginPath();
         ctx.arc(hcx, hcy, hr, 0, Math.PI * 2);
         ctx.fill();
 
-        // eyes
         const eyeOffFwd = hr * 0.45;
         const eyeOffSide = hr * 0.45;
         let e1, e2;
-        if (dir === 'right') {
-          e1 = [hcx + eyeOffFwd, hcy - eyeOffSide];
-          e2 = [hcx + eyeOffFwd, hcy + eyeOffSide];
-        } else if (dir === 'left') {
-          e1 = [hcx - eyeOffFwd, hcy - eyeOffSide];
-          e2 = [hcx - eyeOffFwd, hcy + eyeOffSide];
-        } else if (dir === 'up') {
-          e1 = [hcx - eyeOffSide, hcy - eyeOffFwd];
-          e2 = [hcx + eyeOffSide, hcy - eyeOffFwd];
-        } else {
-          e1 = [hcx - eyeOffSide, hcy + eyeOffFwd];
-          e2 = [hcx + eyeOffSide, hcy + eyeOffFwd];
-        }
+        if (dir === 'right')      { e1 = [hcx + eyeOffFwd, hcy - eyeOffSide]; e2 = [hcx + eyeOffFwd, hcy + eyeOffSide]; }
+        else if (dir === 'left')  { e1 = [hcx - eyeOffFwd, hcy - eyeOffSide]; e2 = [hcx - eyeOffFwd, hcy + eyeOffSide]; }
+        else if (dir === 'up')    { e1 = [hcx - eyeOffSide, hcy - eyeOffFwd]; e2 = [hcx + eyeOffSide, hcy - eyeOffFwd]; }
+        else                       { e1 = [hcx - eyeOffSide, hcy + eyeOffFwd]; e2 = [hcx + eyeOffSide, hcy + eyeOffFwd]; }
         ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(e1[0], e1[1], 2.4, 0, Math.PI * 2);
@@ -290,13 +399,12 @@ export default function RetroSnake({ onClose }) {
       if (phaseRef.current !== 'playing') return;
       rafRef.current = requestAnimationFrame(step);
 
-      if (feedbackRef.current) { draw(); return; }
+      if (pausedRef.current) { draw(); return; }
       if (!lastTickRef.current) lastTickRef.current = now;
       const elapsed = now - lastTickRef.current;
       if (elapsed < tickMsRef.current) { draw(); return; }
       lastTickRef.current = now;
 
-      // tick
       if (queuedDirRef.current) {
         dirRef.current = queuedDirRef.current;
         queuedDirRef.current = null;
@@ -309,24 +417,33 @@ export default function RetroSnake({ onClose }) {
         y: head.y + (dir === 'up' ? -1 : dir === 'down' ? 1 : 0),
       };
 
+      // Wall
       if (nextHead.x < 0 || nextHead.x >= GRID || nextHead.y < 0 || nextHead.y >= GRID) {
-        setEndReason('wall'); setPhase('gameover'); return;
-      }
-      if (g.snake.slice(0, -1).some(c => cellsEqual(c, nextHead))) {
-        setEndReason('self'); setPhase('gameover'); return;
-      }
-      const hitBug = g.bugs.find(b => cellsEqual(b, nextHead));
-      if (hitBug) {
-        const def = isoDefinitions[hitBug.isoRef];
-        setFeedback({
-          isoRef: hitBug.isoRef,
-          term: def?.term ?? hitBug.isoRef,
-          definition: def?.definition ?? '',
-          note: def?.note ?? null,
-        });
+        takeDamage('wall', '§3.39');
         draw();
         return;
       }
+      // Self
+      if (g.snake.slice(0, -1).some(c => cellsEqual(c, nextHead))) {
+        takeDamage('self', '§3.39');
+        draw();
+        return;
+      }
+      // Bug
+      const hitBug = g.bugs.find(b => cellsEqual(b, nextHead));
+      if (hitBug) {
+        takeDamage('bug', hitBug.isoRef);
+        draw();
+        return;
+      }
+      // Heart pickup → open quiz, don't advance the snake
+      if (g.heart && cellsEqual(nextHead, g.heart)) {
+        gameRef.current = { ...g, heart: null };
+        setQuiz({ ...pickQuiz(), answered: false, picked: null });
+        draw();
+        return;
+      }
+
       let newSnake;
       if (cellsEqual(nextHead, g.food)) {
         newSnake = [nextHead, ...g.snake];
@@ -338,7 +455,16 @@ export default function RetroSnake({ onClose }) {
         }
         const newBugs = spawnBugs(newSnake);
         const newFood = randomEmptyCell([...newSnake, ...newBugs]);
-        gameRef.current = { snake: newSnake, bugs: newBugs, food: newFood };
+
+        // Maybe spawn a heart if no heart on board and player isn't at max lives
+        let newHeart = g.heart;
+        if (!newHeart && livesRef.current < MAX_LIVES && foodsEatenRef.current % HEART_SPAWN_EVERY === 0) {
+          newHeart = randomEmptyCell([...newSnake, ...newBugs, newFood]);
+        }
+        // if player is back at max, drop any pending heart
+        if (livesRef.current >= MAX_LIVES) newHeart = null;
+
+        gameRef.current = { snake: newSnake, bugs: newBugs, food: newFood, heart: newHeart };
         setScore(scoreRef.current);
         setLength(newSnake.length);
       } else {
@@ -351,7 +477,36 @@ export default function RetroSnake({ onClose }) {
     draw();
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [phase]);
+  }, [phase, takeDamage]);
+
+  // Damage modal dismiss handler
+  const handleDamageDismiss = useCallback(() => {
+    const fatal = feedback?.fatal;
+    const reason = feedback?.reasonKey;
+    setFeedback(null);
+    if (fatal) {
+      setEndReason(reason);
+      setPhase('gameover');
+      return;
+    }
+    respawnSnake();
+  }, [feedback, respawnSnake]);
+
+  // Quiz answer handler
+  const handleQuizAnswer = useCallback((idx) => {
+    setQuiz(q => q ? { ...q, picked: idx, answered: true } : q);
+  }, []);
+
+  const handleQuizDismiss = useCallback(() => {
+    if (!quiz) return;
+    if (quiz.picked === quiz.correct) {
+      // award +1 life up to max
+      const newLives = Math.min(MAX_LIVES, livesRef.current + 1);
+      livesRef.current = newLives;
+      setLives(newLives);
+    }
+    setQuiz(null);
+  }, [quiz]);
 
   if (phase === 'loading') {
     return (
@@ -416,13 +571,24 @@ export default function RetroSnake({ onClose }) {
           <span className="snake__hud-label">SPEED</span>
           <span className="snake__hud-value">{tps} tps</span>
         </div>
+        <div className="snake__hud-cell snake__hud-cell--lives">
+          <span className="snake__hud-label">LIVES</span>
+          <span className="snake__lives">
+            {Array.from({ length: MAX_LIVES }).map((_, i) => (
+              <span
+                key={i}
+                className={['snake__life', i < lives ? 'snake__life--full' : 'snake__life--empty'].join(' ')}
+                aria-label={i < lives ? 'full life' : 'empty slot'}
+              >
+                ♥
+              </span>
+            ))}
+          </span>
+        </div>
         <div className="snake__hud-cell snake__hud-cell--legend">
-          <span className="snake__legend">
-            <span className="snake__legend-dot snake__legend-dot--food" /> Test Case
-          </span>
-          <span className="snake__legend">
-            <span className="snake__legend-dot snake__legend-dot--bug" /> Defect
-          </span>
+          <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--food" /> TC</span>
+          <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--bug" /> Defect</span>
+          <span className="snake__legend"><span className="snake__legend-dot snake__legend-dot--heart" /> Life</span>
         </div>
       </div>
 
@@ -435,32 +601,36 @@ export default function RetroSnake({ onClose }) {
             className="snake__canvas"
           />
         </div>
-        <div className="snake__hint">Arrows or WASD to move · eat TC · avoid defects</div>
+        <div className="snake__hint">
+          Arrows or WASD · eat TC · avoid defects · catch ♥ and answer correctly for +1 life (max {MAX_LIVES})
+        </div>
       </div>
 
       {feedback && (
-        <FeedbackOverlay
-          feedback={feedback}
-          onDismiss={() => {
-            setFeedback(null);
-            setEndReason('bug');
-            setPhase('gameover');
-          }}
-        />
+        <DamageOverlay feedback={feedback} onDismiss={handleDamageDismiss} />
+      )}
+      {quiz && (
+        <QuizOverlay quiz={quiz} onAnswer={handleQuizAnswer} onDismiss={handleQuizDismiss} />
       )}
     </div>
   );
 }
 
-function FeedbackOverlay({ feedback, onDismiss }) {
+function DamageOverlay({ feedback, onDismiss }) {
+  const reasonLine =
+    feedback.reasonKey === 'wall' ? 'Out of bounds — the snake left the test scope.'
+    : feedback.reasonKey === 'self' ? 'Self-collision — the test case ran into itself.'
+    : 'A defect was hit.';
+  const title = feedback.fatal ? '⚠ FATAL — NO LIVES LEFT' : '⚠ LIFE LOST';
   return (
     <div className="snake__feedback-root" role="dialog" aria-modal="true">
       <div className="snake__feedback-backdrop" />
       <div className="snake__feedback-box">
         <div className="snake__feedback-header">
-          <span>⚠ DEFECT HIT — ISO {feedback.isoRef}</span>
+          <span>{title} — ISO {feedback.isoRef}</span>
         </div>
         <div className="snake__feedback-body">
+          <div className="snake__feedback-reason">{reasonLine}</div>
           <div className="snake__feedback-row">
             <div>
               <div className="snake__feedback-label">ISO TERM</div>
@@ -478,7 +648,61 @@ function FeedbackOverlay({ feedback, onDismiss }) {
             </div>
           )}
           <button className="snake__btn snake__btn--primary" onClick={onDismiss}>
-            I understand →
+            {feedback.fatal ? 'See results →' : 'Continue →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuizOverlay({ quiz, onAnswer, onDismiss }) {
+  const isCorrect = quiz.answered && quiz.picked === quiz.correct;
+  return (
+    <div className="snake__feedback-root" role="dialog" aria-modal="true">
+      <div className="snake__feedback-backdrop" />
+      <div className="snake__feedback-box snake__feedback-box--quiz">
+        <div className="snake__feedback-header snake__feedback-header--quiz">
+          <span>♥ EXTRA LIFE CHALLENGE — ISO {quiz.isoRef}</span>
+        </div>
+        <div className="snake__feedback-body">
+          <div className="snake__quiz-question">{quiz.question}</div>
+          <div className="snake__quiz-choices">
+            {quiz.choices.map((c, i) => {
+              const picked = quiz.picked === i;
+              const correct = i === quiz.correct;
+              let cls = 'snake__quiz-choice';
+              if (quiz.answered) {
+                if (correct) cls += ' snake__quiz-choice--correct';
+                else if (picked) cls += ' snake__quiz-choice--wrong';
+                else cls += ' snake__quiz-choice--dim';
+              }
+              return (
+                <button
+                  key={i}
+                  className={cls}
+                  disabled={quiz.answered}
+                  onClick={() => onAnswer(i)}
+                >
+                  <span className="snake__quiz-choice-key">{String.fromCharCode(65 + i)}</span>
+                  <span>{c}</span>
+                </button>
+              );
+            })}
+          </div>
+          {quiz.answered && (
+            <div className={['snake__quiz-result', isCorrect ? 'snake__quiz-result--ok' : 'snake__quiz-result--bad'].join(' ')}>
+              {isCorrect
+                ? '✓ Correct — +1 life awarded.'
+                : '✗ Incorrect — no life awarded. Review the clause in iso-definitions and try the next heart.'}
+            </div>
+          )}
+          <button
+            className="snake__btn snake__btn--primary"
+            disabled={!quiz.answered}
+            onClick={onDismiss}
+          >
+            Continue →
           </button>
         </div>
       </div>
