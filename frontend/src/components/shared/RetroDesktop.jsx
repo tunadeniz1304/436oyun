@@ -4,6 +4,7 @@ import RetroBugSweeper from './RetroBugSweeper.jsx';
 import RetroBrowser from './RetroBrowser.jsx';
 import RetroDocsFolder from './RetroDocsFolder.jsx';
 import RetroPipelineOps from './RetroPipelineOps.jsx';
+import RetroSnake from './RetroSnake.jsx';
 
 const ALL_FOLDERS = [
   { zoneId: 'error-district',   label: 'Zone1_Incident047', ext: '/',    icon: '📁' },
@@ -22,6 +23,7 @@ const SHORTCUTS = [
   { id: 'outlook',      label: 'Outlook Express',  icon: '📧',  msg: 'Outlook Express\n\nInbox (3 unread):\n• Manager: "Did you classify yet?"\n• IT: "Password expires in 0 days"\n• HR: "Mandatory ISO 29119 training"' },
   { id: 'bugsweeper',    label: 'TriageDesk.exe',   icon: '🕵️',  msg: '' },
   { id: 'pipeline-ops', label: 'PipelineOps.exe',  icon: '⚡',  msg: '' },
+  { id: 'snake',        label: 'Snake.exe',         icon: '🐍',  msg: '' },
 ];
 
 /**
@@ -97,6 +99,10 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
       setDialog({ title: 'PipelineOps.exe', icon: '⚡', size: 'lg', content: <RetroPipelineOps onClose={() => setDialog(null)} /> });
       return;
     }
+    if (sc.id === 'snake') {
+      setDialog({ title: 'Snake.exe', icon: '🐍', size: 'lg', content: <RetroSnake onClose={() => setDialog(null)} /> });
+      return;
+    }
     if (sc.id === 'bugsweeper') {
       setDialog({ title: 'TriageDesk.exe', icon: '🕵️', size: 'lg', content: <RetroBugSweeper onClose={() => setDialog(null)} /> });
     } else if (sc.id === 'ie') {
@@ -165,6 +171,7 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
   const PROGRAMS = [
     { id: 'bugsweeper',    label: 'TriageDesk.exe',   icon: '🕵️' },
     { id: 'pipeline-ops', label: 'PipelineOps.exe',  icon: '⚡' },
+    { id: 'snake',        label: 'Snake.exe',         icon: '🐍' },
     { id: 'ie',           label: 'Internet Explorer', icon: '🌐' },
     { id: 'my-docs',      label: 'My Documents',     icon: '📂' },
     { id: 'outlook',      label: 'Outlook Express',  icon: '📧' },

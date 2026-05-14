@@ -104,11 +104,13 @@
 
 /* ── Left shortcut column ── */
 .retro-desktop__shortcuts {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 92px;
+  grid-auto-flow: column;
+  grid-auto-columns: 92px;
+  grid-template-rows: repeat(6, auto);
+  align-content: start;
   gap: 4px;
-  width: 92px;
   flex-shrink: 0;
 }
 
