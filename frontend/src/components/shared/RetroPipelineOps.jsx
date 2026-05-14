@@ -149,7 +149,7 @@ export default function RetroPipelineOps({ onClose }) {
     return (
       <div className="pipeline-ops pipeline-ops--loading">
         <div className="pipeline-ops__loading-card">
-          <div className="pipeline-ops__loading-icon">🔧</div>
+          <div className="pipeline-ops__loading-icon">⚡</div>
           <div className="pipeline-ops__loading-title">PipelineOps.exe</div>
           <div className="pipeline-ops__loading-subtitle">Initializing test pipeline…</div>
           <div className="pipeline-ops__loading-progress">
@@ -193,7 +193,7 @@ export default function RetroPipelineOps({ onClose }) {
     <DndContext onDragEnd={handleDragEnd}>
       <div className="pipeline-ops">
         <div className="pipeline-ops__header">
-          <span className="pipeline-ops__title">🔧 PipelineOps.exe</span>
+          <span className="pipeline-ops__title">⚡ PipelineOps.exe</span>
           <span className="pipeline-ops__progress">{score} / {DECK.length} placed</span>
         </div>
 

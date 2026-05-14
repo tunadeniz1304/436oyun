@@ -81,7 +81,7 @@ export default function RetroBugSweeper({ onClose }) {
     return (
       <div className="bug-sweeper bug-sweeper--loading">
         <div className="bug-sweeper__loading-card">
-          <div className="bug-sweeper__loading-icon">🐛</div>
+          <div className="bug-sweeper__loading-icon">🕵️</div>
           <div className="bug-sweeper__loading-title">TriageDesk.exe</div>
           <div className="bug-sweeper__loading-subtitle">Loading incident triage console…</div>
           <div className="bug-sweeper__loading-progress">
@@ -129,7 +129,7 @@ export default function RetroBugSweeper({ onClose }) {
   return (
     <div className="bug-sweeper">
       <div className="bug-sweeper__header">
-        <span className="bug-sweeper__title">🐛 BugSweeper</span>
+        <span className="bug-sweeper__title">🕵️ TriageDesk</span>
         <span className="bug-sweeper__lives" aria-label={`${lives} lives remaining`}>
           {HEARTS.map((h, i) => (
             <span key={i} style={{ opacity: i < lives ? 1 : 0.2 }}>{h}</span>
