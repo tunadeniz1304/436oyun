@@ -585,9 +585,20 @@
 .retro-desktop__popup--lg {
   width: 680px;
   max-width: 92vw;
-  max-height: 80vh;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.retro-desktop__popup--lg .retro-desktop__popup-titlebar {
+  flex-shrink: 0;
 }
 
 .retro-desktop__popup-rich {
-  /* no extra padding — rich component brings its own */
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }

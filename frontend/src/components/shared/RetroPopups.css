@@ -219,8 +219,8 @@
   font-size: 12px;
   color: #000;
   background: #c0c0c0;
-  height: 100%;
-  min-height: 400px;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -472,8 +472,8 @@
   font-size: 12px;
   color: #000;
   background: #c0c0c0;
-  height: 100%;
-  min-height: 360px;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
 }
