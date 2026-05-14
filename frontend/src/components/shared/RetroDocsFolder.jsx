@@ -48,7 +48,6 @@ export default function RetroDocsFolder({ onClose }) {
                 key={doc.id}
                 className={`retro-docs-folder__file-btn${selectedDocId === doc.id ? ' retro-docs-folder__file-btn--selected' : ''}`}
                 onClick={(e) => handleFileClick(e, doc.id)}
-                onDoubleClick={() => setOpenDocId(doc.id)}
                 aria-label={`Open ${doc.filename}`}
               >
                 <span className="retro-docs-folder__file-icon">{doc.icon}</span>
