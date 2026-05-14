@@ -581,3 +581,13 @@
 .retro-desktop__hint {
   display: none;
 }
+
+.retro-desktop__popup--lg {
+  width: 680px;
+  max-width: 92vw;
+  max-height: 80vh;
+}
+
+.retro-desktop__popup-rich {
+  /* no extra padding — rich component brings its own */
+}

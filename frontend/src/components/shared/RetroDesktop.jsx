@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import './RetroDesktop.css';
+import RetroBugSweeper from './RetroBugSweeper.jsx';
+import RetroBrowser from './RetroBrowser.jsx';
+import RetroDocsFolder from './RetroDocsFolder.jsx';
 
 const ALL_FOLDERS = [
   { zoneId: 'error-district',   label: 'Zone1_Incident047', ext: '/',    icon: '📁' },
@@ -12,10 +15,11 @@ const ALL_FOLDERS = [
 // Decorative left-column shortcuts (Win95/XP style desktop icons)
 const SHORTCUTS = [
   { id: 'my-computer',  label: 'My Computer',      icon: '🖥️',  msg: 'My Computer\n\nDrives: C:\\ (OPUS Corp)\nFree space: 47%\n\nThis console is read-only for non-admin users.' },
-  { id: 'my-docs',      label: 'My Documents',     icon: '📂',  msg: 'My Documents\n\nNo files indexed.\nContact IT to enable file sync.' },
+  { id: 'my-docs',      label: 'My Documents',     icon: '📂',  msg: '' },
   { id: 'recycle-bin',  label: 'Recycle Bin',      icon: '🗑️',  msg: 'Recycle Bin\n\nDeleted incidents archive — empty.\n(Audit policy: incidents are never deleted.)' },
-  { id: 'ie',           label: 'Internet Explorer', icon: '🌐', msg: 'Internet Explorer 6\n\nUnable to connect.\nThe OPUS Corp intranet is offline.' },
+  { id: 'ie',           label: 'Internet Explorer', icon: '🌐', msg: '' },
   { id: 'outlook',      label: 'Outlook Express',  icon: '📧',  msg: 'Outlook Express\n\nInbox (3 unread):\n• Manager: "Did you classify yet?"\n• IT: "Password expires in 0 days"\n• HR: "Mandatory ISO 29119 training"' },
+  { id: 'bugsweeper',   label: 'BugSweeper.exe',   icon: '🐛',  msg: '' },
 ];
 
 /**
@@ -87,7 +91,15 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
   };
 
   const handleShortcutDoubleClick = (sc) => {
-    setDialog({ title: sc.label, body: sc.msg, icon: sc.icon });
+    if (sc.id === 'bugsweeper') {
+      setDialog({ title: 'BugSweeper.exe', icon: '🐛', size: 'lg', content: <RetroBugSweeper onClose={() => setDialog(null)} /> });
+    } else if (sc.id === 'ie') {
+      setDialog({ title: 'Internet Explorer 6', icon: '🌐', size: 'lg', content: <RetroBrowser onClose={() => setDialog(null)} /> });
+    } else if (sc.id === 'my-docs') {
+      setDialog({ title: 'My Documents', icon: '📂', size: 'lg', content: <RetroDocsFolder onClose={() => setDialog(null)} /> });
+    } else {
+      setDialog({ title: sc.label, body: sc.msg, icon: sc.icon });
+    }
   };
 
   const timeStr  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -217,30 +229,37 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
 
           {/* Generic dialog popup */}
           {dialog && (
-            <div className="retro-desktop__popup" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={['retro-desktop__popup', dialog.size === 'lg' ? 'retro-desktop__popup--lg' : ''].join(' ')}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="retro-desktop__popup-titlebar">
                 <span>{dialog.title}</span>
                 <button className="retro-desktop__wbtn retro-desktop__wbtn--close" onClick={() => setDialog(null)} aria-label="Close">✕</button>
               </div>
-              <div className="retro-desktop__popup-body">
-                <div className="retro-desktop__popup-row">
-                  <span className="retro-desktop__popup-icon">{dialog.icon || 'ℹ️'}</span>
-                  <pre className="retro-desktop__popup-text">{dialog.body}</pre>
-                </div>
-                <div className="retro-desktop__popup-buttons">
-                  {dialog.onConfirm && (
-                    <button
-                      className="retro-desktop__dialog-btn"
-                      onClick={() => { const cb = dialog.onConfirm; setDialog(null); cb(); }}
-                    >
-                      {dialog.confirmLabel || 'OK'}
+              {dialog.content ? (
+                <div className="retro-desktop__popup-rich">{dialog.content}</div>
+              ) : (
+                <div className="retro-desktop__popup-body">
+                  <div className="retro-desktop__popup-row">
+                    <span className="retro-desktop__popup-icon">{dialog.icon || 'ℹ️'}</span>
+                    <pre className="retro-desktop__popup-text">{dialog.body}</pre>
+                  </div>
+                  <div className="retro-desktop__popup-buttons">
+                    {dialog.onConfirm && (
+                      <button
+                        className="retro-desktop__dialog-btn"
+                        onClick={() => { const cb = dialog.onConfirm; setDialog(null); cb(); }}
+                      >
+                        {dialog.confirmLabel || 'OK'}
+                      </button>
+                    )}
+                    <button className="retro-desktop__dialog-btn" onClick={() => setDialog(null)}>
+                      {dialog.onConfirm ? 'Cancel' : 'OK'}
                     </button>
-                  )}
-                  <button className="retro-desktop__dialog-btn" onClick={() => setDialog(null)}>
-                    {dialog.onConfirm ? 'Cancel' : 'OK'}
-                  </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
