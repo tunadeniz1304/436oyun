@@ -581,3 +581,26 @@
 .retro-desktop__hint {
   display: none;
 }
+
+.retro-desktop__popup--lg {
+  width: 680px;
+  max-width: 92vw;
+  height: 78vh;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.retro-desktop__popup--lg .retro-desktop__popup-titlebar {
+  flex-shrink: 0;
+}
+
+.retro-desktop__popup-rich {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

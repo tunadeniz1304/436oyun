@@ -1,0 +1,875 @@
+/* ── Shared Win95-style popup component styles ── */
+
+/* ── BugSweeper mini-game ── */
+.bug-sweeper {
+  display: flex;
+  flex-direction: column;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #c0c0c0;
+  height: 100%;
+  min-height: 340px;
+}
+
+.bug-sweeper__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  box-shadow: 0 1px 0 #fff;
+  gap: 10px;
+  font-weight: bold;
+}
+
+.bug-sweeper__title {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.bug-sweeper__lives {
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.bug-sweeper__round {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.bug-sweeper__card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  background: #fff;
+  margin: 12px 14px 8px;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  min-height: 80px;
+}
+
+.bug-sweeper__targets {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 10px;
+  justify-content: center;
+}
+
+.bug-sweeper__btn {
+  flex: 1;
+  padding: 7px 10px;
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.bug-sweeper__btn:active,
+.bug-sweeper__btn:focus-visible {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  outline: none;
+}
+
+.bug-sweeper__btn--correct {
+  background: #00aa00;
+  color: #fff;
+  border-top-color: #00dd00;
+  border-left-color: #00dd00;
+  border-bottom-color: #005500;
+  border-right-color: #005500;
+}
+
+.bug-sweeper__btn--wrong {
+  background: #cc0000;
+  color: #fff;
+  border-top-color: #ff4444;
+  border-left-color: #ff4444;
+  border-bottom-color: #880000;
+  border-right-color: #880000;
+  animation: bug-sweeper-shake 0.35s ease-out;
+}
+
+@keyframes bug-sweeper-shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-6px); }
+  40%  { transform: translateX(6px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+.bug-sweeper__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px 10px;
+  border-top: 1px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  font-size: 11px;
+}
+
+.bug-sweeper__score {
+  font-weight: bold;
+}
+
+.bug-sweeper__hint {
+  color: var(--ink-soft);
+}
+
+/* ── Result screen ── */
+.bug-sweeper__result {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.bug-sweeper__result-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.bug-sweeper__result-score {
+  font-size: 14px;
+}
+
+.bug-sweeper__iso-callout {
+  background: #fff;
+  border: 2px solid;
+  border-top-color: #808080;
+  border-left-color: #808080;
+  border-bottom-color: #fff;
+  border-right-color: #fff;
+  padding: 10px 14px;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  max-width: 480px;
+  width: 100%;
+}
+
+.bug-sweeper__iso-callout-ref {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.bug-sweeper__result-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.bug-sweeper__result-btn {
+  padding: 6px 18px;
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+}
+
+.bug-sweeper__result-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.bug-sweeper__result-btn:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+/* ── RetroBrowser — Win95/IE6 chrome ── */
+.retro-browser {
+  display: flex;
+  flex-direction: column;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #c0c0c0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Title bar */
+.retro-browser__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 6px;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none;
+}
+
+.retro-browser__titlebar-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.retro-browser__titlebar-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.retro-browser__close-btn {
+  background: #c0c0c0;
+  color: #000;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-size: 11px;
+  font-weight: bold;
+  width: 18px;
+  height: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-browser__close-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+/* Toolbar */
+.retro-browser__toolbar {
+  background: #c0c0c0;
+  padding: 4px 6px;
+  border-bottom: 2px solid #808080;
+  box-shadow: 0 1px 0 #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.retro-browser__nav-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.retro-browser__toolbar-btn {
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.retro-browser__toolbar-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-browser__toolbar-btn:disabled {
+  color: #808080;
+  cursor: default;
+}
+
+.retro-browser__toolbar-btn:disabled:active {
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+}
+
+.retro-browser__address-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-browser__address-label {
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.retro-browser__address-input {
+  flex: 1;
+  background: #fff;
+  border: none;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  padding: 1px 4px;
+  color: #000;
+}
+
+/* Content */
+.retro-browser__content {
+  flex: 1;
+  background: #fff;
+  overflow-y: auto;
+  padding: 12px 16px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 6px 4px;
+}
+
+.retro-browser__page-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+  color: #000080;
+  border-bottom: 1px solid #c0c0c0;
+  padding-bottom: 4px;
+}
+
+.retro-browser__lede {
+  font-size: 12px;
+  font-style: italic;
+  color: #444;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.retro-browser__section {
+  margin-bottom: 16px;
+}
+
+.retro-browser__section-heading {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+  color: #000080;
+}
+
+.retro-browser__paragraph {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+/* ISO callout box */
+.retro-browser__iso-callout {
+  background: #ddeeff;
+  border-left: 3px solid #0066cc;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.retro-browser__iso-callout strong {
+  font-size: 12px;
+}
+
+.retro-browser__iso-callout p {
+  margin: 4px 0 0 0;
+}
+
+.retro-browser__iso-note {
+  color: #333;
+  font-size: 11px;
+}
+
+/* Navigation links styled as hyperlinks */
+.retro-browser__link-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 8px 0 0 0;
+}
+
+.retro-browser__link-list li {
+  margin-bottom: 4px;
+}
+
+.retro-browser__link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0000cc;
+  text-decoration: underline;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.retro-browser__link-btn:hover {
+  color: #cc0000;
+}
+
+.retro-browser__link-btn:active {
+  color: #cc0000;
+}
+
+/* Status bar */
+.retro-browser__statusbar {
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* ── RetroDocsFolder — Win95 My Documents window ── */
+.retro-docs-folder {
+  display: flex;
+  flex-direction: column;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #c0c0c0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.retro-docs-folder__menubar {
+  display: flex;
+  gap: 0;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  padding: 1px 2px;
+}
+
+.retro-docs-folder__menu-item {
+  background: none;
+  border: none;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+.retro-docs-folder__menu-item:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.retro-docs-folder__toolbar {
+  display: flex;
+  gap: 2px;
+  background: #c0c0c0;
+  padding: 3px 4px;
+  border-bottom: 2px solid #808080;
+  box-shadow: 0 1px 0 #fff;
+}
+
+.retro-docs-folder__toolbar-btn {
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.retro-docs-folder__toolbar-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-docs-folder__file-area {
+  flex: 1;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 4px 0;
+}
+
+.retro-docs-folder__viewer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.retro-docs-folder__file-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  align-content: flex-start;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.retro-docs-folder__file-btn {
+  width: 100px;
+  background: none;
+  border: 1px solid transparent;
+  padding: 6px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  text-align: center;
+}
+
+.retro-docs-folder__file-btn:hover {
+  border-color: #000080;
+  background: #e0e8f8;
+}
+
+.retro-docs-folder__file-btn--selected {
+  background: #000080;
+  color: #fff;
+  border-color: #000080;
+}
+
+.retro-docs-folder__file-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.retro-docs-folder__file-name {
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.retro-docs-folder__statusbar {
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* ── RetroDocViewer — PDF-style reader inside the folder ── */
+.retro-doc-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #c0c0c0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  overflow: hidden;
+}
+
+.retro-doc-viewer__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 6px;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.retro-doc-viewer__titlebar-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.retro-doc-viewer__titlebar-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.retro-doc-viewer__content {
+  flex: 1;
+  background: #fefcf7;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 20px 24px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 4px 0;
+}
+
+.retro-doc-viewer__heading {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  color: #000;
+}
+
+.retro-doc-viewer__page:first-child .retro-doc-viewer__heading {
+  margin-top: 0;
+}
+
+.retro-doc-viewer__para {
+  margin: 0 0 0.8em 0;
+}
+
+.retro-doc-viewer__iso-section {
+  margin-top: 1.4em;
+  border-top: 1px solid #ccc;
+  padding-top: 1em;
+}
+
+.retro-doc-viewer__iso-callout {
+  background: #fffbe6;
+  border-left: 3px solid #cc8800;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.retro-doc-viewer__iso-callout p {
+  margin: 4px 0 0 0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+}
+
+.retro-doc-viewer__iso-label {
+  font-weight: bold;
+  font-variant: small-caps;
+  margin-bottom: 4px;
+}
+
+.retro-doc-viewer__iso-note {
+  color: #555;
+  font-size: 11px;
+}
+
+.retro-doc-viewer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ── Bug Mine — Win95 Minesweeper ── */
+.bug-mine {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: #c0c0c0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  user-select: none;
+}
+
+.bug-mine__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #c0c0c0;
+  border-bottom: 2px solid #808080;
+  box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #808080;
+  margin: 6px;
+  flex-shrink: 0;
+}
+
+.bug-mine__counter {
+  background: #000;
+  color: #f00;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  padding: 2px 4px;
+  min-width: 44px;
+  text-align: center;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.bug-mine__face-btn {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-size: 18px;
+  width: 32px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.bug-mine__face-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.bug-mine__grid {
+  display: grid;
+  grid-template-columns: repeat(9, 28px);
+  grid-template-rows: repeat(9, 28px);
+  gap: 0;
+  margin: 0 6px 0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  flex-shrink: 0;
+}
+
+.bug-mine__cell {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.bug-mine__cell--closed {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+}
+
+.bug-mine__cell--closed:active {
+  border: 1px solid #808080;
+}
+
+.bug-mine__cell--open {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  cursor: default;
+}
+
+.bug-mine__cell--exploded {
+  background: #f00;
+}
+
+.bug-mine__cell--n1 { color: #0000f0; }
+.bug-mine__cell--n2 { color: #007b00; }
+.bug-mine__cell--n3 { color: #f00; }
+.bug-mine__cell--n4 { color: #00007b; }
+.bug-mine__cell--n5 { color: #7b0000; }
+.bug-mine__cell--n6 { color: #007b7b; }
+.bug-mine__cell--n7 { color: #000; }
+.bug-mine__cell--n8 { color: #808080; }
+
+.bug-mine__statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: #c0c0c0;
+  border-top: 1px solid #808080;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.bug-mine__status--lost { color: #cc0000; font-weight: bold; }
+.bug-mine__status--won  { color: #006600; font-weight: bold; }
+
+.bug-mine__close-btn {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.bug-mine__close-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
