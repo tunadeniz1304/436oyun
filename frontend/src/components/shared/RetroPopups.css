@@ -210,3 +210,256 @@
   outline: 1px dotted #000;
   outline-offset: -4px;
 }
+
+/* ── RetroBrowser — Win95/IE6 chrome ── */
+.retro-browser {
+  display: flex;
+  flex-direction: column;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #c0c0c0;
+  height: 100%;
+  min-height: 400px;
+  overflow: hidden;
+}
+
+/* Title bar */
+.retro-browser__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 6px;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none;
+}
+
+.retro-browser__titlebar-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.retro-browser__titlebar-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.retro-browser__close-btn {
+  background: #c0c0c0;
+  color: #000;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-size: 11px;
+  font-weight: bold;
+  width: 18px;
+  height: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-browser__close-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+/* Toolbar */
+.retro-browser__toolbar {
+  background: #c0c0c0;
+  padding: 4px 6px;
+  border-bottom: 2px solid #808080;
+  box-shadow: 0 1px 0 #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.retro-browser__nav-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.retro-browser__toolbar-btn {
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.retro-browser__toolbar-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-browser__toolbar-btn:disabled {
+  color: #808080;
+  cursor: default;
+}
+
+.retro-browser__toolbar-btn:disabled:active {
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+}
+
+.retro-browser__address-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.retro-browser__address-label {
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.retro-browser__address-input {
+  flex: 1;
+  background: #fff;
+  border: none;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  padding: 1px 4px;
+  color: #000;
+}
+
+/* Content */
+.retro-browser__content {
+  flex: 1;
+  background: #fff;
+  overflow-y: auto;
+  padding: 12px 16px;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 6px 4px;
+}
+
+.retro-browser__page-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+  color: #000080;
+  border-bottom: 1px solid #c0c0c0;
+  padding-bottom: 4px;
+}
+
+.retro-browser__lede {
+  font-size: 12px;
+  font-style: italic;
+  color: #444;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.retro-browser__section {
+  margin-bottom: 16px;
+}
+
+.retro-browser__section-heading {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
+  color: #000080;
+}
+
+.retro-browser__paragraph {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+/* ISO callout box */
+.retro-browser__iso-callout {
+  background: #ddeeff;
+  border-left: 3px solid #0066cc;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.retro-browser__iso-callout strong {
+  font-size: 12px;
+}
+
+.retro-browser__iso-callout p {
+  margin: 4px 0 0 0;
+}
+
+.retro-browser__iso-note {
+  color: #333;
+  font-size: 11px;
+}
+
+/* Navigation links styled as hyperlinks */
+.retro-browser__link-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 8px 0 0 0;
+}
+
+.retro-browser__link-list li {
+  margin-bottom: 4px;
+}
+
+.retro-browser__link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0000cc;
+  text-decoration: underline;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.retro-browser__link-btn:hover {
+  color: #cc0000;
+}
+
+.retro-browser__link-btn:active {
+  color: #cc0000;
+}
+
+/* Status bar */
+.retro-browser__statusbar {
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #000;
+  flex-shrink: 0;
+}
