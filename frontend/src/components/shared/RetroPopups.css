@@ -718,3 +718,158 @@
   font-size: 11px;
   flex-shrink: 0;
 }
+
+/* ── Bug Mine — Win95 Minesweeper ── */
+.bug-mine {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background: #c0c0c0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  user-select: none;
+}
+
+.bug-mine__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: #c0c0c0;
+  border-bottom: 2px solid #808080;
+  box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #808080;
+  margin: 6px;
+  flex-shrink: 0;
+}
+
+.bug-mine__counter {
+  background: #000;
+  color: #f00;
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  padding: 2px 4px;
+  min-width: 44px;
+  text-align: center;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.bug-mine__face-btn {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-size: 18px;
+  width: 32px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.bug-mine__face-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.bug-mine__grid {
+  display: grid;
+  grid-template-columns: repeat(9, 28px);
+  grid-template-rows: repeat(9, 28px);
+  gap: 0;
+  margin: 0 6px 0;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+  flex-shrink: 0;
+}
+
+.bug-mine__cell {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.bug-mine__cell--closed {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+}
+
+.bug-mine__cell--closed:active {
+  border: 1px solid #808080;
+}
+
+.bug-mine__cell--open {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  cursor: default;
+}
+
+.bug-mine__cell--exploded {
+  background: #f00;
+}
+
+.bug-mine__cell--n1 { color: #0000f0; }
+.bug-mine__cell--n2 { color: #007b00; }
+.bug-mine__cell--n3 { color: #f00; }
+.bug-mine__cell--n4 { color: #00007b; }
+.bug-mine__cell--n5 { color: #7b0000; }
+.bug-mine__cell--n6 { color: #007b7b; }
+.bug-mine__cell--n7 { color: #000; }
+.bug-mine__cell--n8 { color: #808080; }
+
+.bug-mine__statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: #c0c0c0;
+  border-top: 1px solid #808080;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.bug-mine__status--lost { color: #cc0000; font-weight: bold; }
+.bug-mine__status--won  { color: #006600; font-weight: bold; }
+
+.bug-mine__close-btn {
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+
+.bug-mine__close-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
