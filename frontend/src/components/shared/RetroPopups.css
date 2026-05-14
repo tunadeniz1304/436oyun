@@ -463,3 +463,249 @@
   color: #000;
   flex-shrink: 0;
 }
+
+/* ── RetroDocsFolder — Win95 My Documents window ── */
+.retro-docs-folder {
+  display: flex;
+  flex-direction: column;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  background: #c0c0c0;
+  height: 100%;
+  min-height: 360px;
+  overflow: hidden;
+  position: relative;
+}
+
+.retro-docs-folder__menubar {
+  display: flex;
+  gap: 0;
+  background: #c0c0c0;
+  border-bottom: 1px solid #808080;
+  padding: 1px 2px;
+}
+
+.retro-docs-folder__menu-item {
+  background: none;
+  border: none;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+.retro-docs-folder__menu-item:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.retro-docs-folder__toolbar {
+  display: flex;
+  gap: 2px;
+  background: #c0c0c0;
+  padding: 3px 4px;
+  border-bottom: 2px solid #808080;
+  box-shadow: 0 1px 0 #fff;
+}
+
+.retro-docs-folder__toolbar-btn {
+  background: #c0c0c0;
+  border: none;
+  border-top: 2px solid #fff;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #808080;
+  border-right: 2px solid #808080;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.retro-docs-folder__toolbar-btn:active {
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-bottom: 2px solid #fff;
+  border-right: 2px solid #fff;
+}
+
+.retro-docs-folder__file-area {
+  flex: 1;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 4px 0;
+}
+
+.retro-docs-folder__file-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  align-content: flex-start;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.retro-docs-folder__file-btn {
+  width: 100px;
+  background: none;
+  border: 1px solid transparent;
+  padding: 6px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  color: #000;
+  text-align: center;
+}
+
+.retro-docs-folder__file-btn:hover {
+  border-color: #000080;
+  background: #e0e8f8;
+}
+
+.retro-docs-folder__file-btn--selected {
+  background: #000080;
+  color: #fff;
+  border-color: #000080;
+}
+
+.retro-docs-folder__file-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.retro-docs-folder__file-name {
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.retro-docs-folder__statusbar {
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* ── RetroDocViewer — PDF-style reader inside the folder ── */
+.retro-doc-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #c0c0c0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  color: #000;
+  overflow: hidden;
+}
+
+.retro-doc-viewer__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 6px;
+  background: linear-gradient(to right, #000080, #1084d0);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.retro-doc-viewer__titlebar-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.retro-doc-viewer__titlebar-text {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.retro-doc-viewer__content {
+  flex: 1;
+  background: #fefcf7;
+  overflow-y: auto;
+  max-height: 55vh;
+  padding: 20px 24px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  margin: 4px 4px 0;
+}
+
+.retro-doc-viewer__heading {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  color: #000;
+}
+
+.retro-doc-viewer__page:first-child .retro-doc-viewer__heading {
+  margin-top: 0;
+}
+
+.retro-doc-viewer__para {
+  margin: 0 0 0.8em 0;
+}
+
+.retro-doc-viewer__iso-section {
+  margin-top: 1.4em;
+  border-top: 1px solid #ccc;
+  padding-top: 1em;
+}
+
+.retro-doc-viewer__iso-callout {
+  background: #fffbe6;
+  border-left: 3px solid #cc8800;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.retro-doc-viewer__iso-callout p {
+  margin: 4px 0 0 0;
+  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+}
+
+.retro-doc-viewer__iso-label {
+  font-weight: bold;
+  font-variant: small-caps;
+  margin-bottom: 4px;
+}
+
+.retro-doc-viewer__iso-note {
+  color: #555;
+  font-size: 11px;
+}
+
+.retro-doc-viewer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #c0c0c0;
+  border-top: 2px solid #808080;
+  box-shadow: 0 -1px 0 #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
