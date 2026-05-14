@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getISODefinition } from '../../data/iso-definitions.js';
 import './RetroPopups.css';
 
@@ -27,6 +27,13 @@ export default function RetroBugSweeper({ onClose }) {
   const [lives, setLives]       = useState(3);
   const [feedback, setFeedback] = useState(null); // { target: string, correct: bool } | null
   const [status, setStatus]     = useState('playing'); // 'playing' | 'won' | 'lost'
+  const [phase, setPhase]       = useState('loading'); // 'loading' | 'ready'
+
+  useEffect(() => {
+    if (phase !== 'loading') return;
+    const id = setTimeout(() => setPhase('ready'), 900);
+    return () => clearTimeout(id);
+  }, [phase]);
 
   const isoDef = getISODefinition('§4.7');
 
@@ -69,6 +76,26 @@ export default function RetroBugSweeper({ onClose }) {
     setFeedback(null);
     setStatus('playing');
   };
+
+  if (phase === 'loading') {
+    return (
+      <div className="bug-sweeper bug-sweeper--loading">
+        <div className="bug-sweeper__loading-card">
+          <div className="bug-sweeper__loading-icon">🐛</div>
+          <div className="bug-sweeper__loading-title">TriageDesk.exe</div>
+          <div className="bug-sweeper__loading-subtitle">Loading incident triage console…</div>
+          <div className="bug-sweeper__loading-progress">
+            <div className="bug-sweeper__loading-bar" />
+          </div>
+          <div className="bug-sweeper__loading-log">
+            <div>&gt; Reading incident log………… OK</div>
+            <div>&gt; Loading ISO 29119-1 §4.7… OK</div>
+            <div>&gt; Connecting to defect tracker…</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (status !== 'playing') {
     return (

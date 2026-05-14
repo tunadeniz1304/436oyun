@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import './RetroPipelineOps.css';
 
@@ -103,8 +103,14 @@ export default function RetroPipelineOps({ onClose }) {
   const [placed, setPlaced]         = useState({});
   const [wrongFlash, setWrongFlash] = useState(null);
   const [wrongInfo, setWrongInfo]   = useState(null);
-  const [status, setStatus]         = useState('playing');
+  const [phase, setPhase]           = useState('loading');
   const [score, setScore]           = useState(0);
+
+  useEffect(() => {
+    if (phase !== 'loading') return;
+    const id = setTimeout(() => setPhase('playing'), 900);
+    return () => clearTimeout(id);
+  }, [phase]);
 
   const handleDragEnd = ({ active, over }) => {
     if (!over) return;
@@ -120,7 +126,7 @@ export default function RetroPipelineOps({ onClose }) {
       setScore(newScore);
       setWrongInfo(null);
       if (newScore === DECK.length) {
-        setStatus('won');
+        setPhase('won');
       }
     } else {
       setWrongFlash(card.id);
@@ -134,12 +140,32 @@ export default function RetroPipelineOps({ onClose }) {
     setScore(0);
     setWrongFlash(null);
     setWrongInfo(null);
-    setStatus('playing');
+    setPhase('playing');
   };
 
   const unplacedCards = DECK.filter(c => !placed[c.id]);
 
-  if (status === 'won') {
+  if (phase === 'loading') {
+    return (
+      <div className="pipeline-ops pipeline-ops--loading">
+        <div className="pipeline-ops__loading-card">
+          <div className="pipeline-ops__loading-icon">🔧</div>
+          <div className="pipeline-ops__loading-title">PipelineOps.exe</div>
+          <div className="pipeline-ops__loading-subtitle">Initializing test pipeline…</div>
+          <div className="pipeline-ops__loading-progress">
+            <div className="pipeline-ops__loading-bar" />
+          </div>
+          <div className="pipeline-ops__loading-log">
+            <div>&gt; Loading test deck……… OK</div>
+            <div>&gt; Mounting stage runners… OK</div>
+            <div>&gt; Connecting to ISO/IEC/IEEE 29119-1…</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'won') {
     return (
       <div className="pipeline-ops pipeline-ops--result">
         <div className="pipeline-ops__result-title">🎉 Pipeline Complete!</div>
@@ -197,7 +223,7 @@ export default function RetroPipelineOps({ onClose }) {
               <DraggableCard card={card} />
             </div>
           ))}
-          {unplacedCards.length === 0 && status !== 'won' && (
+          {unplacedCards.length === 0 && phase !== 'won' && (
             <div className="pipeline-ops__hand-empty">All cards placed!</div>
           )}
         </div>
