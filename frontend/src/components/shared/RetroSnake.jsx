@@ -343,31 +343,42 @@ export default function RetroSnake({ onClose }) {
         ctx.fillText('×', bx + bs / 2, by + bs / 2 + 1);
       });
 
-      // Snake
+      // Snake — split the path at wrap-around discontinuities so a wrapping
+      // segment doesn't draw a long line across the board.
+      const tracePath = () => {
+        ctx.beginPath();
+        if (snake.length === 0) return;
+        ctx.moveTo(cx(snake[0]), cy(snake[0]));
+        for (let i = 1; i < snake.length; i++) {
+          const dx = Math.abs(snake[i].x - snake[i - 1].x);
+          const dy = Math.abs(snake[i].y - snake[i - 1].y);
+          // adjacent cells differ by 1; anything larger means the snake wrapped
+          if (dx > 1 || dy > 1) {
+            ctx.moveTo(cx(snake[i]), cy(snake[i]));
+          } else {
+            ctx.lineTo(cx(snake[i]), cy(snake[i]));
+          }
+        }
+        if (snake.length === 1) {
+          ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
+        }
+      };
+
       if (snake.length > 0) {
         const bodyW = CELL - 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.strokeStyle = '#0d3a16';
         ctx.lineWidth = bodyW + 4;
-        ctx.beginPath();
-        ctx.moveTo(cx(snake[0]), cy(snake[0]));
-        for (let i = 1; i < snake.length; i++) ctx.lineTo(cx(snake[i]), cy(snake[i]));
-        if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
+        tracePath();
         ctx.stroke();
         ctx.strokeStyle = '#4caf50';
         ctx.lineWidth = bodyW;
-        ctx.beginPath();
-        ctx.moveTo(cx(snake[0]), cy(snake[0]));
-        for (let i = 1; i < snake.length; i++) ctx.lineTo(cx(snake[i]), cy(snake[i]));
-        if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
+        tracePath();
         ctx.stroke();
         ctx.strokeStyle = 'rgba(255,255,255,0.18)';
         ctx.lineWidth = bodyW * 0.4;
-        ctx.beginPath();
-        ctx.moveTo(cx(snake[0]), cy(snake[0]));
-        for (let i = 1; i < snake.length; i++) ctx.lineTo(cx(snake[i]), cy(snake[i]));
-        if (snake.length === 1) ctx.lineTo(cx(snake[0]) + 0.01, cy(snake[0]));
+        tracePath();
         ctx.stroke();
 
         const head = snake[0];
