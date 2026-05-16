@@ -25,7 +25,7 @@ const SHORTCUTS = [
   { id: 'bugsweeper',    label: 'TriageDesk.exe',   icon: '🕵️',  msg: '' },
   { id: 'pipeline-ops', label: 'PipelineOps.exe',  icon: '⚡',  msg: '' },
   { id: 'snake',        label: 'Snake.exe',         icon: '🐍',  msg: '' },
-  { id: 'vscode',      label: 'VS Code',           icon: '🔵',  msg: '' },
+  { id: 'vscode',      label: 'VS Code',           icon: <img src="/vscode.svg" alt="VS Code" style={{ width: '1em', height: '1em', display: 'inline-block' }} />,  msg: '' },
 ];
 
 /**
