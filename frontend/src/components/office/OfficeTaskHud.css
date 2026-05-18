@@ -2,8 +2,8 @@
 
 /* ── Root container ── */
 .otask {
-  position: absolute;
-  top: 16px;
+  position: fixed;
+  top: 80px;
   left: 16px;
   z-index: 120;          /* above lighting overlay (50) and hud bar (100), below toast (200) */
   width: 320px;
