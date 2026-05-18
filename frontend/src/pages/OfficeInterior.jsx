@@ -8,6 +8,7 @@ import { ZONE_ORDER } from '../context/GameContext.jsx';
 import PixelCharacter from '../components/shared/PixelCharacter.jsx';
 import NpcDialog from '../components/shared/NpcDialog.jsx';
 import RetroDesktop from '../components/shared/RetroDesktop.jsx';
+import OfficeTaskHud from '../components/office/OfficeTaskHud.jsx';
 import './OfficeInterior.css';
 
 const TILE_PX = 48;
@@ -309,7 +310,7 @@ export default function OfficeInterior() {
   const { zoneId } = useParams();
   const navigate = useNavigate();
   const layout = OFFICE_LAYOUTS[zoneId];
-  const { state, completeQuest } = useGame();
+  const { state, completeQuest, markManagerStageSeen } = useGame();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeNpcId, setActiveNpcId] = useState(null);
@@ -330,6 +331,8 @@ export default function OfficeInterior() {
   // Derive office stage from global state
   const completedQuests = state.completedQuests;
   const zoneDone = state.completedZones.has(zoneId);
+  const briefingSeen = state.managerStagesSeen.has(`${zoneId}::briefing`);
+  const returnSeen   = state.managerStagesSeen.has(`${zoneId}::workers-done`);
   const requiredQuestIds = layout.npcs.filter(n => n.quiz).map(n => n.id);
   const allQuestsDone = requiredQuestIds.every(id => completedQuests.has(id));
   const anyQuestDone = requiredQuestIds.some(id => completedQuests.has(id));
@@ -423,6 +426,15 @@ export default function OfficeInterior() {
         </div>
         <span className="office__hud-hint">WASD · E to interact</span>
       </div>
+
+      <OfficeTaskHud
+        npcs={layout.npcs}
+        completedQuests={state.completedQuests}
+        officeStage={officeStage}
+        zoneDone={zoneDone}
+        briefingSeen={briefingSeen}
+        returnSeen={returnSeen}
+      />
 
       <div className="office__viewport" ref={viewportRef}>
         <div className="office__lighting-overlay" />
@@ -529,6 +541,7 @@ export default function OfficeInterior() {
           currentStage={officeStage}
           onClose={() => { setDialogOpen(false); setActiveNpcId(null); }}
           onQuestComplete={handleQuestComplete}
+          onManagerStageSeen={(stage) => markManagerStageSeen(zoneId, stage)}
         />
       )}
 

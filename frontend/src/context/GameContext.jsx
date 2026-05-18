@@ -43,6 +43,7 @@ const initialState = {
   sessionStarted: false,
   primersSeen: new Set(),
   skipAllPrimers: false,
+  managerStagesSeen: new Set(),
   hintsUsed: {
     'error-district':    new Set(),
     'vv-headquarters':   new Set(),
@@ -136,12 +137,19 @@ function reducer(state, action) {
       return { ...state, completedQuests };
     }
 
+    case 'MARK_MANAGER_STAGE_SEEN': {
+      const managerStagesSeen = new Set(state.managerStagesSeen);
+      managerStagesSeen.add(action.key);
+      return { ...state, managerStagesSeen };
+    }
+
     case 'RESET':
       return {
         ...initialState,
         completedZones: new Set(),
         completedQuests: new Set(),
         primersSeen: new Set(),
+        managerStagesSeen: new Set(),
         hintsUsed: {
           'error-district':    new Set(),
           'vv-headquarters':   new Set(),
@@ -266,6 +274,10 @@ export function GameProvider({ children }) {
     (zoneId, itemId) => dispatch({ type: 'USE_HINT', zoneId, itemId }),
     []
   );
+  const markManagerStageSeen = useCallback(
+    (zoneId, stage) => dispatch({ type: 'MARK_MANAGER_STAGE_SEEN', key: `${zoneId}::${stage}` }),
+    []
+  );
 
   const hasSeenPrimer = useCallback(
     (zoneId) => state.skipAllPrimers || state.primersSeen.has(zoneId),
@@ -307,6 +319,7 @@ export function GameProvider({ children }) {
       useHint,
       hasSeenPrimer,
       usedHint,
+      markManagerStageSeen,
     }),
     [
       state,
@@ -324,6 +337,7 @@ export function GameProvider({ children }) {
       useHint,
       hasSeenPrimer,
       usedHint,
+      markManagerStageSeen,
     ]
   );
 
