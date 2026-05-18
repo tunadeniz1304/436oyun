@@ -1,1 +1,283 @@
-/* OfficeTaskHud styles — all values via design tokens, no hardcoded colors */
+/* OfficeTaskHud — all values via design tokens, no hardcoded colors */
+
+/* ── Root container ── */
+.otask {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 120;          /* above lighting overlay (50) and hud bar (100), below toast (200) */
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  font-family: var(--font-sans);
+  pointer-events: auto;
+}
+
+/* ── Collapsed pill (always visible header row) ── */
+.otask__pill {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  width: 100%;
+  padding: 10px var(--gap-md);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-radius var(--t-base) var(--ease-out);
+}
+
+/* When expanded, square off the bottom corners */
+.otask--expanded .otask__pill {
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border-bottom-color: var(--border-soft);
+}
+
+.otask__pill:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.otask__pill:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus), var(--shadow-lg);
+}
+
+/* Accent dot */
+.otask__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--office-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--office-accent) 70%, transparent);
+}
+
+/* Pill text body */
+.otask__pill-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.otask__eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: var(--fw-bold);
+  color: var(--office-accent);
+  line-height: 1;
+}
+
+.otask__active-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: var(--lh-snug);
+}
+
+/* Counter */
+.otask__counter {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+}
+
+/* Chevron */
+.otask__chevron {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--ink-muted);
+  transition: transform var(--t-base) var(--ease-out);
+}
+
+/* ── Expanded panel ── */
+.otask__panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: otask-slide-down var(--t-base) var(--ease-out) both;
+}
+
+@keyframes otask-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Progress bar */
+.otask__progress-track {
+  height: 3px;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+
+.otask__progress-fill {
+  height: 100%;
+  background: var(--office-accent);
+  transition: width var(--t-long) var(--ease-out);
+  position: relative;
+}
+
+.otask__progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -55deg,
+    transparent 0 5px,
+    rgba(255, 255, 255, 0.25) 5px 8px
+  );
+  animation: otask-stripe 1.4s linear infinite;
+}
+
+@keyframes otask-stripe {
+  from { background-position: 0 0; }
+  to   { background-position: -26px 0; }
+}
+
+/* Task list */
+.otask__list {
+  padding: var(--gap-sm) var(--gap-sm) var(--gap-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-soft) transparent;
+}
+
+/* Individual task row */
+.otask__row {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: 7px var(--gap-sm);
+  border-radius: var(--r-md);
+  transition: background var(--t-micro) var(--ease-out);
+}
+
+.otask__row-icon {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  text-align: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.otask__row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.otask__row-where {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: var(--fw-semi);
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.otask__row-name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  line-height: var(--lh-snug);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.otask__row-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Status: done ── */
+.otask__row--done .otask__row-icon {
+  color: var(--success);
+}
+
+.otask__row--done .otask__row-name {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(136, 136, 136, 0.5);
+}
+
+.otask__row--done .otask__row-where {
+  color: var(--border-strong);
+}
+
+/* ── Status: active ── */
+.otask__row--active {
+  background: color-mix(in srgb, var(--office-accent) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--office-accent) 30%, transparent);
+}
+
+.otask__row--active .otask__row-icon {
+  color: var(--office-accent);
+  animation: otask-pulse-icon 1.6s ease-in-out infinite;
+}
+
+.otask__row--active .otask__row-name {
+  color: var(--ink);
+  font-weight: var(--fw-semi);
+}
+
+.otask__row--active .otask__row-where {
+  color: var(--office-accent);
+}
+
+@keyframes otask-pulse-icon {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Status: pending ── */
+.otask__row--pending .otask__row-icon {
+  color: var(--border-strong);
+}
+
+.otask__row--pending .otask__row-name {
+  color: var(--ink-muted);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .otask__panel {
+    animation: none;
+  }
+  .otask__progress-fill::after {
+    animation: none;
+  }
+  .otask__row--active .otask__row-icon {
+    animation: none;
+  }
+}

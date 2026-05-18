@@ -425,17 +425,17 @@ export default function OfficeInterior() {
         <span className="office__hud-hint">WASD · E to interact</span>
       </div>
 
-      <OfficeTaskHud
-        zoneLabel={layout.label}
-        zoneColor={layout.color}
-        npcs={layout.npcs}
-        completedQuests={state.completedQuests}
-        officeStage={officeStage}
-        zoneDone={zoneDone}
-      />
-
       <div className="office__viewport" ref={viewportRef}>
         <div className="office__lighting-overlay" />
+
+        <OfficeTaskHud
+          zoneLabel={layout.label}
+          zoneColor={layout.color}
+          npcs={layout.npcs}
+          completedQuests={state.completedQuests}
+          officeStage={officeStage}
+          zoneDone={zoneDone}
+        />
 
         {computerLockedToast && (
           <div className="office__toast">
