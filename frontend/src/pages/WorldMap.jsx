@@ -614,17 +614,25 @@ function ExecutiveHQ({ color, locked }) {
 }
 
 /* ── Street lamp ────────────────────────────────────────────────────── */
-function StreetLamp({ position }) {
+function StreetLamp({ position, rotation = 0 }) {
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* base plate */}
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.18, 0.22, 0.1, 12]} />
+        <meshStandardMaterial color="#4a5260" roughness={0.7} />
+      </mesh>
+      {/* pole */}
       <mesh position={[0, 2.5, 0]}>
         <cylinderGeometry args={[0.06, 0.09, 5, 7]} />
         <meshStandardMaterial color="#78869a" roughness={0.7} />
       </mesh>
+      {/* arm */}
       <mesh position={[0.5, 4.9, 0]}>
         <boxGeometry args={[1, 0.12, 0.12]} />
         <meshStandardMaterial color="#78869a" roughness={0.7} />
       </mesh>
+      {/* lamp */}
       <mesh position={[1, 4.85, 0]}>
         <sphereGeometry args={[0.22, 10, 10]} />
         <meshStandardMaterial color="#fffde7" emissive="#fffde7" emissiveIntensity={2.5} />
@@ -701,8 +709,89 @@ function MapPaths({ completedZones }) {
     end:   pos3(p.to[0],   p.to[1]),
     fromId: p.fromId,
   }));
+
+  // Each pentagon corner gets two stacked patches that knit the adjoining
+  // segments cleanly:
+  //   • asphalt disc (full circle, road half-width + small overshoot)
+  //   • sidewalk arc on the OUTER side only (sector facing away from centroid)
+  const asphaltRadius    = ROAD_WIDTH / 2 + 0.15;
+  const sidewalkOuterRad = ROAD_WIDTH / 2 + KERB_THICK + SIDEWALK_WIDTH + 0.05;
+  const kerbOuterRad     = ROAD_WIDTH / 2 + KERB_THICK + 0.02;
+
   return (
     <group>
+      {Object.entries(ROAD_CORNERS).map(([id, [gx, gy]]) => {
+        const [x, , z] = pos3(gx, gy);
+        // Find the two segments meeting at this corner. The "outward" direction
+        // is roughly the average of the two unit vectors pointing AWAY from the
+        // neighbours (i.e. opposite of vectors to the neighbours).
+        const neighbours = segments
+          .filter((s) =>
+            (Math.abs(s.start[0] - x) < 0.01 && Math.abs(s.start[2] - z) < 0.01) ||
+            (Math.abs(s.end[0]   - x) < 0.01 && Math.abs(s.end[2]   - z) < 0.01)
+          )
+          .map((s) => {
+            const other = (Math.abs(s.start[0] - x) < 0.01 && Math.abs(s.start[2] - z) < 0.01)
+              ? s.end : s.start;
+            const dx = other[0] - x;
+            const dz = other[2] - z;
+            const len = Math.hypot(dx, dz) || 1;
+            return [dx / len, dz / len];
+          });
+        // Outward bisector = -(n1 + n2)/2, then normalised
+        const sumX = neighbours.reduce((a, n) => a + n[0], 0);
+        const sumZ = neighbours.reduce((a, n) => a + n[1], 0);
+        const inwardLen = Math.hypot(sumX, sumZ) || 1;
+        const outDx = -sumX / inwardLen;
+        const outDz = -sumZ / inwardLen;
+        // Sweep half-angle for the visible outer arc — wide enough to cover the
+        // gap between adjacent segments' outer sidewalks.
+        // ringGeometry thetaStart=0 points along +X in the mesh's local frame.
+        // After rotation [-π/2, 0, 0] (so the ring lies in the XZ plane), the
+        // angle increases CCW when viewed from above. We want the arc centred
+        // on the outward direction in world XZ:
+        const outAngle = Math.atan2(outDz, outDx);
+        const halfSweep = Math.PI * 0.55;
+        // Compensate for the X-axis rotation: a positive thetaStart in the
+        // unrotated ring maps to -Z in world, so flip the angle sign.
+        const thetaStart = -outAngle - halfSweep;
+        const thetaLength = halfSweep * 2;
+
+        return (
+          <group key={`corner-${id}`} position={[x, 0, z]}>
+            {/* sidewalk arc — outer sector only */}
+            <mesh
+              position={[0, 0.069, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              receiveShadow
+            >
+              <ringGeometry
+                args={[asphaltRadius - 0.01, sidewalkOuterRad, 36, 1, thetaStart, thetaLength]}
+              />
+              <meshStandardMaterial color="#bfb7a1" roughness={0.92} />
+            </mesh>
+            {/* kerb arc — narrow dark seam, matches sidewalk sector */}
+            <mesh
+              position={[0, 0.084, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <ringGeometry
+                args={[asphaltRadius - 0.01, kerbOuterRad, 36, 1, thetaStart, thetaLength]}
+              />
+              <meshStandardMaterial color="#7a7363" roughness={0.85} />
+            </mesh>
+            {/* asphalt disc on top */}
+            <mesh
+              position={[0, 0.041, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              receiveShadow
+            >
+              <circleGeometry args={[asphaltRadius, 24]} />
+              <meshStandardMaterial color="#3a3f48" roughness={0.95} />
+            </mesh>
+          </group>
+        );
+      })}
       {segments.map((seg, i) => (
         <RoadSegment key={i} seg={seg} isCompleted={completedZones.has(seg.fromId)} />
       ))}
@@ -710,13 +799,66 @@ function MapPaths({ completedZones }) {
   );
 }
 
-/* ── Street lamps along roads ───────────────────────────────────────── */
-const LAMP_POSITIONS = [
-  [-9, 0, -12], [0, 0, -11], [8, 0, -9],
-  [-9, 0, -4],  [9, 0, -4],
-  [-9, 0, 5],   [9, 0, 5],
-  [-4, 0, 13],  [4, 0, 13],
-];
+/* ── Pentagon road loop in world (x, z) — derived from ROAD_CORNERS ── */
+/* Order: Error → V&V → Artefact → Final → Matrix → Error (CW on screen).
+ * Used by lamp placement, traffic routes, and pedestrian sidewalk routes. */
+const PENTAGON_WAYPOINTS = [
+  ROAD_CORNERS['error-district'],
+  ROAD_CORNERS['vv-headquarters'],
+  ROAD_CORNERS['artefact-archive'],
+  ROAD_CORNERS['final-inspection'],
+  ROAD_CORNERS['matrix-tower'],
+].map(([gx, gy]) => {
+  const [x, , z] = pos3(gx, gy);
+  return [x, z];
+});
+
+const PENTAGON_REVERSE = [...PENTAGON_WAYPOINTS].reverse();
+
+/* ── Street lamps along the OUTER sidewalk of the pentagon ──────────── */
+/* For each pentagon segment we place 2 lamps along its outer kerb, with the
+ * lamp arm pointing back toward the road centroid (so the light hangs over
+ * the asphalt, not over the building). */
+const LAMP_PLACEMENTS = (() => {
+  const out = [];
+  for (let i = 0; i < PENTAGON_WAYPOINTS.length; i++) {
+    const a = PENTAGON_WAYPOINTS[i];
+    const b = PENTAGON_WAYPOINTS[(i + 1) % PENTAGON_WAYPOINTS.length];
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const len = Math.hypot(dx, dz);
+    const ux = dx / len;
+    const uz = dz / len;
+    // Right-hand normal of travel direction (a → b). We'll test whether this
+    // side is OUTER by checking which is farther from the road centroid.
+    const rightX = -uz;
+    const rightZ =  ux;
+    const midX = (a[0] + b[0]) / 2;
+    const midZ = (a[1] + b[1]) / 2;
+    const probeOut = Math.hypot(
+      midX + rightX - ROAD_CENTROID[0],
+      midZ + rightZ - ROAD_CENTROID[1],
+    );
+    const probeMid = Math.hypot(midX - ROAD_CENTROID[0], midZ - ROAD_CENTROID[1]);
+    const outerSign = probeOut > probeMid ? 1 : -1;
+    const nx = rightX * outerSign;
+    const nz = rightZ * outerSign;
+
+    // Two lamp positions along the segment, at ~25% and ~75% of its length,
+    // offset onto the outer sidewalk centre.
+    [0.25, 0.75].forEach((t) => {
+      const px = a[0] + ux * len * t + nx * SIDEWALK_CENTRE;
+      const pz = a[1] + uz * len * t + nz * SIDEWALK_CENTRE;
+      // Lamp arm should point INWARD (toward the road), i.e. opposite of nx,nz.
+      // The default StreetLamp arm extends along its local +X axis. A rotation
+      // of Y=α rotates +X into world direction (cos α, sin α) in (x, z).
+      // So to align local +X with inward = (-nx, -nz): α = atan2(-nz, -nx).
+      const armRot = Math.atan2(-nz, -nx);
+      out.push({ position: [px, 0, pz], rotation: armRot });
+    });
+  }
+  return out;
+})();
 
 /* ── Procedural trees ───────────────────────────────────────────────── */
 const TREES = [
@@ -1182,24 +1324,6 @@ function PlazaLife() {
 }
 
 /* ── Traffic & pedestrians ──────────────────────────────────────────── */
-
-/* Pentagon road loop — derived from the 5 building positions on the campus.
- * Order: Error → V&V → Artefact → Final → Matrix → Error (clockwise on screen).
- * These match the 5 PATHS segments, so cars stay on the asphalt. */
-/* Cars drive on the asphalt — the road pentagon itself.
- * Order: Error → V&V → Artefact → Final → Matrix → Error (clockwise on screen). */
-const PENTAGON_WAYPOINTS = [
-  ROAD_CORNERS['error-district'],
-  ROAD_CORNERS['vv-headquarters'],
-  ROAD_CORNERS['artefact-archive'],
-  ROAD_CORNERS['final-inspection'],
-  ROAD_CORNERS['matrix-tower'],
-].map(([gx, gy]) => {
-  const [x, , z] = pos3(gx, gy);
-  return [x, z];
-});
-
-const PENTAGON_REVERSE = [...PENTAGON_WAYPOINTS].reverse();
 
 /* All cars in the same direction share one speed so spacing never collapses.
  * Different colours, evenly phased around the pentagon → no overtaking, no crashes. */
@@ -1781,7 +1905,9 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
       <MapPaths completedZones={state.completedZones} />
 
       {/* ── Street lamps ── */}
-      {LAMP_POSITIONS.map((p, i) => <StreetLamp key={i} position={p} />)}
+      {LAMP_PLACEMENTS.map((l, i) => (
+        <StreetLamp key={i} position={l.position} rotation={l.rotation} />
+      ))}
 
       {/* ── Buildings ── */}
       {BUILDINGS.map((b) => {
