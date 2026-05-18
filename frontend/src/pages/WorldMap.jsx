@@ -95,9 +95,16 @@ const rotationToCentroid = (id) => {
   return Math.atan2(dx, dz);
 };
 
-/* Buildings sit just outside the sidewalk — right at the edge of the road.
- * Asphalt half-width ≈ 1.75 + sidewalk ≈ 1.9 + small gap → ≈ 4.2 world units. */
-const BUILDING_SETBACK = 4.2;
+/* ── Road & sidewalk geometry (single source of truth) ──────────────── */
+const ROAD_WIDTH      = 3.5;
+const SIDEWALK_WIDTH  = 1.4;
+const KERB_THICK      = 0.14;
+const SIDEWALK_CENTRE = ROAD_WIDTH / 2 + KERB_THICK + SIDEWALK_WIDTH / 2;
+
+/* Buildings sit just past the OUTER edge of the sidewalk, with a small gap
+ * so their footprint doesn't bury the pavement. */
+const BUILDING_SETBACK =
+  ROAD_WIDTH / 2 + KERB_THICK + SIDEWALK_WIDTH + 2.0;
 
 const BUILDINGS = [
   { id: 'error-district',   shape: 'office',     label: 'Error District HQ'   },
@@ -626,25 +633,50 @@ function StreetLamp({ position }) {
   );
 }
 
-/* ── Road segment with asphalt + lane markings ──────────────────────── */
+/* ── Road segment — asphalt + centre line, plus a sidewalk ONLY on the
+ * outer side (facing the buildings). The inner side (facing the plaza) is
+ * left to the plaza floor itself. ───────────────────────────────────── */
 function RoadSegment({ seg, isCompleted }) {
   const s = new THREE.Vector3(seg.start[0], 0, seg.start[2]);
   const e = new THREE.Vector3(seg.end[0], 0, seg.end[2]);
   const mid = s.clone().add(e).multiplyScalar(0.5);
   const length = s.distanceTo(e);
   const angle = Math.atan2(e.z - s.z, e.x - s.x);
+  // overshoot so corners knit
+  const sidewalkLen = length + SIDEWALK_WIDTH;
+
+  // Local +Z is to the LEFT of travel direction. Pick whichever local side is
+  // farther from the road centroid → that's the OUTER side (toward buildings).
+  // Travel direction in world: (cos angle, sin angle). Left-normal: (-sin, cos).
+  const leftWorld = [mid.x - Math.sin(angle), mid.z + Math.cos(angle)];
+  const dLeft  = Math.hypot(leftWorld[0]  - ROAD_CENTROID[0], leftWorld[1]  - ROAD_CENTROID[1]);
+  const dMid   = Math.hypot(mid.x - ROAD_CENTROID[0], mid.z - ROAD_CENTROID[1]);
+  const outerSign = dLeft > dMid ? 1 : -1; // +1 means outer side is local +Z
 
   const linePoints = [
-    new THREE.Vector3(seg.start[0], 0, seg.start[2]),
-    new THREE.Vector3(seg.end[0], 0, seg.end[2]),
+    new THREE.Vector3(-length / 2, 0, 0),
+    new THREE.Vector3( length / 2, 0, 0),
   ];
 
   return (
-    <group>
-      {/* asphalt strip */}
-      <mesh position={[mid.x, 0.04, mid.z]} rotation={[0, -angle, 0]} receiveShadow>
-        <boxGeometry args={[length, 0.08, 3.5]} />
+    <group position={[mid.x, 0, mid.z]} rotation={[0, -angle, 0]}>
+      {/* asphalt */}
+      <mesh position={[0, 0.04, 0]} receiveShadow>
+        <boxGeometry args={[length, 0.08, ROAD_WIDTH]} />
         <meshStandardMaterial color="#3a3f48" roughness={0.95} />
+      </mesh>
+      {/* kerb on the outer side only */}
+      <mesh position={[0, 0.085, outerSign * (ROAD_WIDTH / 2 + KERB_THICK / 2)]}>
+        <boxGeometry args={[length, 0.05, KERB_THICK]} />
+        <meshStandardMaterial color="#7a7363" roughness={0.85} />
+      </mesh>
+      {/* sidewalk on the outer side only — facing the buildings */}
+      <mesh
+        position={[0, 0.07, outerSign * SIDEWALK_CENTRE]}
+        receiveShadow
+      >
+        <boxGeometry args={[sidewalkLen, 0.1, SIDEWALK_WIDTH]} />
+        <meshStandardMaterial color="#bfb7a1" roughness={0.92} />
       </mesh>
       {/* centre line */}
       <Line
@@ -657,7 +689,7 @@ function RoadSegment({ seg, isCompleted }) {
         dashOffset={0}
         transparent
         opacity={isCompleted ? 0.9 : 0.5}
-        position={[0, 0.1, 0]}
+        position={[0, 0.12, 0]}
       />
     </group>
   );
@@ -1307,7 +1339,9 @@ function Cars() {
 
 /* Pedestrians walk on the sidewalk hugging the road, just outside the asphalt.
  * Sidewalk = pentagon corners pushed ~1.9 units outward from the centroid. */
-const SIDEWALK_OFFSET = 1.9;
+/* Pedestrians walk on the OUTER sidewalk — same lateral offset as the visible
+ * sidewalk strip drawn under the road. Keeps figures aligned to the pavement. */
+const SIDEWALK_OFFSET = SIDEWALK_CENTRE;
 const SIDEWALK_OUTER = PENTAGON_WAYPOINTS.map(([x, z]) => {
   const dx = x - ROAD_CENTROID[0];
   const dz = z - ROAD_CENTROID[1];
