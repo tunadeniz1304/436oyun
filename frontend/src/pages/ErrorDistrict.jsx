@@ -12,7 +12,7 @@ import CausalChain from '../components/zone1/CausalChain.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
-import { getZoneSkipTarget } from '../context/zoneNavigation.js';
+import { getZoneSkipTarget, getNextOfficeTarget } from '../context/zoneNavigation.js';
 import {
   zone1Scenarios,
   COLUMN_DEFS,
@@ -26,6 +26,7 @@ import './ErrorDistrict.css';
 const ZONE_ID = 'error-district';
 const ZONE_COLOR = 'var(--zone1-color)';
 const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
+const NEXT_OFFICE = getNextOfficeTarget(ZONE_ID);
 
 function ErrorDistrict() {
   const navigate = useNavigate();
@@ -284,9 +285,9 @@ function ErrorDistrict() {
                   variant="primary"
                   size="lg"
                   zoneColor="var(--zone1-color)"
-                  onClick={() => navigate('/zone/vv-headquarters')}
+                  onClick={() => navigate(NEXT_OFFICE.route)}
                 >
-                  Continue → Zone 2
+                  {NEXT_OFFICE.label}
                 </Button>
               </div>
             </motion.div>

@@ -14,7 +14,7 @@ import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useTimer } from '../hooks/useTimer.js';
 import { useMotion } from '../hooks/useMotion.js';
-import { getZoneSkipTarget } from '../context/zoneNavigation.js';
+import { getZoneSkipTarget, getNextOfficeTarget } from '../context/zoneNavigation.js';
 import {
   zone2Missions,
   ZONE2_FULL_SCORE,
@@ -29,6 +29,7 @@ import './VVHeadquarters.css';
 const ZONE_ID = 'vv-headquarters';
 const ZONE_COLOR = 'var(--zone2-color)';
 const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
+const NEXT_OFFICE = getNextOfficeTarget(ZONE_ID);
 
 const TIMER_SECONDS = 30;
 const ROUTING_LABEL = {
@@ -331,9 +332,9 @@ function VVHeadquarters() {
               size="lg"
               zoneColor="var(--zone2-color)"
               disabled={!completionRecorded}
-              onClick={() => navigate('/zone/matrix-tower')}
+              onClick={() => navigate(NEXT_OFFICE.route)}
             >
-              Continue → Zone 3
+              {NEXT_OFFICE.label}
             </Button>
           </div>
         )}

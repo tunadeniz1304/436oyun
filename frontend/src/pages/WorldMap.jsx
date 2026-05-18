@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame.js';
 import { useMotion } from '../hooks/useMotion.js';
 import ProgressTracker from '../components/shared/ProgressTracker.jsx';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import {
   OrbitControls, Html, ContactShadows, Sky,
   Line, Float,
@@ -81,14 +81,82 @@ const hex2rgb = (hex) => {
 
 /* ── Shared materials ───────────────────────────────────────────────── */
 const CONCRETE = { color: '#e8e4dc', roughness: 0.85, metalness: 0 };
-const GLASS    = { color: '#b8d4e8', roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.82 };
 const LOCKED   = { color: '#c8cdd6', roughness: 0.95, metalness: 0 };
 
-function Mat({ locked, ...props }) {
-  return <meshStandardMaterial {...(locked ? LOCKED : props)} />;
+/* Mix a hex colour toward warm concrete for a tinted facade */
+function tintedFacade(hex, mix = 0.78) {
+  const [r, g, b] = hex2rgb(hex);
+  const [br, bg, bb] = hex2rgb('#f0ebe1');
+  const c = new THREE.Color(
+    br * mix + r * (1 - mix),
+    bg * mix + g * (1 - mix),
+    bb * mix + b * (1 - mix),
+  );
+  return `#${c.getHexString()}`;
 }
-function GlassMat({ locked }) {
-  return locked ? <meshStandardMaterial {...LOCKED} /> : <meshStandardMaterial {...GLASS} />;
+
+/* Glass takes a slight zone tint when unlocked */
+function tintedGlass(hex) {
+  const [r, g, b] = hex2rgb(hex);
+  const [br, bg, bb] = hex2rgb('#b8d4e8');
+  const c = new THREE.Color(
+    br * 0.7 + r * 0.3,
+    bg * 0.7 + g * 0.3,
+    bb * 0.7 + b * 0.3,
+  );
+  return `#${c.getHexString()}`;
+}
+
+function Mat({ locked, color, ...props }) {
+  if (locked) return <meshStandardMaterial {...LOCKED} />;
+  return <meshStandardMaterial color={color} {...props} />;
+}
+function GlassMat({ locked, zoneColor }) {
+  if (locked) return <meshStandardMaterial {...LOCKED} />;
+  return (
+    <meshStandardMaterial
+      color={tintedGlass(zoneColor)}
+      roughness={0.05}
+      metalness={0.25}
+      transparent
+      opacity={0.82}
+      emissive={zoneColor}
+      emissiveIntensity={0.12}
+    />
+  );
+}
+
+/* Window grid — rows of small emissive cells on a facade panel */
+function WindowGrid({ width, height, position, rotation = [0, 0, 0], cols = 4, rows = 5, locked, zoneColor }) {
+  if (locked) return null;
+  const cells = [];
+  const cellW = (width / cols) * 0.55;
+  const cellH = (height / rows) * 0.45;
+  const stepX = width / cols;
+  const stepY = height / rows;
+  const startX = -width / 2 + stepX / 2;
+  const startY = -height / 2 + stepY / 2;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      cells.push(
+        <mesh key={`${r}-${c}`} position={[startX + c * stepX, startY + r * stepY, 0]}>
+          <planeGeometry args={[cellW, cellH]} />
+          <meshStandardMaterial
+            color="#fff6d0"
+            emissive="#ffeaa0"
+            emissiveIntensity={0.85}
+            transparent
+            opacity={0.95}
+          />
+        </mesh>
+      );
+    }
+  }
+  return (
+    <group position={position} rotation={rotation}>
+      {cells}
+    </group>
+  );
 }
 
 /* ── Zone ground patch ──────────────────────────────────────────────── */
@@ -109,25 +177,46 @@ function ZonePatch({ color, radius = 5.5, unlocked }) {
 /* ── Buildings ──────────────────────────────────────────────────────── */
 
 function OfficeBuilding({ color, locked }) {
+  const facade = locked ? CONCRETE.color : tintedFacade(color, 0.72);
   return (
     <group>
       {/* podium */}
       <mesh position={[0, 0.6, 0]} castShadow>
         <boxGeometry args={[5.5, 1.2, 4]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
+      </mesh>
+      {/* entrance canopy */}
+      <mesh position={[0, 1.35, 2.05]} castShadow>
+        <boxGeometry args={[2.4, 0.12, 0.6]} />
+        <meshStandardMaterial color={locked ? '#aaa' : color} emissive={locked ? '#000' : color} emissiveIntensity={locked ? 0 : 0.4} />
       </mesh>
       {/* main tower */}
       <mesh position={[0, 4, 0]} castShadow>
         <boxGeometry args={[3.8, 5.6, 2.8]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
       </mesh>
       {/* glass curtain strips */}
       {[-1.4, -0.4, 0.6, 1.6].map((dy, i) => (
         <mesh key={i} position={[0, 2.2 + dy, 1.42]} castShadow>
           <boxGeometry args={[3.5, 0.65, 0.05]} />
-          <GlassMat locked={locked} />
+          <GlassMat locked={locked} zoneColor={color} />
         </mesh>
       ))}
+      {/* side window rows */}
+      <WindowGrid
+        width={2.4} height={4.6}
+        position={[1.91, 4, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+        cols={3} rows={4}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={2.4} height={4.6}
+        position={[-1.91, 4, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+        cols={3} rows={4}
+        locked={locked} zoneColor={color}
+      />
       {/* colour accent band */}
       <mesh position={[0, 6.96, 0]}>
         <boxGeometry args={[3.9, 0.22, 2.9]} />
@@ -142,28 +231,83 @@ function OfficeBuilding({ color, locked }) {
         <boxGeometry args={[0.5, 0.6, 0.5]} />
         <meshStandardMaterial color="#b0b8c4" roughness={0.9} />
       </mesh>
+      {/* satellite dish */}
+      <mesh position={[-1.0, 7.95, -0.4]} rotation={[Math.PI / 4, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.32, 0.32, 0.08, 16]} />
+        <meshStandardMaterial color="#dcdcdc" roughness={0.5} metalness={0.3} />
+      </mesh>
     </group>
   );
 }
 
 function Skyscraper({ color, locked }) {
+  const facade = locked ? CONCRETE.color : tintedFacade(color, 0.7);
   return (
     <group>
       {/* wide lobby base */}
       <mesh position={[0, 0.8, 0]} castShadow>
         <boxGeometry args={[4.5, 1.6, 4.5]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.8} />
       </mesh>
+      {/* lobby glass band */}
+      {!locked && (
+        <mesh position={[0, 0.8, 2.26]}>
+          <boxGeometry args={[3.6, 1, 0.06]} />
+          <GlassMat locked={false} zoneColor={color} />
+        </mesh>
+      )}
       {/* lower shaft */}
       <mesh position={[0, 4.6, 0]} castShadow>
         <boxGeometry args={[3.2, 4.4, 3.2]} />
-        <GlassMat locked={locked} />
+        <GlassMat locked={locked} zoneColor={color} />
       </mesh>
+      {/* lower shaft window grid */}
+      <WindowGrid
+        width={2.6} height={3.6}
+        position={[0, 4.6, 1.62]}
+        cols={4} rows={5}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={2.6} height={3.6}
+        position={[0, 4.6, -1.62]}
+        rotation={[0, Math.PI, 0]}
+        cols={4} rows={5}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={2.6} height={3.6}
+        position={[1.62, 4.6, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+        cols={4} rows={5}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={2.6} height={3.6}
+        position={[-1.62, 4.6, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+        cols={4} rows={5}
+        locked={locked} zoneColor={color}
+      />
       {/* upper shaft */}
       <mesh position={[0.2, 9.8, 0.2]} castShadow>
         <boxGeometry args={[2.2, 5.6, 2.2]} />
-        <GlassMat locked={locked} />
+        <GlassMat locked={locked} zoneColor={color} />
       </mesh>
+      {/* upper shaft window grid */}
+      <WindowGrid
+        width={1.7} height={4.6}
+        position={[0.2, 9.8, 1.12]}
+        cols={3} rows={6}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={1.7} height={4.6}
+        position={[0.2, 9.8, -0.72]}
+        rotation={[0, Math.PI, 0]}
+        cols={3} rows={6}
+        locked={locked} zoneColor={color}
+      />
       {/* crown band */}
       <mesh position={[0.2, 12.7, 0.2]}>
         <boxGeometry args={[2.3, 0.25, 2.3]} />
@@ -174,6 +318,13 @@ function Skyscraper({ color, locked }) {
         <cylinderGeometry args={[0.06, 0.18, 3, 8]} />
         <meshStandardMaterial color={locked ? '#aaa' : color} emissive={locked ? '#000' : color} emissiveIntensity={locked ? 0 : 0.6} />
       </mesh>
+      {/* spire beacon */}
+      {!locked && (
+        <mesh position={[0.2, 15.8, 0.2]}>
+          <sphereGeometry args={[0.18, 12, 12]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.4} />
+        </mesh>
+      )}
       {/* setback accent */}
       <mesh position={[0, 6.95, 0]}>
         <boxGeometry args={[3.3, 0.18, 3.3]} />
@@ -184,28 +335,65 @@ function Skyscraper({ color, locked }) {
 }
 
 function CampusBuilding({ color, locked }) {
+  const facade = locked ? CONCRETE.color : tintedFacade(color, 0.72);
   return (
     <group>
       {/* wide low hall */}
       <mesh position={[0, 0.9, 0.5]} castShadow>
         <boxGeometry args={[6, 1.8, 4.5]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
       </mesh>
       {/* glass atrium front */}
       <mesh position={[0, 1.5, 2.55]}>
         <boxGeometry args={[4, 2.2, 0.12]} />
-        <GlassMat locked={locked} />
+        <GlassMat locked={locked} zoneColor={color} />
       </mesh>
+      {/* atrium window dots */}
+      <WindowGrid
+        width={3.6} height={1.8}
+        position={[0, 1.5, 2.62]}
+        cols={6} rows={2}
+        locked={locked} zoneColor={color}
+      />
+      {/* side windows */}
+      <WindowGrid
+        width={3.4} height={1.3}
+        position={[3.01, 1.1, 0.5]}
+        rotation={[0, Math.PI / 2, 0]}
+        cols={5} rows={2}
+        locked={locked} zoneColor={color}
+      />
+      <WindowGrid
+        width={3.4} height={1.3}
+        position={[-3.01, 1.1, 0.5]}
+        rotation={[0, -Math.PI / 2, 0]}
+        cols={5} rows={2}
+        locked={locked} zoneColor={color}
+      />
       {/* rear tower */}
       <mesh position={[-1.5, 3.8, -0.8]} castShadow>
         <boxGeometry args={[2.2, 4.2, 2.2]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
       </mesh>
+      {/* rear tower windows */}
+      <WindowGrid
+        width={1.6} height={3.2}
+        position={[-1.5, 3.8, 0.32]}
+        cols={3} rows={4}
+        locked={locked} zoneColor={color}
+      />
       {/* colour wall stripe */}
       <mesh position={[-1.5, 3.8, -1.92]}>
         <boxGeometry args={[2.3, 4.3, 0.1]} />
         <meshStandardMaterial color={locked ? '#aaa' : color} emissive={locked ? '#000' : color} emissiveIntensity={locked ? 0 : 0.3} />
       </mesh>
+      {/* rooftop solar panel */}
+      {!locked && (
+        <mesh position={[1.4, 1.93, 0.5]} rotation={[-Math.PI / 12, 0, 0]} castShadow>
+          <boxGeometry args={[2.4, 0.06, 1.6]} />
+          <meshStandardMaterial color="#1a2540" roughness={0.3} metalness={0.5} emissive="#0a1430" emissiveIntensity={0.2} />
+        </mesh>
+      )}
       {/* roof parapet */}
       <mesh position={[0, 1.86, 0.5]}>
         <boxGeometry args={[6.1, 0.18, 4.6]} />
@@ -216,25 +404,41 @@ function CampusBuilding({ color, locked }) {
 }
 
 function DataCenter({ color, locked }) {
+  const facade = locked ? CONCRETE.color : tintedFacade(color, 0.72);
   return (
     <group>
       {/* main block */}
       <mesh position={[0, 1.8, 0]} castShadow>
         <boxGeometry args={[5.5, 3.6, 4]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
       </mesh>
       {/* secondary block */}
       <mesh position={[0, 1.2, -2.6]} castShadow>
         <boxGeometry args={[4, 2.4, 1.2]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={facade} roughness={0.85} />
       </mesh>
       {/* vent strips */}
       {[-1, 0, 1].map((i) => (
         <mesh key={i} position={[i * 1.6, 1.8, 2.02]}>
           <boxGeometry args={[1.1, 3.5, 0.08]} />
-          <meshStandardMaterial color="#9aa4b2" roughness={0.8} />
+          <meshStandardMaterial color="#9aa4b2" roughness={0.8} metalness={0.2} />
         </mesh>
       ))}
+      {/* status indicator LEDs on vent strips */}
+      {!locked && [-1, 0, 1].map((i) => (
+        <mesh key={`led-${i}`} position={[i * 1.6, 3.1, 2.08]}>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.6} />
+        </mesh>
+      ))}
+      {/* side window slits */}
+      <WindowGrid
+        width={3.2} height={1.8}
+        position={[-2.78, 2.2, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+        cols={5} rows={1}
+        locked={locked} zoneColor={color}
+      />
       {/* colour tech stripe */}
       <mesh position={[2.78, 1.8, 0]}>
         <boxGeometry args={[0.1, 3, 1.2]} />
@@ -244,20 +448,37 @@ function DataCenter({ color, locked }) {
       {[[-1.5, 0.8], [0.5, -0.8], [1.8, 0.6]].map(([x, z], i) => (
         <mesh key={i} position={[x, 3.8, z]} castShadow>
           <boxGeometry args={[0.9, 0.55, 0.9]} />
-          <meshStandardMaterial color="#8899aa" roughness={0.9} />
+          <meshStandardMaterial color="#8899aa" roughness={0.9} metalness={0.3} />
         </mesh>
       ))}
+      {/* tall antenna mast */}
+      <mesh position={[-2.2, 4.6, -1.5]} castShadow>
+        <cylinderGeometry args={[0.04, 0.06, 1.8, 8]} />
+        <meshStandardMaterial color="#6b7280" roughness={0.6} />
+      </mesh>
+      {!locked && (
+        <mesh position={[-2.2, 5.55, -1.5]}>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={1.2} />
+        </mesh>
+      )}
     </group>
   );
 }
 
 function ExecutiveHQ({ color, locked }) {
+  const drumColor = locked ? '#c8cdd6' : tintedFacade(color, 0.82);
   return (
     <group>
       {/* wide podium ring */}
       <mesh position={[0, 0.5, 0]} castShadow>
         <cylinderGeometry args={[4.5, 4.5, 1, 32]} />
-        <Mat locked={locked} {...CONCRETE} />
+        <Mat locked={locked} color={drumColor} roughness={0.75} />
+      </mesh>
+      {/* podium accent ring */}
+      <mesh position={[0, 1.02, 0]}>
+        <torusGeometry args={[4.5, 0.08, 10, 48]} />
+        <meshStandardMaterial color={locked ? '#aaa' : color} emissive={locked ? '#000' : color} emissiveIntensity={locked ? 0 : 0.5} />
       </mesh>
       {/* columns */}
       {Array.from({ length: 8 }).map((_, i) => {
@@ -269,11 +490,41 @@ function ExecutiveHQ({ color, locked }) {
           </mesh>
         );
       })}
+      {/* uplights at column bases */}
+      {!locked && Array.from({ length: 8 }).map((_, i) => {
+        const a = (i / 8) * Math.PI * 2;
+        return (
+          <mesh key={`u-${i}`} position={[Math.cos(a) * 3.5, 0.55, Math.sin(a) * 3.5]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.4} />
+          </mesh>
+        );
+      })}
       {/* main drum */}
       <mesh position={[0, 2.4, 0]} castShadow>
         <cylinderGeometry args={[3.2, 3.2, 1.8, 32]} />
-        <Mat locked={locked} color="#f5f2ec" roughness={0.6} metalness={0} />
+        <Mat locked={locked} color={drumColor} roughness={0.6} metalness={0} />
       </mesh>
+      {/* drum window band */}
+      {!locked && Array.from({ length: 16 }).map((_, i) => {
+        const a = (i / 16) * Math.PI * 2;
+        return (
+          <mesh
+            key={`win-${i}`}
+            position={[Math.cos(a) * 3.21, 2.4, Math.sin(a) * 3.21]}
+            rotation={[0, -a + Math.PI / 2, 0]}
+          >
+            <planeGeometry args={[0.65, 0.85]} />
+            <meshStandardMaterial
+              color="#fff6d0"
+              emissive="#ffeaa0"
+              emissiveIntensity={0.8}
+              transparent
+              opacity={0.95}
+            />
+          </mesh>
+        );
+      })}
       {/* accent ring */}
       <mesh position={[0, 3.35, 0]}>
         <torusGeometry args={[3.25, 0.12, 12, 48]} />
@@ -296,6 +547,19 @@ function ExecutiveHQ({ color, locked }) {
         <sphereGeometry args={[0.28, 16, 16]} />
         <meshStandardMaterial color={locked ? '#aaa' : color} emissive={locked ? '#000' : color} emissiveIntensity={locked ? 0 : 0.8} />
       </mesh>
+      {/* flag pole */}
+      {!locked && (
+        <>
+          <mesh position={[0, 7.2, 0]} castShadow>
+            <cylinderGeometry args={[0.04, 0.04, 1.5, 8]} />
+            <meshStandardMaterial color="#6b7280" />
+          </mesh>
+          <mesh position={[0.35, 7.6, 0]}>
+            <planeGeometry args={[0.6, 0.4]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} side={THREE.DoubleSide} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -397,25 +661,191 @@ const TREES = [
   { p: [14, 0, 27], s: 1.0 },
 ];
 
+const TREE_GREENS = [
+  ['#2d7a2a', '#3d9638'],
+  ['#3a8c3a', '#52b04d'],
+  ['#2f6b34', '#46924a'],
+  ['#4a9a3e', '#5fb852'],
+  ['#286a26', '#3a8e36'],
+];
+
 function Trees() {
   return (
     <group>
-      {TREES.map(({ p, s }, i) => (
-        <group key={i} position={p} scale={s}>
-          <mesh position={[0, 0.55, 0]}>
-            <cylinderGeometry args={[0.13, 0.2, 1.1, 7]} />
-            <meshStandardMaterial color="#5c3d1e" roughness={0.95} />
+      {TREES.map(({ p, s }, i) => {
+        const [lower, upper] = TREE_GREENS[i % TREE_GREENS.length];
+        return (
+          <group key={i} position={p} scale={s}>
+            <mesh position={[0, 0.55, 0]}>
+              <cylinderGeometry args={[0.13, 0.2, 1.1, 7]} />
+              <meshStandardMaterial color="#5c3d1e" roughness={0.95} />
+            </mesh>
+            <mesh position={[0, 2.0, 0]}>
+              <sphereGeometry args={[0.9, 10, 10]} />
+              <meshStandardMaterial color={lower} roughness={0.9} />
+            </mesh>
+            <mesh position={[0, 2.85, 0]}>
+              <sphereGeometry args={[0.58, 10, 10]} />
+              <meshStandardMaterial color={upper} roughness={0.9} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
+/* ── Flower bushes — scattered colour pops near roads ───────────────── */
+const BUSHES = [
+  { p: [-6, 0, -8],  c: '#e85d75' },
+  { p: [6, 0, -8],   c: '#f5a623' },
+  { p: [-6, 0, 9],   c: '#b667d4' },
+  { p: [6, 0, 9],    c: '#ffd56b' },
+  { p: [-11, 0, 0],  c: '#ff8a5b' },
+  { p: [11, 0, 0],   c: '#9be564' },
+  { p: [-2, 0, -14], c: '#e85d75' },
+  { p: [2, 0, 15],   c: '#f5a623' },
+];
+
+function Bushes() {
+  return (
+    <group>
+      {BUSHES.map(({ p, c }, i) => (
+        <group key={i} position={p}>
+          <mesh position={[0, 0.25, 0]}>
+            <sphereGeometry args={[0.45, 10, 10]} />
+            <meshStandardMaterial color="#3a7a32" roughness={0.9} />
           </mesh>
-          <mesh position={[0, 2.0, 0]}>
-            <sphereGeometry args={[0.9, 10, 10]} />
-            <meshStandardMaterial color="#2d7a2a" roughness={0.9} />
+          <mesh position={[0.18, 0.55, 0.1]}>
+            <sphereGeometry args={[0.22, 10, 10]} />
+            <meshStandardMaterial color={c} roughness={0.7} emissive={c} emissiveIntensity={0.15} />
           </mesh>
-          <mesh position={[0, 2.85, 0]}>
-            <sphereGeometry args={[0.58, 10, 10]} />
-            <meshStandardMaterial color="#3d9638" roughness={0.9} />
+          <mesh position={[-0.15, 0.5, -0.1]}>
+            <sphereGeometry args={[0.18, 10, 10]} />
+            <meshStandardMaterial color={c} roughness={0.7} emissive={c} emissiveIntensity={0.15} />
           </mesh>
         </group>
       ))}
+    </group>
+  );
+}
+
+/* ── Central plaza fountain ─────────────────────────────────────────── */
+function FountainJet() {
+  const jetRef = useRef();
+  const dropletsRef = useRef([]);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (jetRef.current) {
+      const s = 1 + Math.sin(t * 2.6) * 0.06;
+      jetRef.current.scale.y = s;
+    }
+    dropletsRef.current.forEach((m, i) => {
+      if (!m) return;
+      const phase = (t * 1.4 + i * 0.35) % 1.6;
+      const angle = (i / 8) * Math.PI * 2;
+      const radius = 0.35 + phase * 0.5;
+      const height = 2.45 - Math.pow(phase - 0.2, 2) * 2.6;
+      m.position.set(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+      const fade = Math.max(0, 1 - phase / 1.6);
+      m.scale.setScalar(0.6 + fade * 0.4);
+      if (m.material) m.material.opacity = 0.4 + fade * 0.55;
+    });
+  });
+
+  return (
+    <group>
+      {/* central water jet */}
+      <mesh ref={jetRef} position={[0, 1.55, 0]}>
+        <cylinderGeometry args={[0.08, 0.18, 1.4, 12, 1, true]} />
+        <meshStandardMaterial
+          color="#cfe8ff"
+          emissive="#7cc4ff"
+          emissiveIntensity={0.6}
+          transparent
+          opacity={0.65}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* arching droplets */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i} ref={(el) => (dropletsRef.current[i] = el)}>
+          <sphereGeometry args={[0.09, 8, 8]} />
+          <meshStandardMaterial
+            color="#dff1ff"
+            emissive="#9bd8ff"
+            emissiveIntensity={0.8}
+            transparent
+            opacity={0.85}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Fountain() {
+  return (
+    <group position={[0, 0, 0]}>
+      {/* basin rim */}
+      <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[1.7, 1.75, 0.36, 40]} />
+        <meshStandardMaterial color="#cfc6b0" roughness={0.85} />
+      </mesh>
+      {/* basin inner water (slightly recessed disc) */}
+      <mesh position={[0, 0.34, 0]} receiveShadow>
+        <cylinderGeometry args={[1.55, 1.55, 0.06, 40]} />
+        <meshStandardMaterial
+          color="#7cc4ff"
+          emissive="#3a9be0"
+          emissiveIntensity={0.35}
+          roughness={0.2}
+          metalness={0.1}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      {/* basin trim ring */}
+      <mesh position={[0, 0.37, 0]}>
+        <torusGeometry args={[1.55, 0.04, 10, 48]} />
+        <meshStandardMaterial color="#b8aa8c" roughness={0.7} />
+      </mesh>
+      {/* central pedestal */}
+      <mesh position={[0, 0.65, 0]} castShadow>
+        <cylinderGeometry args={[0.38, 0.55, 0.6, 16]} />
+        <meshStandardMaterial color="#d7cdb4" roughness={0.8} />
+      </mesh>
+      {/* mid-tier bowl */}
+      <mesh position={[0, 1.05, 0]} castShadow>
+        <cylinderGeometry args={[0.85, 0.55, 0.18, 24]} />
+        <meshStandardMaterial color="#cfc6b0" roughness={0.8} />
+      </mesh>
+      {/* mid-tier water dish */}
+      <mesh position={[0, 1.16, 0]}>
+        <cylinderGeometry args={[0.78, 0.78, 0.04, 24]} />
+        <meshStandardMaterial
+          color="#7cc4ff"
+          emissive="#3a9be0"
+          emissiveIntensity={0.35}
+          roughness={0.2}
+          metalness={0.1}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      {/* upper stem */}
+      <mesh position={[0, 1.4, 0]} castShadow>
+        <cylinderGeometry args={[0.18, 0.28, 0.5, 14]} />
+        <meshStandardMaterial color="#d7cdb4" roughness={0.8} />
+      </mesh>
+      {/* top finial */}
+      <mesh position={[0, 1.72, 0]} castShadow>
+        <sphereGeometry args={[0.18, 16, 16]} />
+        <meshStandardMaterial color="#b8aa8c" roughness={0.7} metalness={0.1} />
+      </mesh>
+      {/* animated water */}
+      <FountainJet />
     </group>
   );
 }
@@ -539,7 +969,17 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
       {/* concrete plaza */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
         <planeGeometry args={[38, 38]} />
-        <meshStandardMaterial color="#c4bfb0" roughness={0.9} />
+        <meshStandardMaterial color="#d2c8b2" roughness={0.9} />
+      </mesh>
+
+      {/* central plaza accent — circular tile */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, 0]} receiveShadow>
+        <ringGeometry args={[2.2, 3.4, 48]} />
+        <meshStandardMaterial color="#a8a08b" roughness={0.85} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.026, 0]} receiveShadow>
+        <circleGeometry args={[2.2, 48]} />
+        <meshStandardMaterial color="#b8b094" roughness={0.85} />
       </mesh>
 
       {/* ── Roads ── */}
@@ -569,6 +1009,8 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
 
       {/* ── Ambient props ── */}
       <Trees />
+      <Bushes />
+      <Fountain />
 
       {/* ── Shadows / env ── */}
       <ContactShadows
