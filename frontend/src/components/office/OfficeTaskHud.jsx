@@ -102,7 +102,7 @@ const AUTO_COLLAPSE_MS = 3500;
 /**
  * @param {{ zoneLabel: string, zoneColor: string, npcs: object[], completedQuests: Set<string>, officeStage: string, zoneDone: boolean }} props
  */
-export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQuests, officeStage, zoneDone }) {
+export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zoneDone }) {
   const [expanded, setExpanded] = useState(false);
   const userToggledRef = useRef(false);
   const collapseTimerRef = useRef(null);
@@ -130,7 +130,7 @@ export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQue
     setExpanded(true);
     scheduleCollapse();
     return () => clearTimeout(collapseTimerRef.current);
-  }, [officeStage]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [officeStage]); // intentional: scheduleCollapse is stable, only officeStage should retrigger
 
   const handleToggle = () => {
     userToggledRef.current = true;
