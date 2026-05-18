@@ -20,7 +20,7 @@ function quizLabel(npc) {
   return `Help — ${npc.role}`;
 }
 
-function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
+function buildTasks({ npcs, completedQuests, officeStage, zoneDone, briefingSeen, returnSeen }) {
   const manager = npcs.find(n => n.type === 'main');
   const quizNpcs = npcs.filter(n => n.quiz);
   const managerName = manager ? manager.name.split(' ')[0] : 'Manager';
@@ -31,7 +31,7 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     id: 'briefing',
     where: 'Manager Desk',
     name: `Receive Briefing — ${managerName}`,
-    status: officeStage === 'briefing' ? 'active' : 'done',
+    status: briefingSeen ? 'done' : 'active',
     meta: 'Step 1',
   });
 
@@ -41,7 +41,7 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     let status;
     if (isDone) {
       status = 'done';
-    } else if (officeStage === 'workers-pending' && !firstActivated) {
+    } else if (briefingSeen && !firstActivated) {
       status = 'active';
       firstActivated = true;
     } else {
@@ -57,33 +57,25 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     });
   }
 
-  {
-    let status;
-    if (officeStage === 'zone-done') status = 'done';
-    else if (officeStage === 'workers-done') status = 'active';
-    else status = 'pending';
-    tasks.push({
-      id: 'return',
-      where: 'Manager Desk',
-      name: `Return to Manager — ${managerName}`,
-      status,
-      meta: 'Step 3',
-    });
-  }
+  tasks.push({
+    id: 'return',
+    where: 'Manager Desk',
+    name: `Return to Manager — ${managerName}`,
+    status: returnSeen
+      ? 'done'
+      : (officeStage === 'workers-done' ? 'active' : 'pending'),
+    meta: 'Step 3',
+  });
 
-  {
-    let status;
-    if (zoneDone) status = 'done';
-    else if (officeStage === 'workers-done') status = 'active';
-    else status = 'pending';
-    tasks.push({
-      id: 'console',
-      where: 'Your Desk',
-      name: 'Open the Office Console',
-      status,
-      meta: 'Final step',
-    });
-  }
+  tasks.push({
+    id: 'console',
+    where: 'Your Desk',
+    name: 'Open the Office Console',
+    status: zoneDone
+      ? 'done'
+      : (officeStage === 'workers-done' && returnSeen ? 'active' : 'pending'),
+    meta: 'Final step',
+  });
 
   tasks.push({
     id: 'exit',
@@ -102,14 +94,14 @@ const AUTO_COLLAPSE_MS = 3500;
 /**
  * @param {{ zoneLabel: string, zoneColor: string, npcs: object[], completedQuests: Set<string>, officeStage: string, zoneDone: boolean }} props
  */
-export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zoneDone }) {
+export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zoneDone, briefingSeen, returnSeen }) {
   const [expanded, setExpanded] = useState(false);
   const userToggledRef = useRef(false);
   const collapseTimerRef = useRef(null);
 
   const tasks = useMemo(
-    () => buildTasks({ npcs, completedQuests, officeStage, zoneDone }),
-    [npcs, completedQuests, officeStage, zoneDone],
+    () => buildTasks({ npcs, completedQuests, officeStage, zoneDone, briefingSeen, returnSeen }),
+    [npcs, completedQuests, officeStage, zoneDone, briefingSeen, returnSeen],
   );
 
   const doneCount  = tasks.filter(t => t.status === 'done').length;
@@ -131,7 +123,7 @@ export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zone
     setExpanded(true);
     scheduleCollapse();
     return () => clearTimeout(collapseTimerRef.current);
-  }, [officeStage]); // intentional: scheduleCollapse is stable, only officeStage should retrigger
+  }, [officeStage, briefingSeen, returnSeen]); // intentional: manager ack changes should also re-expand
 
   const handleToggle = () => {
     userToggledRef.current = true;
