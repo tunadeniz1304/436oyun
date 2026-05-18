@@ -209,11 +209,36 @@
 }
 
 .otask__row-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
   font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  text-align: center;
+  font-weight: var(--fw-black);
   line-height: 1;
   flex-shrink: 0;
+}
+
+.otask__row-icon--done {
+  background: var(--success);
+  color: #fff;
+  box-shadow: 0 2px 4px color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.otask__row-icon--active {
+  background: var(--warning);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--warning) 18%, transparent),
+    0 0 14px color-mix(in srgb, var(--warning) 55%, transparent);
+  animation: otask-pulse-icon 1.6s ease-in-out infinite;
+}
+
+.otask__row-icon--pending {
+  background: transparent;
+  border: 1.5px solid var(--border-strong);
+  color: transparent;
 }
 
 .otask__row-body {
@@ -255,10 +280,6 @@
 }
 
 /* ── Status: done ── */
-.otask__row--done .otask__row-icon {
-  color: var(--success);
-}
-
 .otask__row--done .otask__row-name {
   color: var(--ink-muted);
   text-decoration: line-through;
@@ -271,13 +292,8 @@
 
 /* ── Status: active ── */
 .otask__row--active {
-  background: color-mix(in srgb, var(--office-accent) 10%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--office-accent) 30%, transparent);
-}
-
-.otask__row--active .otask__row-icon {
-  color: var(--office-accent);
-  animation: otask-pulse-icon 1.6s ease-in-out infinite;
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 30%, transparent);
 }
 
 .otask__row--active .otask__row-name {
@@ -286,19 +302,23 @@
 }
 
 .otask__row--active .otask__row-where {
-  color: var(--office-accent);
+  color: var(--warning);
 }
 
 @keyframes otask-pulse-icon {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
+  0%, 100% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--warning) 18%, transparent),
+      0 0 14px color-mix(in srgb, var(--warning) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px color-mix(in srgb, var(--warning) 10%, transparent),
+      0 0 22px color-mix(in srgb, var(--warning) 70%, transparent);
+  }
 }
 
 /* ── Status: pending ── */
-.otask__row--pending .otask__row-icon {
-  color: var(--border-strong);
-}
-
 .otask__row--pending .otask__row-name {
   color: var(--ink-muted);
 }
@@ -308,10 +328,10 @@
   .otask__panel {
     animation: none;
   }
-  .otask__progress-fill::after {
+  .otask__bar-fill::after {
     animation: none;
   }
-  .otask__row--active .otask__row-icon {
+  .otask__row-icon--active {
     animation: none;
   }
 }

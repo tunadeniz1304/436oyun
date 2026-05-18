@@ -96,7 +96,7 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
   return tasks;
 }
 
-const STATUS_ICON = { done: '✓', active: '▶', pending: '○' };
+const STATUS_GLYPH = { done: '✓', active: '!', pending: '' };
 const AUTO_COLLAPSE_MS = 3500;
 
 /**
@@ -179,7 +179,7 @@ export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zone
                 className={`otask__row otask__row--${t.status}`}
                 role="listitem"
               >
-                <span className="otask__row-icon" aria-hidden="true">{STATUS_ICON[t.status]}</span>
+                <span className={`otask__row-icon otask__row-icon--${t.status}`} aria-hidden="true">{STATUS_GLYPH[t.status]}</span>
                 <span className="otask__row-body">
                   <span className="otask__row-where">{t.where}</span>
                   <span className="otask__row-name">{t.name}</span>
