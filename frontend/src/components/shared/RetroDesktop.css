@@ -104,13 +104,11 @@
 
 /* ── Left shortcut column ── */
 .retro-desktop__shortcuts {
-  display: grid;
-  grid-template-columns: 92px;
-  grid-auto-flow: column;
-  grid-auto-columns: 92px;
-  grid-template-rows: repeat(6, auto);
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 4px;
+  width: 92px;
   flex-shrink: 0;
 }
 
@@ -515,23 +513,12 @@
 }
 
 .retro-desktop__start-flag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #ef4444 0%, #ef4444 50%, #22c55e 50%, #22c55e 100%);
+  border: 1px solid #000;
   font-size: 0;
-}
-
-.retro-desktop__win-logo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 1px;
-  width: 16px;
-  height: 16px;
-}
-
-.retro-desktop__win-logo span {
-  display: block;
 }
 
 .retro-desktop__start-text { letter-spacing: 0.02em; }
@@ -590,100 +577,6 @@
   text-align: center;
 }
 
-/* ── Find dialog ── */
-.retro-desktop__find-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.retro-desktop__find-label {
-  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
-  font-size: 12px;
-  color: #000;
-  white-space: nowrap;
-}
-
-.retro-desktop__find-input {
-  flex: 1;
-  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
-  font-size: 12px;
-  padding: 2px 4px;
-  border: none;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-bottom: 2px solid #fff;
-  border-right: 2px solid #fff;
-  background: #fff;
-  color: #000;
-  outline: none;
-}
-
-.retro-desktop__find-results {
-  border: none;
-  border-top: 2px solid #808080;
-  border-left: 2px solid #808080;
-  border-bottom: 2px solid #fff;
-  border-right: 2px solid #fff;
-  background: #fff;
-  min-height: 80px;
-  max-height: 140px;
-  overflow-y: auto;
-  margin-bottom: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: #808080 #c0c0c0;
-}
-
-.retro-desktop__find-results::-webkit-scrollbar {
-  width: 12px;
-}
-
-.retro-desktop__find-results::-webkit-scrollbar-track {
-  background: #c0c0c0;
-  border-left: 1px solid #808080;
-}
-
-.retro-desktop__find-results::-webkit-scrollbar-thumb {
-  background: #c0c0c0;
-  border-top: 2px solid #fff;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #808080;
-  border-right: 2px solid #808080;
-}
-
-.retro-desktop__find-results-header {
-  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
-  font-size: 11px;
-  color: #fff;
-  background: #000080;
-  padding: 2px 6px;
-}
-
-.retro-desktop__find-result-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 8px;
-  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
-  font-size: 12px;
-  color: #000;
-  cursor: default;
-}
-
-.retro-desktop__find-result-row:hover {
-  background: #000080;
-  color: #fff;
-}
-
-.retro-desktop__find-empty {
-  font-family: 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
-  font-size: 12px;
-  color: #555;
-  padding: 12px 10px;
-  text-align: center;
-}
-
 /* ── Backwards-compat hint (kept in case anything still uses it) ── */
 .retro-desktop__hint {
   display: none;
@@ -691,9 +584,10 @@
 
 .retro-desktop__popup--lg {
   width: 680px;
-  max-width: 92vw;
-  height: 78vh;
-  top: 47%;
+  max-width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  max-height: 540px;
+  top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
