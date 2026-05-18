@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame.js';
@@ -7,7 +7,7 @@ import ProgressTracker from '../components/shared/ProgressTracker.jsx';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   OrbitControls, Html, ContactShadows, Sky,
-  Line, Float,
+  Line, Float, useTexture,
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { normalizeScore } from '../context/scoreUtils.js';
@@ -57,20 +57,62 @@ const ZONE_DEFS = [
 const GRID = 7;
 const pos3 = (gx, gy) => [(gx - 2.5) * GRID, 0, (gy - 2.5) * GRID];
 
+/* Pentagon road corners (in gx/gy grid space).
+ * These define the asphalt loop. Buildings sit OUTSIDE this loop along the
+ * sidewalk's outer edge; pedestrians walk on the sidewalk hugging the road. */
+const ROAD_CORNERS = {
+  'error-district':   [1.3, 0.9],
+  'vv-headquarters':  [3.7, 1.1],
+  'artefact-archive': [3.7, 2.9],
+  'final-inspection': [2.5, 4.4],
+  'matrix-tower':     [1.3, 2.9],
+};
+
+/* Centroid of the road pentagon, in world (x, z) space */
+const ROAD_CENTROID = (() => {
+  const pts = Object.values(ROAD_CORNERS).map(([gx, gy]) => pos3(gx, gy));
+  const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+  const cz = pts.reduce((a, p) => a + p[2], 0) / pts.length;
+  return [cx, cz];
+})();
+
+/* Push a road corner outward from the road centroid by `dist` world units */
+const offsetFromCentroid = (id, dist) => {
+  const [gx, gy] = ROAD_CORNERS[id];
+  const [x, , z] = pos3(gx, gy);
+  const dx = x - ROAD_CENTROID[0];
+  const dz = z - ROAD_CENTROID[1];
+  const len = Math.hypot(dx, dz) || 1;
+  return [x + (dx / len) * dist, z + (dz / len) * dist];
+};
+
+/* Yaw so the building's +Z face (front) points back toward the road centroid */
+const rotationToCentroid = (id) => {
+  const [gx, gy] = ROAD_CORNERS[id];
+  const [x, , z] = pos3(gx, gy);
+  const dx = ROAD_CENTROID[0] - x;
+  const dz = ROAD_CENTROID[1] - z;
+  return Math.atan2(dx, dz);
+};
+
+/* Buildings sit just outside the sidewalk — right at the edge of the road.
+ * Asphalt half-width ≈ 1.75 + sidewalk ≈ 1.9 + small gap → ≈ 4.2 world units. */
+const BUILDING_SETBACK = 4.2;
+
 const BUILDINGS = [
-  { id: 'error-district',  gx: 0.8, gy: 0.5,  shape: 'office',     label: 'Error District HQ'  },
-  { id: 'vv-headquarters', gx: 4.2, gy: 0.8,  shape: 'skyscraper', label: 'V&V Tower'           },
-  { id: 'matrix-tower',    gx: 0.8, gy: 3.2,  shape: 'campus',     label: 'Matrix Research Hub' },
-  { id: 'artefact-archive',gx: 4.2, gy: 3.2,  shape: 'datacenter', label: 'Artefact Archive'    },
-  { id: 'final-inspection', gx: 2.5, gy: 4.8, shape: 'hq',         label: 'Final Inspection HQ' },
+  { id: 'error-district',   shape: 'office',     label: 'Error District HQ'   },
+  { id: 'vv-headquarters',  shape: 'skyscraper', label: 'V&V Tower'           },
+  { id: 'matrix-tower',     shape: 'campus',     label: 'Matrix Research Hub' },
+  { id: 'artefact-archive', shape: 'datacenter', label: 'Artefact Archive'    },
+  { id: 'final-inspection', shape: 'hq',         label: 'Final Inspection HQ' },
 ];
 
 const PATHS = [
-  { from: [0.8, 0.5], to: [4.2, 0.8], fromId: 'error-district'   },
-  { from: [0.8, 0.5], to: [0.8, 3.2], fromId: 'error-district'   },
-  { from: [4.2, 0.8], to: [4.2, 3.2], fromId: 'vv-headquarters'  },
-  { from: [0.8, 3.2], to: [2.5, 4.8], fromId: 'matrix-tower'     },
-  { from: [4.2, 3.2], to: [2.5, 4.8], fromId: 'artefact-archive' },
+  { from: ROAD_CORNERS['error-district'],   to: ROAD_CORNERS['vv-headquarters'],  fromId: 'error-district'   },
+  { from: ROAD_CORNERS['error-district'],   to: ROAD_CORNERS['matrix-tower'],     fromId: 'error-district'   },
+  { from: ROAD_CORNERS['vv-headquarters'],  to: ROAD_CORNERS['artefact-archive'], fromId: 'vv-headquarters'  },
+  { from: ROAD_CORNERS['matrix-tower'],     to: ROAD_CORNERS['final-inspection'], fromId: 'matrix-tower'     },
+  { from: ROAD_CORNERS['artefact-archive'], to: ROAD_CORNERS['final-inspection'], fromId: 'artefact-archive' },
 ];
 
 /* ── Colour helpers ─────────────────────────────────────────────────── */
@@ -850,9 +892,470 @@ function Fountain() {
   );
 }
 
+/* ── Traffic & pedestrians ──────────────────────────────────────────── */
+
+/* Pentagon road loop — derived from the 5 building positions on the campus.
+ * Order: Error → V&V → Artefact → Final → Matrix → Error (clockwise on screen).
+ * These match the 5 PATHS segments, so cars stay on the asphalt. */
+/* Cars drive on the asphalt — the road pentagon itself.
+ * Order: Error → V&V → Artefact → Final → Matrix → Error (clockwise on screen). */
+const PENTAGON_WAYPOINTS = [
+  ROAD_CORNERS['error-district'],
+  ROAD_CORNERS['vv-headquarters'],
+  ROAD_CORNERS['artefact-archive'],
+  ROAD_CORNERS['final-inspection'],
+  ROAD_CORNERS['matrix-tower'],
+].map(([gx, gy]) => {
+  const [x, , z] = pos3(gx, gy);
+  return [x, z];
+});
+
+const PENTAGON_REVERSE = [...PENTAGON_WAYPOINTS].reverse();
+
+/* All cars in the same direction share one speed so spacing never collapses.
+ * Different colours, evenly phased around the pentagon → no overtaking, no crashes. */
+const CW_SPEED  = 2.0;
+const CCW_SPEED = 1.7;
+
+const CW_CARS = [
+  { color: '#e74c3c' },
+  { color: '#2980b9' },
+  { color: '#f1c40f' },
+];
+
+const CCW_CARS = [
+  { color: '#ecf0f1' },
+  { color: '#27ae60' },
+];
+
+/* Lateral offset from road centreline — keeps each direction on its own lane.
+ * Asphalt is ~3.5 wide; ~0.85 puts each lane comfortably inside its half. */
+const LANE_OFFSET = 0.85;
+
+function Car({ route, phase = 0 }) {
+  const groupRef = useRef();
+  const wheelRefs = useRef([]);
+
+  // pre-compute segment lengths so speed is consistent across segments
+  const segs = route.waypoints.map((p, i) => {
+    const n = route.waypoints[(i + 1) % route.waypoints.length];
+    const dx = n[0] - p[0];
+    const dz = n[1] - p[1];
+    const len = Math.hypot(dx, dz);
+    // unit "right" vector relative to travel direction (drive on the right)
+    return { from: p, to: n, len, nx: -dz / len, nz: dx / len };
+  });
+  const totalLen = segs.reduce((a, s) => a + s.len, 0);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime() * route.speed + phase * totalLen;
+    let dist = ((t % totalLen) + totalLen) % totalLen;
+    let seg = segs[0];
+    for (const s of segs) {
+      if (dist <= s.len) { seg = s; break; }
+      dist -= s.len;
+    }
+    const k = dist / seg.len;
+    const cx = seg.from[0] + (seg.to[0] - seg.from[0]) * k;
+    const cz = seg.from[1] + (seg.to[1] - seg.from[1]) * k;
+    // shift onto the right-hand lane relative to travel direction
+    const x = cx + seg.nx * LANE_OFFSET;
+    const z = cz + seg.nz * LANE_OFFSET;
+    const angle = Math.atan2(seg.to[1] - seg.from[1], seg.to[0] - seg.from[0]);
+    if (groupRef.current) {
+      groupRef.current.position.set(x, 0.18, z);
+      groupRef.current.rotation.y = -angle;
+    }
+    wheelRefs.current.forEach((w) => {
+      if (w) w.rotation.x = clock.getElapsedTime() * route.speed * 3;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* chassis */}
+      <mesh position={[0, 0.14, 0]} castShadow>
+        <boxGeometry args={[1.05, 0.28, 0.5]} />
+        <meshStandardMaterial color={route.color} roughness={0.4} metalness={0.4} />
+      </mesh>
+      {/* cabin */}
+      <mesh position={[-0.05, 0.36, 0]} castShadow>
+        <boxGeometry args={[0.6, 0.22, 0.46]} />
+        <meshStandardMaterial color="#1a2540" roughness={0.2} metalness={0.5} />
+      </mesh>
+      {/* windshield slit */}
+      <mesh position={[0.15, 0.36, 0]}>
+        <boxGeometry args={[0.05, 0.16, 0.42]} />
+        <meshStandardMaterial color="#9bd2ff" emissive="#9bd2ff" emissiveIntensity={0.2} transparent opacity={0.7} />
+      </mesh>
+      {/* headlights */}
+      <mesh position={[0.53, 0.18, 0.18]}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshStandardMaterial color="#fffbe0" emissive="#fffbe0" emissiveIntensity={1.4} />
+      </mesh>
+      <mesh position={[0.53, 0.18, -0.18]}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshStandardMaterial color="#fffbe0" emissive="#fffbe0" emissiveIntensity={1.4} />
+      </mesh>
+      {/* tail lights */}
+      <mesh position={[-0.53, 0.18, 0.18]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#ff5050" emissive="#ff5050" emissiveIntensity={1.0} />
+      </mesh>
+      <mesh position={[-0.53, 0.18, -0.18]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#ff5050" emissive="#ff5050" emissiveIntensity={1.0} />
+      </mesh>
+      {/* wheels */}
+      {[
+        [ 0.35, 0,  0.27],
+        [ 0.35, 0, -0.27],
+        [-0.35, 0,  0.27],
+        [-0.35, 0, -0.27],
+      ].map((p, i) => (
+        <mesh
+          key={i}
+          ref={(el) => (wheelRefs.current[i] = el)}
+          position={p}
+          rotation={[0, 0, Math.PI / 2]}
+        >
+          <cylinderGeometry args={[0.12, 0.12, 0.08, 12]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Cars() {
+  return (
+    <group>
+      {CW_CARS.map((c, i) => (
+        <Car
+          key={`cw-${i}`}
+          route={{ speed: CW_SPEED, color: c.color, waypoints: PENTAGON_WAYPOINTS }}
+          phase={i / CW_CARS.length}
+        />
+      ))}
+      {CCW_CARS.map((c, i) => (
+        <Car
+          key={`ccw-${i}`}
+          route={{ speed: CCW_SPEED, color: c.color, waypoints: PENTAGON_REVERSE }}
+          phase={i / CCW_CARS.length}
+        />
+      ))}
+    </group>
+  );
+}
+
+/* Pedestrians walk on the sidewalk hugging the road, just outside the asphalt.
+ * Sidewalk = pentagon corners pushed ~1.9 units outward from the centroid. */
+const SIDEWALK_OFFSET = 1.9;
+const SIDEWALK_OUTER = PENTAGON_WAYPOINTS.map(([x, z]) => {
+  const dx = x - ROAD_CENTROID[0];
+  const dz = z - ROAD_CENTROID[1];
+  const len = Math.hypot(dx, dz) || 1;
+  return [x + (dx / len) * SIDEWALK_OFFSET, z + (dz / len) * SIDEWALK_OFFSET];
+});
+const SIDEWALK_OUTER_REV = [...SIDEWALK_OUTER].reverse();
+
+const PED_ROUTES = [
+  { speed: 0.85, shirt: '#ff6b6b', waypoints: SIDEWALK_OUTER     },
+  { speed: 0.70, shirt: '#48c9b0', waypoints: SIDEWALK_OUTER_REV },
+  { speed: 0.90, shirt: '#5dade2', waypoints: SIDEWALK_OUTER     },
+  { speed: 0.75, shirt: '#f5b041', waypoints: SIDEWALK_OUTER_REV },
+  { speed: 0.95, shirt: '#bb8fce', waypoints: SIDEWALK_OUTER     },
+  { speed: 0.80, shirt: '#7dcea0', waypoints: SIDEWALK_OUTER_REV },
+];
+
+function Pedestrian({ route, phase = 0 }) {
+  const groupRef = useRef();
+  const leftLegRef = useRef();
+  const rightLegRef = useRef();
+  const leftArmRef = useRef();
+  const rightArmRef = useRef();
+
+  const segs = route.waypoints.map((p, i) => {
+    const n = route.waypoints[(i + 1) % route.waypoints.length];
+    const dx = n[0] - p[0];
+    const dz = n[1] - p[1];
+    return { from: p, to: n, len: Math.hypot(dx, dz) };
+  });
+  const totalLen = segs.reduce((a, s) => a + s.len, 0);
+
+  useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
+    const t = time * route.speed + phase * totalLen;
+    let dist = ((t % totalLen) + totalLen) % totalLen;
+    let seg = segs[0];
+    for (const s of segs) {
+      if (dist <= s.len) { seg = s; break; }
+      dist -= s.len;
+    }
+    const k = dist / seg.len;
+    const x = seg.from[0] + (seg.to[0] - seg.from[0]) * k;
+    const z = seg.from[1] + (seg.to[1] - seg.from[1]) * k;
+    const angle = Math.atan2(seg.to[1] - seg.from[1], seg.to[0] - seg.from[0]);
+    if (groupRef.current) {
+      const bob = Math.abs(Math.sin(time * 6)) * 0.04;
+      groupRef.current.position.set(x, 0.02 + bob, z);
+      groupRef.current.rotation.y = -angle;
+    }
+    const swing = Math.sin(time * 6) * 0.5;
+    if (leftLegRef.current)  leftLegRef.current.rotation.z  =  swing;
+    if (rightLegRef.current) rightLegRef.current.rotation.z = -swing;
+    if (leftArmRef.current)  leftArmRef.current.rotation.z  = -swing * 0.7;
+    if (rightArmRef.current) rightArmRef.current.rotation.z =  swing * 0.7;
+  });
+
+  const skin = '#f3c8a4';
+  const pants = '#34495e';
+
+  return (
+    <group ref={groupRef}>
+      {/* legs (pivots near hip) */}
+      <group ref={leftLegRef} position={[0, 0.32, 0.07]}>
+        <mesh position={[0, -0.16, 0]}>
+          <boxGeometry args={[0.08, 0.32, 0.08]} />
+          <meshStandardMaterial color={pants} roughness={0.85} />
+        </mesh>
+      </group>
+      <group ref={rightLegRef} position={[0, 0.32, -0.07]}>
+        <mesh position={[0, -0.16, 0]}>
+          <boxGeometry args={[0.08, 0.32, 0.08]} />
+          <meshStandardMaterial color={pants} roughness={0.85} />
+        </mesh>
+      </group>
+      {/* torso */}
+      <mesh position={[0, 0.48, 0]}>
+        <boxGeometry args={[0.18, 0.3, 0.16]} />
+        <meshStandardMaterial color={route.shirt} roughness={0.8} />
+      </mesh>
+      {/* arms */}
+      <group ref={leftArmRef} position={[0, 0.6, 0.11]}>
+        <mesh position={[0, -0.13, 0]}>
+          <boxGeometry args={[0.05, 0.28, 0.05]} />
+          <meshStandardMaterial color={route.shirt} roughness={0.8} />
+        </mesh>
+      </group>
+      <group ref={rightArmRef} position={[0, 0.6, -0.11]}>
+        <mesh position={[0, -0.13, 0]}>
+          <boxGeometry args={[0.05, 0.28, 0.05]} />
+          <meshStandardMaterial color={route.shirt} roughness={0.8} />
+        </mesh>
+      </group>
+      {/* head */}
+      <mesh position={[0, 0.74, 0]}>
+        <sphereGeometry args={[0.1, 12, 12]} />
+        <meshStandardMaterial color={skin} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+function Pedestrians() {
+  return (
+    <group>
+      {PED_ROUTES.map((r, i) => (
+        <Pedestrian key={i} route={r} phase={i / PED_ROUTES.length} />
+      ))}
+      {PED_ROUTES.map((r, i) => (
+        <Pedestrian key={`b-${i}`} route={r} phase={(i / PED_ROUTES.length) + 0.5} />
+      ))}
+    </group>
+  );
+}
+
+/* ── Advertising plane circling the campus ──────────────────────────── */
+function AdPlane() {
+  const groupRef = useRef();
+  const propellerRef = useRef();
+  const bannerRef = useRef();
+  const logoTexture = useTexture('/logo.png');
+
+  const ORBIT_RADIUS = 26;
+  const ORBIT_HEIGHT = 14;
+  const ORBIT_SPEED = 0.18;
+  const ORBIT_CENTER = [0, 0, -2];
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime() * ORBIT_SPEED;
+    const x = ORBIT_CENTER[0] + Math.cos(t) * ORBIT_RADIUS;
+    const z = ORBIT_CENTER[2] + Math.sin(t) * ORBIT_RADIUS;
+    const y = ORBIT_HEIGHT;
+
+    if (groupRef.current) {
+      groupRef.current.position.set(x, y, z);
+      // tangent heading: derivative of (cos, sin) is (-sin, cos); plane nose faces +X by default
+      const heading = Math.atan2(-Math.cos(t), -Math.sin(t));
+      groupRef.current.rotation.y = heading;
+      // constant gentle bank into the turn
+      groupRef.current.rotation.z = -0.1;
+    }
+    if (propellerRef.current) {
+      propellerRef.current.rotation.x = clock.getElapsedTime() * 28;
+    }
+    if (bannerRef.current) {
+      // slight slipstream sway around vertical axis (banner stays horizontal)
+      bannerRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 1.6) * 0.04;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* fuselage — red body (cylinder along X = flight direction) */}
+      <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.32, 0.22, 2.2, 16]} />
+        <meshStandardMaterial color="#d83a2a" roughness={0.55} metalness={0.15} />
+      </mesh>
+      {/* white belly stripe */}
+      <mesh position={[0, -0.18, 0]}>
+        <boxGeometry args={[1.6, 0.12, 0.5]} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.6} />
+      </mesh>
+      {/* nose cone */}
+      <mesh position={[1.25, 0, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
+        <coneGeometry args={[0.22, 0.45, 16]} />
+        <meshStandardMaterial color="#b82e1e" roughness={0.55} />
+      </mesh>
+      {/* cockpit glass */}
+      <mesh position={[0.35, 0.28, 0]} castShadow>
+        <sphereGeometry args={[0.28, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial
+          color="#9bd8ff"
+          roughness={0.1}
+          metalness={0.3}
+          transparent
+          opacity={0.78}
+          emissive="#4aa8e0"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      {/* upper wing — biplane top wing */}
+      <mesh position={[0.05, 0.55, 0]} castShadow>
+        <boxGeometry args={[1.1, 0.08, 3.6]} />
+        <meshStandardMaterial color="#d83a2a" roughness={0.6} />
+      </mesh>
+      {/* upper wing white tip stripes */}
+      <mesh position={[0.05, 0.59, 1.55]}>
+        <boxGeometry args={[1.0, 0.04, 0.4]} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.6} />
+      </mesh>
+      <mesh position={[0.05, 0.59, -1.55]}>
+        <boxGeometry args={[1.0, 0.04, 0.4]} />
+        <meshStandardMaterial color="#f5f5f5" roughness={0.6} />
+      </mesh>
+      {/* lower wing — biplane bottom wing */}
+      <mesh position={[0.05, -0.28, 0]} castShadow>
+        <boxGeometry args={[1.0, 0.07, 3.2]} />
+        <meshStandardMaterial color="#d83a2a" roughness={0.6} />
+      </mesh>
+      {/* wing struts connecting upper and lower wing */}
+      {[-1.1, 1.1].map((dz) => (
+        <mesh key={dz} position={[0.05, 0.13, dz]}>
+          <boxGeometry args={[0.06, 0.85, 0.06]} />
+          <meshStandardMaterial color="#f5f5f5" roughness={0.7} />
+        </mesh>
+      ))}
+      {/* tail vertical fin */}
+      <mesh position={[-1.0, 0.35, 0]} castShadow>
+        <boxGeometry args={[0.55, 0.65, 0.08]} />
+        <meshStandardMaterial color="#d83a2a" roughness={0.6} />
+      </mesh>
+      {/* tail horizontal stabilizer */}
+      <mesh position={[-0.95, 0.05, 0]} castShadow>
+        <boxGeometry args={[0.6, 0.06, 1.2]} />
+        <meshStandardMaterial color="#d83a2a" roughness={0.6} />
+      </mesh>
+      {/* landing gear struts */}
+      {[-0.3, 0.3].map((dz) => (
+        <mesh key={dz} position={[0.15, -0.55, dz]}>
+          <cylinderGeometry args={[0.04, 0.04, 0.45, 6]} />
+          <meshStandardMaterial color="#3a3f48" roughness={0.7} />
+        </mesh>
+      ))}
+      {/* landing gear wheels */}
+      {[-0.3, 0.3].map((dz) => (
+        <mesh key={`w-${dz}`} position={[0.15, -0.78, dz]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.13, 0.13, 0.08, 12]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.85} />
+        </mesh>
+      ))}
+      {/* propeller hub */}
+      <mesh position={[1.55, 0, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.08, 0.08, 0.12, 12]} />
+        <meshStandardMaterial color="#2a2a2a" roughness={0.6} metalness={0.4} />
+      </mesh>
+      {/* spinning propeller blades */}
+      <group ref={propellerRef} position={[1.62, 0, 0]}>
+        <mesh>
+          <boxGeometry args={[0.04, 0.9, 0.08]} />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.5} transparent opacity={0.55} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <boxGeometry args={[0.04, 0.9, 0.08]} />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.5} transparent opacity={0.55} />
+        </mesh>
+      </group>
+
+      {/* tow rope from tail to banner */}
+      <Line
+        points={[
+          [-1.25, 0.05, 0],
+          [-2.3,  0.05, 0],
+          [-3.4,  0.0,  0],
+        ]}
+        color="#2a2a2a"
+        lineWidth={1.5}
+        transparent
+        opacity={0.85}
+      />
+
+      {/* banner trailing horizontally behind the plane (long along X = flight axis) */}
+      <group ref={bannerRef} position={[-3.4, 0, 0]}>
+        {/* front mast — vertical rod at banner leading edge */}
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry args={[0.04, 0.04, 1.4, 8]} />
+          <meshStandardMaterial color="#888" roughness={0.6} metalness={0.3} />
+        </mesh>
+        {/* trailing mast — vertical rod at banner trailing edge */}
+        <mesh position={[-4.4, 0, 0]}>
+          <cylinderGeometry args={[0.035, 0.035, 1.4, 8]} />
+          <meshStandardMaterial color="#888" roughness={0.6} metalness={0.3} />
+        </mesh>
+        {/* banner cloth — two back-to-back planes so the logo reads correctly from BOTH sides
+            (DoubleSide would mirror the text on the back face) */}
+        <mesh position={[-2.2, 0, 0.01]}>
+          <planeGeometry args={[4.4, 1.3]} />
+          <meshStandardMaterial
+            map={logoTexture}
+            color="#ffffff"
+            roughness={0.85}
+            metalness={0}
+            side={THREE.FrontSide}
+            transparent
+          />
+        </mesh>
+        <mesh position={[-2.2, 0, -0.01]} rotation={[0, Math.PI, 0]}>
+          <planeGeometry args={[4.4, 1.3]} />
+          <meshStandardMaterial
+            map={logoTexture}
+            color="#ffffff"
+            roughness={0.85}
+            metalness={0}
+            side={THREE.FrontSide}
+            transparent
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 /* ── Map node ───────────────────────────────────────────────────────── */
 function MapNode({ building, isUnlocked, isCompleted, isHovered, onHover, onClick, zoneDef }) {
-  const [x, , z] = pos3(building.gx, building.gy);
+  const [x, z] = offsetFromCentroid(building.id, BUILDING_SETBACK);
+  const yaw = rotationToCentroid(building.id);
   const { color } = zoneDef;
   const locked = !isUnlocked;
   const labelY = building.shape === 'skyscraper' ? 17 : building.shape === 'hq' ? 9 : 10;
@@ -870,6 +1373,7 @@ function MapNode({ building, isUnlocked, isCompleted, isHovered, onHover, onClic
       >
         <group
           scale={isHovered ? 1.04 : 1}
+          rotation={[0, yaw, 0]}
           onPointerOver={(e) => { e.stopPropagation(); onHover(building.id); }}
           onPointerOut={(e) => { e.stopPropagation(); onHover(null); }}
           onClick={(e) => { e.stopPropagation(); if (isUnlocked) onClick(building.id); }}
@@ -1011,6 +1515,13 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
       <Trees />
       <Bushes />
       <Fountain />
+      <Cars />
+      <Pedestrians />
+
+      {/* ── Advertising plane circling overhead ── */}
+      <Suspense fallback={null}>
+        <AdPlane />
+      </Suspense>
 
       {/* ── Shadows / env ── */}
       <ContactShadows
