@@ -2,35 +2,32 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import './OfficeTaskHud.css';
 
 const ROLE_LABELS = {
-  'Log Analysis Engineer':    'Classify Log Output',
-  'Defect Triage Lead':       'Validate Defect Report',
-  'Backend Engineer':         'Read Stack Trace',
-  'QA Engineer':              'Reproduce the Bug',
-  'V&V Lead':                 'Route Mission Cards',
-  'Verification Specialist':  'Verify Conformance',
-  'Validation Specialist':    'Validate User Stories',
-  'Test Level Architect':     'Fill the Test Matrix',
-  'Test Level Analyst':       'Analyse Test Levels',
-  'Artefact Curator':         'Tag the Artefacts',
-  'Static Analysis Lead':     'Review Static Artefacts',
+  'Log Analysis Engineer':     'Classify Log Output',
+  'Defect Triage Lead':        'Triage the Failure',
+  'Verification Engineer':     'Verify the Spec Match',
+  'Validation Engineer':       'Validate User Fitness',
+  'Test Level Researcher':     'Map Test Levels',
+  'Test Type Researcher':      'Map Test Types',
+  'Senior Archivist':          'Tag the Test Basis',
+  'Static Testing Specialist': 'Classify Static Artefact',
+  'Lead Inspector':            'Identify the Oracle',
+  'Score Auditor':             'Audit the Verdict',
 };
 
 function quizLabel(npc) {
   if (ROLE_LABELS[npc.role]) return ROLE_LABELS[npc.role];
-  return `Help — ${npc.role}`;
+  return 'Answer the Quiz';
 }
 
 function buildTasks({ npcs, completedQuests, officeStage, zoneDone, briefingSeen, returnSeen }) {
-  const manager = npcs.find(n => n.type === 'main');
   const quizNpcs = npcs.filter(n => n.quiz);
-  const managerName = manager ? manager.name.split(' ')[0] : 'Manager';
 
   const tasks = [];
 
   tasks.push({
     id: 'briefing',
     where: 'Manager Desk',
-    name: `Receive Briefing — ${managerName}`,
+    name: 'Receive Briefing',
     status: briefingSeen ? 'done' : 'active',
     meta: 'Step 1',
   });
@@ -51,7 +48,7 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone, briefingSeen
     tasks.push({
       id: npc.id,
       where: npc.role,
-      name: `${quizLabel(npc)} — ${npc.name.split(' ')[0]}`,
+      name: quizLabel(npc),
       status,
       meta: isoRef ? `Quiz · ${isoRef}` : 'Quiz',
     });
@@ -60,7 +57,7 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone, briefingSeen
   tasks.push({
     id: 'return',
     where: 'Manager Desk',
-    name: `Return to Manager — ${managerName}`,
+    name: 'Return to Manager',
     status: returnSeen
       ? 'done'
       : (officeStage === 'workers-done' ? 'active' : 'pending'),
