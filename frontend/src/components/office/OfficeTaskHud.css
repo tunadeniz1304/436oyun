@@ -120,30 +120,64 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Progress bar */
-.otask__progress-track {
-  height: 3px;
-  background: var(--border-soft);
+/* Progress strip */
+.otask__progress {
+  padding: var(--gap-sm) var(--gap-md) var(--gap-md);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.otask__progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: var(--fw-bold);
+  color: var(--ink-muted);
+  margin-bottom: var(--gap-xs);
+}
+
+.otask__progress-label strong {
+  color: var(--success);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.02em;
+}
+
+.otask__bar {
+  height: 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-pill);
   overflow: hidden;
 }
 
-.otask__progress-fill {
+.otask__bar-fill {
   height: 100%;
-  background: var(--office-accent);
-  transition: width var(--t-long) var(--ease-out);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--success) 80%, black) 0%,
+    var(--success) 50%,
+    color-mix(in srgb, var(--success) 70%, white) 100%
+  );
+  border-radius: var(--r-pill);
   position: relative;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--success) 50%, transparent);
+  transition: width var(--t-long) var(--ease-out);
 }
 
-.otask__progress-fill::after {
+.otask__bar-fill::after {
   content: '';
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     -55deg,
-    transparent 0 5px,
-    rgba(255, 255, 255, 0.25) 5px 8px
+    transparent 0 6px,
+    rgba(255, 255, 255, 0.18) 6px 10px
   );
-  animation: otask-stripe 1.4s linear infinite;
+  animation: otask-stripe 1.2s linear infinite;
+  border-radius: inherit;
 }
 
 @keyframes otask-stripe {

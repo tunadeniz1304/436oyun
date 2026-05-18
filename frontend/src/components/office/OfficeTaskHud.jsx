@@ -114,6 +114,7 @@ export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zone
 
   const doneCount  = tasks.filter(t => t.status === 'done').length;
   const activeTask = tasks.find(t => t.status === 'active');
+  const pct        = Math.round((doneCount / tasks.length) * 100);
 
   const scheduleCollapse = () => {
     clearTimeout(collapseTimerRef.current);
@@ -161,11 +162,14 @@ export default function OfficeTaskHud({ npcs, completedQuests, officeStage, zone
       {expanded && (
         <div className="otask__panel" role="list" aria-label="Task list">
 
-          <div className="otask__progress-track" role="presentation">
-            <div
-              className="otask__progress-fill"
-              style={{ width: `${(doneCount / tasks.length) * 100}%` }}
-            />
+          <div className="otask__progress">
+            <div className="otask__progress-label">
+              <span>TOTAL TASKS COMPLETED</span>
+              <strong>{pct}%</strong>
+            </div>
+            <div className="otask__bar">
+              <div className="otask__bar-fill" style={{ width: `${pct}%` }} />
+            </div>
           </div>
 
           <div className="otask__list">
