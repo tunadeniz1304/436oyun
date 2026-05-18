@@ -251,4 +251,4 @@ Full manual smoke test:
 - Internationalisation
 
 These can be considered after the core educational flow and session persistence
-are stable.
+are stable..
