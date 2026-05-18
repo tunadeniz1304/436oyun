@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import './OfficeTaskHud.css';
 
 const ROLE_LABELS = {
@@ -97,12 +97,15 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
 }
 
 const STATUS_ICON = { done: '✓', active: '▶', pending: '○' };
+const AUTO_COLLAPSE_MS = 3500;
 
 /**
  * @param {{ zoneLabel: string, zoneColor: string, npcs: object[], completedQuests: Set<string>, officeStage: string, zoneDone: boolean }} props
  */
 export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQuests, officeStage, zoneDone }) {
   const [expanded, setExpanded] = useState(false);
+  const userToggledRef = useRef(false);
+  const collapseTimerRef = useRef(null);
 
   const tasks = useMemo(
     () => buildTasks({ npcs, completedQuests, officeStage, zoneDone }),
@@ -112,13 +115,35 @@ export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQue
   const doneCount  = tasks.filter(t => t.status === 'done').length;
   const activeTask = tasks.find(t => t.status === 'active');
 
+  const scheduleCollapse = () => {
+    clearTimeout(collapseTimerRef.current);
+    collapseTimerRef.current = setTimeout(() => {
+      if (!userToggledRef.current) {
+        setExpanded(false);
+      }
+    }, AUTO_COLLAPSE_MS);
+  };
+
+  // Auto-expand on stage change (and on first mount) to draw attention
+  useEffect(() => {
+    if (userToggledRef.current) return;
+    setExpanded(true);
+    scheduleCollapse();
+    return () => clearTimeout(collapseTimerRef.current);
+  }, [officeStage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToggle = () => {
+    userToggledRef.current = true;
+    clearTimeout(collapseTimerRef.current);
+    setExpanded(e => !e);
+  };
+
   return (
     <div className={`otask${expanded ? ' otask--expanded' : ''}`}>
 
-      {/* Pill / header row — always visible, click to toggle */}
       <button
         className="otask__pill"
-        onClick={() => setExpanded(e => !e)}
+        onClick={handleToggle}
         aria-expanded={expanded}
         aria-label={expanded ? 'Collapse task list' : 'Expand task list'}
       >
@@ -133,7 +158,6 @@ export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQue
         <span className="otask__chevron" aria-hidden="true">{expanded ? '▴' : '▾'}</span>
       </button>
 
-      {/* Expanded panel */}
       {expanded && (
         <div className="otask__panel" role="list" aria-label="Task list">
 
