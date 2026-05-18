@@ -102,7 +102,7 @@ function QuizBody({ quiz, onComplete, zoneColor }) {
  *   onQuestComplete?: (npcId:string)=>void,
  * }} props
  */
-export default function NpcDialog({ npc, zoneColor, currentStage, onClose, onQuestComplete }) {
+export default function NpcDialog({ npc, zoneColor, currentStage, onClose, onQuestComplete, onManagerStageSeen }) {
   const [idx, setIdx] = useState(0);
 
   const isQuizMode = !!npc.quiz;
@@ -130,13 +130,17 @@ export default function NpcDialog({ npc, zoneColor, currentStage, onClose, onQue
       if (isQuizMode) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        if (isLast) onClose();
-        else setIdx(i => i + 1);
+        if (isLast) {
+          if (isManagerMode) onManagerStageSeen?.(currentStage);
+          onClose();
+        } else {
+          setIdx(i => i + 1);
+        }
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [onClose, isLast, isQuizMode]);
+  }, [onClose, isLast, isQuizMode, isManagerMode, onManagerStageSeen, currentStage]);
 
   const handleQuestComplete = () => {
     onQuestComplete?.(npc.id);
@@ -205,7 +209,7 @@ export default function NpcDialog({ npc, zoneColor, currentStage, onClose, onQue
                 </div>
                 <button
                   className={`npc-dialog__btn${isLast ? ' npc-dialog__btn--enter' : ''}`}
-                  onClick={isLast ? onClose : () => setIdx(i => i + 1)}
+                  onClick={isLast ? () => { if (isManagerMode) onManagerStageSeen?.(currentStage); onClose(); } : () => setIdx(i => i + 1)}
                 >
                   {btnLabel}
                 </button>
