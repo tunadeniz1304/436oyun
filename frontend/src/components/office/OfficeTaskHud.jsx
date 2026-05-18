@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import './OfficeTaskHud.css';
 
 const ROLE_LABELS = {
@@ -20,10 +20,6 @@ function quizLabel(npc) {
   return `Help — ${npc.role}`;
 }
 
-/**
- * Build an ordered task array from props.
- * Returns: { id, where, name, status: 'done'|'active'|'pending', meta }[]
- */
 function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
   const manager = npcs.find(n => n.type === 'main');
   const quizNpcs = npcs.filter(n => n.quiz);
@@ -31,7 +27,6 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
 
   const tasks = [];
 
-  // Step 1 — briefing
   tasks.push({
     id: 'briefing',
     where: 'Manager Desk',
@@ -40,7 +35,6 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     meta: 'Step 1',
   });
 
-  // Steps 2..N — one per quiz NPC in declaration order
   let firstActivated = false;
   for (const npc of quizNpcs) {
     const isDone = completedQuests.has(npc.id);
@@ -63,7 +57,6 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     });
   }
 
-  // Step N+1 — return to manager
   {
     let status;
     if (officeStage === 'zone-done') status = 'done';
@@ -78,7 +71,6 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     });
   }
 
-  // Step N+2 — open the console
   {
     let status;
     if (zoneDone) status = 'done';
@@ -93,7 +85,6 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
     });
   }
 
-  // Step N+3 — leave
   tasks.push({
     id: 'exit',
     where: 'Exit Door',
@@ -105,10 +96,14 @@ function buildTasks({ npcs, completedQuests, officeStage, zoneDone }) {
   return tasks;
 }
 
+const STATUS_ICON = { done: '✓', active: '▶', pending: '○' };
+
 /**
  * @param {{ zoneLabel: string, zoneColor: string, npcs: object[], completedQuests: Set<string>, officeStage: string, zoneDone: boolean }} props
  */
 export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQuests, officeStage, zoneDone }) {
+  const [expanded, setExpanded] = useState(false);
+
   const tasks = useMemo(
     () => buildTasks({ npcs, completedQuests, officeStage, zoneDone }),
     [npcs, completedQuests, officeStage, zoneDone],
@@ -117,17 +112,56 @@ export default function OfficeTaskHud({ zoneLabel, zoneColor, npcs, completedQue
   const doneCount  = tasks.filter(t => t.status === 'done').length;
   const activeTask = tasks.find(t => t.status === 'active');
 
-  // temporary plain render — styled in commit 3+
   return (
-    <div style={{ position: 'absolute', top: 64, left: 16, zIndex: 120, background: 'rgba(0,0,0,0.7)', color: '#fff', padding: 8, borderRadius: 8, fontSize: 12, maxWidth: 280 }}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>{doneCount}/{tasks.length} — {activeTask?.name ?? 'Done'}</div>
-      <ul style={{ margin: 0, paddingLeft: 16 }}>
-        {tasks.map(t => (
-          <li key={t.id} style={{ opacity: t.status === 'pending' ? 0.45 : 1, textDecoration: t.status === 'done' ? 'line-through' : 'none', marginBottom: 2 }}>
-            {t.status === 'done' ? '✓' : t.status === 'active' ? '▶' : '○'} {t.name}
-          </li>
-        ))}
-      </ul>
+    <div className={`otask${expanded ? ' otask--expanded' : ''}`}>
+
+      {/* Pill / header row — always visible, click to toggle */}
+      <button
+        className="otask__pill"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Collapse task list' : 'Expand task list'}
+      >
+        <span className="otask__dot" aria-hidden="true" />
+        <span className="otask__pill-body">
+          <span className="otask__eyebrow">CURRENT OBJECTIVE</span>
+          <span className="otask__active-name">{activeTask?.name ?? 'All tasks complete'}</span>
+        </span>
+        <span className="otask__counter" aria-label={`${doneCount} of ${tasks.length} done`}>
+          {doneCount}/{tasks.length}
+        </span>
+        <span className="otask__chevron" aria-hidden="true">{expanded ? '▴' : '▾'}</span>
+      </button>
+
+      {/* Expanded panel */}
+      {expanded && (
+        <div className="otask__panel" role="list" aria-label="Task list">
+
+          <div className="otask__progress-track" role="presentation">
+            <div
+              className="otask__progress-fill"
+              style={{ width: `${(doneCount / tasks.length) * 100}%` }}
+            />
+          </div>
+
+          <div className="otask__list">
+            {tasks.map(t => (
+              <div
+                key={t.id}
+                className={`otask__row otask__row--${t.status}`}
+                role="listitem"
+              >
+                <span className="otask__row-icon" aria-hidden="true">{STATUS_ICON[t.status]}</span>
+                <span className="otask__row-body">
+                  <span className="otask__row-where">{t.where}</span>
+                  <span className="otask__row-name">{t.name}</span>
+                </span>
+                <span className="otask__row-meta">{t.meta}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
