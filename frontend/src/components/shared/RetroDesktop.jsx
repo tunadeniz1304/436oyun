@@ -100,9 +100,9 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
     if (sc.id === 'bugsweeper') {
       setDialog({ title: 'BugSweeper.exe', icon: '🐛', size: 'lg', content: <RetroBugSweeper onClose={() => setDialog(null)} /> });
     } else if (sc.id === 'ie') {
-      setDialog({ title: 'Internet Explorer 6', icon: '🌐', size: 'lg', content: <RetroBrowser onClose={() => setDialog(null)} /> });
+      setDialog({ title: 'Internet Explorer 6', icon: '🌐', size: 'lg', chromeless: true, content: <RetroBrowser onClose={() => setDialog(null)} /> });
     } else if (sc.id === 'my-docs') {
-      setDialog({ title: 'My Documents', icon: '📂', size: 'lg', content: <RetroDocsFolder onClose={() => setDialog(null)} /> });
+      setDialog({ title: 'My Documents', icon: '📂', size: 'lg', chromeless: true, content: <RetroDocsFolder onClose={() => setDialog(null)} /> });
     } else {
       setDialog({ title: sc.label, body: sc.msg, icon: sc.icon });
     }
@@ -239,10 +239,12 @@ export default function RetroDesktop({ zoneId, completedZones, zoneOrder, onLaun
               className={['retro-desktop__popup', dialog.size === 'lg' ? 'retro-desktop__popup--lg' : ''].join(' ')}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="retro-desktop__popup-titlebar">
-                <span>{dialog.title}</span>
-                <button className="retro-desktop__wbtn retro-desktop__wbtn--close" onClick={() => setDialog(null)} aria-label="Close">✕</button>
-              </div>
+              {!dialog.chromeless && (
+                <div className="retro-desktop__popup-titlebar">
+                  <span>{dialog.title}</span>
+                  <button className="retro-desktop__wbtn retro-desktop__wbtn--close" onClick={() => setDialog(null)} aria-label="Close">✕</button>
+                </div>
+              )}
               {dialog.content ? (
                 <div className="retro-desktop__popup-rich">{dialog.content}</div>
               ) : (

@@ -584,9 +584,10 @@
 
 .retro-desktop__popup--lg {
   width: 680px;
-  max-width: 92vw;
-  height: 78vh;
-  top: 47%;
+  max-width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  max-height: 540px;
+  top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
