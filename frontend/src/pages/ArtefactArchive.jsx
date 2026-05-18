@@ -12,7 +12,7 @@ import DependencyMap from '../components/zone4/DependencyMap.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
-import { getZoneSkipTarget } from '../context/zoneNavigation.js';
+import { getZoneSkipTarget, getNextOfficeTarget } from '../context/zoneNavigation.js';
 import {
   zone4Artefacts,
   ZONE4_FULL_SCORE,
@@ -27,6 +27,7 @@ import './ArtefactArchive.css';
 const ZONE_ID = 'artefact-archive';
 const ZONE_COLOR = 'var(--zone4-color)';
 const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
+const NEXT_OFFICE = getNextOfficeTarget(ZONE_ID);
 
 function evaluateTags(artefact, picked) {
   const correct = artefact.correctTags;
@@ -382,9 +383,9 @@ function ArtefactArchive() {
                 variant="primary"
                 size="lg"
                 zoneColor="var(--zone4-color)"
-                onClick={() => navigate('/final-inspection')}
+                onClick={() => navigate(NEXT_OFFICE.route)}
               >
-                Continue → Final Inspection
+                {NEXT_OFFICE.label}
               </Button>
             </div>
           </>

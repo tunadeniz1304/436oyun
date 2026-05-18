@@ -10,7 +10,7 @@ import SingleCellChallenge from '../components/zone3/SingleCellChallenge.jsx';
 import { useGame } from '../hooks/useGame.js';
 import { useFeedbackQueue } from '../hooks/useFeedbackQueue.js';
 import { useMotion } from '../hooks/useMotion.js';
-import { getZoneSkipTarget } from '../context/zoneNavigation.js';
+import { getZoneSkipTarget, getNextOfficeTarget } from '../context/zoneNavigation.js';
 import {
   zone3Scenarios,
   ZONE3_FULL_SCORE,
@@ -25,6 +25,7 @@ import './TestMatrixTower.css';
 const ZONE_ID = 'matrix-tower';
 const ZONE_COLOR = 'var(--zone3-color)';
 const SKIP_TARGET = getZoneSkipTarget(ZONE_ID);
+const NEXT_OFFICE = getNextOfficeTarget(ZONE_ID);
 
 function correctSet(scenario) {
   return new Set(scenario.correctCells.map((c) => cellKey(c.level, c.type)));
@@ -277,9 +278,9 @@ function TestMatrixTower() {
               variant="primary"
               size="lg"
               zoneColor="var(--zone3-color)"
-              onClick={() => navigate('/zone/artefact-archive')}
+              onClick={() => navigate(NEXT_OFFICE.route)}
             >
-              Continue → Zone 4
+              {NEXT_OFFICE.label}
             </Button>
           </div>
         )}

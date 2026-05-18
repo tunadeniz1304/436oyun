@@ -27,3 +27,30 @@ export function getZoneSkipTarget(zoneId) {
     label: isFinal ? 'Skip to Final' : `Skip to Zone ${idx + 2}`,
   };
 }
+
+/**
+ * After a zone test is solved, the player should walk into the NEXT zone's
+ * office (briefing → worker quizzes → console) before facing the next test.
+ * For the last office-backed zone (artefact-archive), there is no next office,
+ * so we route directly to Final Inspection.
+ */
+export function getNextOfficeTarget(zoneId) {
+  const idx = SKIPPABLE_ZONE_ORDER.indexOf(zoneId);
+  if (idx < 0 || idx >= SKIPPABLE_ZONE_ORDER.length - 1) return null;
+
+  const nextZoneId = SKIPPABLE_ZONE_ORDER[idx + 1];
+
+  if (nextZoneId === 'final-inspection') {
+    return {
+      zoneId: nextZoneId,
+      route: ZONE_ROUTES[nextZoneId],
+      label: 'Continue → Final Inspection',
+    };
+  }
+
+  return {
+    zoneId: nextZoneId,
+    route: `/office/${nextZoneId}`,
+    label: `Continue → Zone ${idx + 2} Office`,
+  };
+}
