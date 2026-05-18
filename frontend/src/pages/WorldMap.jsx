@@ -892,6 +892,263 @@ function Fountain() {
   );
 }
 
+/* ── Plaza furniture: bench ─────────────────────────────────────────── */
+function Bench({ position = [0, 0, 0], rotation = 0 }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* seat */}
+      <mesh position={[0, 0.34, 0]} castShadow>
+        <boxGeometry args={[1.8, 0.08, 0.42]} />
+        <meshStandardMaterial color="#8a5a32" roughness={0.85} />
+      </mesh>
+      {/* backrest */}
+      <mesh position={[0, 0.62, -0.17]} castShadow>
+        <boxGeometry args={[1.8, 0.46, 0.07]} />
+        <meshStandardMaterial color="#8a5a32" roughness={0.85} />
+      </mesh>
+      {/* end supports */}
+      {[-0.82, 0.82].map((x, i) => (
+        <mesh key={i} position={[x, 0.17, 0]} castShadow>
+          <boxGeometry args={[0.08, 0.34, 0.42]} />
+          <meshStandardMaterial color="#3a3a3a" roughness={0.6} metalness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ── Seated person — anatomically aligned to bench seat ─────────────── */
+/* Bench seat top sits at world Y ≈ 0.38 (seat centre 0.34, half-height 0.04).
+ * Hip pivot is at Y = 0.42, slightly back of the bench centre at Z = -0.05.
+ * Upper legs extend forward (+Z) horizontally, lower legs hang down from the knee.
+ * Forward face of the figure is +Z (matches Bench's front-facing convention). */
+function SeatedPerson({ position = [0, 0, 0], rotation = 0, shirt = '#ff6b6b' }) {
+  const groupRef = useRef();
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.getElapsedTime();
+    groupRef.current.position.y = position[1] + Math.sin(t * 1.5) * 0.008;
+  });
+
+  const skin = '#f3c8a4';
+  const pants = '#34495e';
+
+  // Pose constants
+  const hipY = 0.42;
+  const hipZ = -0.05;
+  const thighLen = 0.34;
+  const shinLen = 0.34;
+  const kneeZ = hipZ + thighLen;   // 0.29
+  const legX = 0.08;
+
+  return (
+    <group ref={groupRef} position={position} rotation={[0, rotation, 0]}>
+      {/* Upper legs — horizontal, forward from hip to knee.
+          Box rotated 90° around X so its long axis lies along +Z. */}
+      <mesh position={[ legX, hipY, hipZ + thighLen / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[0.09, thighLen, 0.1]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+      <mesh position={[-legX, hipY, hipZ + thighLen / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <boxGeometry args={[0.09, thighLen, 0.1]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+
+      {/* Lower legs — vertical, hanging from knee toward the ground.
+          Top of shin meets knee at (legX, hipY, kneeZ); centre is half-length below. */}
+      <mesh position={[ legX, hipY - shinLen / 2, kneeZ]}>
+        <boxGeometry args={[0.09, shinLen, 0.09]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+      <mesh position={[-legX, hipY - shinLen / 2, kneeZ]}>
+        <boxGeometry args={[0.09, shinLen, 0.09]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+
+      {/* Shoes */}
+      <mesh position={[ legX, hipY - shinLen + 0.03, kneeZ + 0.05]}>
+        <boxGeometry args={[0.1, 0.05, 0.18]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+      </mesh>
+      <mesh position={[-legX, hipY - shinLen + 0.03, kneeZ + 0.05]}>
+        <boxGeometry args={[0.1, 0.05, 0.18]} />
+        <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+      </mesh>
+
+      {/* Torso — sits on hip, leans back slightly to rest against backrest */}
+      <mesh position={[0, hipY + 0.2, hipZ - 0.04]} rotation={[-0.12, 0, 0]}>
+        <boxGeometry args={[0.26, 0.4, 0.18]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+
+      {/* Arms — shoulders → forearms resting on thighs */}
+      <mesh position={[ 0.18, hipY + 0.18, hipZ + 0.05]} rotation={[0.9, 0, 0.05]}>
+        <boxGeometry args={[0.07, 0.32, 0.07]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+      <mesh position={[-0.18, hipY + 0.18, hipZ + 0.05]} rotation={[0.9, 0, -0.05]}>
+        <boxGeometry args={[0.07, 0.32, 0.07]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+
+      {/* Head */}
+      <mesh position={[0, hipY + 0.5, hipZ - 0.05]}>
+        <sphereGeometry args={[0.12, 14, 14]} />
+        <meshStandardMaterial color={skin} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Standing person — idle stance with hands on hips ───────────────── */
+function StandingIdlePerson({ position = [0, 0, 0], rotation = 0, shirt = '#5dade2' }) {
+  const groupRef = useRef();
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.getElapsedTime();
+    groupRef.current.position.y = position[1] + Math.sin(t * 1.8) * 0.015;
+  });
+
+  const skin = '#f3c8a4';
+  const pants = '#2c3e50';
+
+  return (
+    <group ref={groupRef} position={position} rotation={[0, rotation, 0]}>
+      {/* legs */}
+      <mesh position={[0.07, 0.16, 0]}>
+        <boxGeometry args={[0.08, 0.32, 0.08]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+      <mesh position={[-0.07, 0.16, 0]}>
+        <boxGeometry args={[0.08, 0.32, 0.08]} />
+        <meshStandardMaterial color={pants} roughness={0.85} />
+      </mesh>
+      {/* torso */}
+      <mesh position={[0, 0.48, 0]}>
+        <boxGeometry args={[0.2, 0.32, 0.16]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+      {/* arms */}
+      <mesh position={[0.16, 0.46, 0]}>
+        <boxGeometry args={[0.06, 0.3, 0.06]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+      <mesh position={[-0.16, 0.46, 0]}>
+        <boxGeometry args={[0.06, 0.3, 0.06]} />
+        <meshStandardMaterial color={shirt} roughness={0.8} />
+      </mesh>
+      {/* head */}
+      <mesh position={[0, 0.74, 0]}>
+        <sphereGeometry args={[0.11, 12, 12]} />
+        <meshStandardMaterial color={skin} roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Dog — small box body, sphere head, wagging tail ────────────────── */
+function Dog({ position = [0, 0, 0], rotation = 0, fur = '#c89060' }) {
+  const tailRef = useRef();
+  useFrame(({ clock }) => {
+    if (!tailRef.current) return;
+    tailRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 8) * 0.6;
+  });
+
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* body */}
+      <mesh position={[0, 0.18, 0]} castShadow>
+        <boxGeometry args={[0.48, 0.2, 0.22]} />
+        <meshStandardMaterial color={fur} roughness={0.85} />
+      </mesh>
+      {/* head */}
+      <mesh position={[0.28, 0.28, 0]} castShadow>
+        <sphereGeometry args={[0.13, 14, 14]} />
+        <meshStandardMaterial color={fur} roughness={0.85} />
+      </mesh>
+      {/* snout */}
+      <mesh position={[0.39, 0.24, 0]} castShadow>
+        <boxGeometry args={[0.09, 0.07, 0.09]} />
+        <meshStandardMaterial color="#2a2018" roughness={0.7} />
+      </mesh>
+      {/* ears */}
+      <mesh position={[0.22, 0.4, 0.08]} rotation={[0, 0, -0.4]}>
+        <coneGeometry args={[0.05, 0.1, 6]} />
+        <meshStandardMaterial color={fur} roughness={0.85} />
+      </mesh>
+      <mesh position={[0.22, 0.4, -0.08]} rotation={[0, 0, -0.4]}>
+        <coneGeometry args={[0.05, 0.1, 6]} />
+        <meshStandardMaterial color={fur} roughness={0.85} />
+      </mesh>
+      {/* legs */}
+      {[
+        [ 0.16, 0,  0.08],
+        [ 0.16, 0, -0.08],
+        [-0.16, 0,  0.08],
+        [-0.16, 0, -0.08],
+      ].map((p, i) => (
+        <mesh key={i} position={[p[0], 0.05, p[2]]}>
+          <boxGeometry args={[0.06, 0.14, 0.06]} />
+          <meshStandardMaterial color={fur} roughness={0.85} />
+        </mesh>
+      ))}
+      {/* tail (wags via Y rotation around its hip pivot) */}
+      <group ref={tailRef} position={[-0.24, 0.24, 0]}>
+        <mesh position={[-0.1, 0.04, 0]} rotation={[0, 0, 0.4]}>
+          <boxGeometry args={[0.18, 0.05, 0.05]} />
+          <meshStandardMaterial color={fur} roughness={0.85} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/* ── Plaza life: benches, seated people, dog, fountain visitor ─────── */
+/* Each bench + its seated occupants share a group, so figures stay anchored
+ * to the seat regardless of how the bench rotates to face the fountain. */
+function BenchWithPeople({ position, rotation, sitters }) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <Bench />
+      {sitters.map((s, i) => (
+        // Bench seat is 1.8 wide along X → spread sitters across it.
+        <SeatedPerson key={i} position={[s.x, 0, 0]} rotation={0} shirt={s.shirt} />
+      ))}
+    </group>
+  );
+}
+
+function PlazaLife() {
+  return (
+    <group>
+      {/* Bench 1 — NW of fountain, facing the fountain */}
+      <BenchWithPeople
+        position={[-3.4, 0, -2.6]}
+        rotation={Math.PI * 0.75}
+        sitters={[
+          { x:  0.45, shirt: '#e85d75' },
+          { x: -0.45, shirt: '#5dade2' },
+        ]}
+      />
+
+      {/* Bench 2 — SE of fountain, facing the fountain */}
+      <BenchWithPeople
+        position={[3.4, 0, 2.6]}
+        rotation={-Math.PI * 0.25}
+        sitters={[
+          { x: 0.3, shirt: '#f5b041' },
+        ]}
+      />
+
+      {/* Dog padding around between the SE bench and the fountain */}
+      <Dog position={[2.4, 0, 2.6]} rotation={-Math.PI * 0.55} fur="#b07440" />
+
+      {/* Visitor on the south side looking at the fountain */}
+      <StandingIdlePerson position={[1.4, 0, 2.6]} rotation={Math.PI * 1.05} shirt="#bb8fce" />
+    </group>
+  );
+}
+
 /* ── Traffic & pedestrians ──────────────────────────────────────────── */
 
 /* Pentagon road loop — derived from the 5 building positions on the campus.
@@ -1515,6 +1772,7 @@ function WorldMapScene({ state, isZoneUnlocked, hoveredId, setHoveredId, onSelec
       <Trees />
       <Bushes />
       <Fountain />
+      <PlazaLife />
       <Cars />
       <Pedestrians />
 
