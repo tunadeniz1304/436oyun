@@ -57,7 +57,7 @@
 
 ISO Testing World is a browser-based educational game built for the IT & ISQS Learner-as-Designer course. Players take the role of a senior test engineer resolving production incident `#047` across five zones, each targeting a different ISO/IEC/IEEE 29119-1:2022 concept cluster. Every zone is designed so that informal, everyday definitions produce the wrong answer — correct play requires ISO-precise vocabulary. The game includes an office-interior simulation layer with NPC-driven briefings, pixel-art characters, and retro desktop mini-tools that contextualise the incidents before each zone.
 
-**Team:** OPUS — Tuna Deniz, Goktuğ Tabak, Oğuzhan Tarhan, Buğra Kara
+**Team:** OPUS — Tuna Deniz, Göktuğ Tabak, Oğuzhan Tarhan, Buğra Kara
 **Course:** IT & ISQS — Learner-as-Designer Project
 **Standard:** ISO/IEC/IEEE 29119-1:2022 (Second edition)
 
@@ -339,7 +339,7 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 <!-- Contact -->
 ## :handshake: Contact
 
-OPUS Team — Tuna Deniz, Goktuğ Tabak, Oğuzhan Tarhan, Buğra Kara
+OPUS Team — Tuna Deniz, Göktuğ Tabak, Oğuzhan Tarhan, Buğra Kara
 
 Course: IT & ISQS — Learner-as-Designer Project
 
