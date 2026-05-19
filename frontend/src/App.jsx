@@ -8,6 +8,7 @@ import TestMatrixTower from './pages/TestMatrixTower.jsx';
 import ArtefactArchive from './pages/ArtefactArchive.jsx';
 import FinalInspection from './pages/FinalInspection.jsx';
 import OfficeInterior from './pages/OfficeInterior.jsx';
+import UserGuide from './pages/UserGuide.jsx';
 
 function PageTransition({ children }) {
   const reduced = useReducedMotion();
@@ -63,6 +64,10 @@ function AnimatedRoutes() {
         <Route
           path="/office/:zoneId"
           element={<PageTransition><OfficeInterior /></PageTransition>}
+        />
+        <Route
+          path="/user-guide"
+          element={<PageTransition><UserGuide /></PageTransition>}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

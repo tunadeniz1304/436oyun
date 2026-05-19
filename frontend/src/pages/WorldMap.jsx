@@ -1988,6 +1988,11 @@ function WorldMap() {
     <div className="world-map">
       <motion.header className="world-map__topbar" {...headerMotion}>
         <div className="world-map__topbar-left">
+          <img
+            src="/iso-logo2.png"
+            alt="ISO Testing World"
+            className="world-map__logo"
+          />
           <span className="world-map__incident">
             <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true" style={{ fill: 'currentColor' }}>
               <path d="M9 1 L17 16 H1 Z" />
@@ -2003,6 +2008,17 @@ function WorldMap() {
           </p>
         </div>
         <div className="world-map__topbar-right">
+          <div className="world-map__help-card" role="group" aria-label="User guide call to action">
+            <span className="world-map__help-card-caption">Don't know how to use?</span>
+            <button
+              type="button"
+              className="world-map__help-btn"
+              onClick={() => navigate('/user-guide')}
+              aria-label="Open user guide"
+            >
+              📖 How to use?
+            </button>
+          </div>
           <ProgressTracker completed={completedCount} total={4} />
         </div>
       </motion.header>
