@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="frontend/public/iso-world-logo.jpeg" alt="ISO Testing World logo" width="200" height="auto" />
+  <img src="frontend/public/iso-world-logo.jpeg" alt="ISO Testing World logo" width="320" height="auto" />
   <h1>ISO Testing World</h1>
 
   <p>
@@ -19,7 +19,7 @@
 </p>
 
 <h4>
-  <a href="http://localhost:5173">Run Locally</a>
+  <a href="https://opus-isotestingworld.vercel.app/">View Demo</a>
   <span> · </span>
   <a href="CLAUDE.md">Documentation</a>
 </h4>
@@ -255,7 +255,9 @@ The game is fully playable. Refresh resets all state (by design for the prototyp
 <!-- Deployment -->
 ### :triangular_flag_on_post: Deployment
 
-No production deployment target is wired up for the current prototype. For a local production build:
+The frontend is deployed to Vercel at **[https://opus-isotestingworld.vercel.app/](https://opus-isotestingworld.vercel.app/)**.
+
+To produce a production build locally:
 
 ```bash
 cd frontend
@@ -263,13 +265,13 @@ npm run build
 npm run preview
 ```
 
-The backend is a standard Node.js process (`node src/server.js`) and requires PostgreSQL at the configured `DATABASE_URL`. Production deployment is out of scope for the Week 3 prototype.
+The backend is a standard Node.js process (`node src/server.js`) and requires PostgreSQL at the configured `DATABASE_URL`. The Vercel deployment runs the frontend only — session persistence requires a separately hosted backend.
 
 
 <!-- Usage -->
 ## :eyes: Usage
 
-1. Open `http://localhost:5173`.
+1. Open **[https://opus-isotestingworld.vercel.app/](https://opus-isotestingworld.vercel.app/)** (or `http://localhost:5173` for a local dev run).
 2. On the **WorldMap (Corporate Test Campus)**, Zone 1 — Error District HQ is unlocked. Later zones unlock sequentially as each zone is completed.
 3. Before each zone, step into the **office interior** and speak with NPCs to receive your briefing. The task HUD in the top-left tracks your current objectives.
 4. Complete the zone gameplay (drag-and-drop, routing decisions, matrix selection, or artefact tagging depending on the zone).
@@ -317,7 +319,7 @@ Team members follow the branch naming and commit style conventions in [CLAUDE.md
 
 - **Do I need the backend running to play the game?**
 
-  No. The frontend runs standalone at `http://localhost:5173`. Without the backend, session progress is in-memory only — a page refresh resets all state. The console will show backend sync warnings, which can be ignored during frontend-only runs.
+  No. The game runs fully at [https://opus-isotestingworld.vercel.app/](https://opus-isotestingworld.vercel.app/) without a backend. Without the backend, session progress is in-memory only — a page refresh resets all state. The console will show backend sync warnings, which can be ignored.
 
 - **Why are there two folders — `iso-testing-world/` and `frontend/`?**
 
