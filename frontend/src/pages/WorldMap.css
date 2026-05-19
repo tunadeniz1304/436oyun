@@ -58,8 +58,23 @@ body {
 
 .world-map__topbar-left {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.world-map__logo {
+  height: 140px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.world-map__brand-text {
+  display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .world-map__topbar-right {
@@ -77,7 +92,7 @@ body {
 
 .world-map__help-card-caption {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 13px;
   font-style: italic;
   color: var(--ink-soft);
   letter-spacing: 0.02em;
@@ -88,12 +103,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 11px 22px;
+  padding: 10px 20px;
   background: var(--zone5-color, #3C3489);
   border: 1px solid var(--zone5-color, #3C3489);
   border-radius: var(--r-pill);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -521,4 +536,6 @@ body {
   .world-map__sidebar {
     flex-direction: column;
   }
+  .world-map__topbar-left { gap: 14px; }
+  .world-map__logo { height: 90px; }
 }
