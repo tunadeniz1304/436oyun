@@ -157,6 +157,22 @@ body {
   margin: 0;
   letter-spacing: -0.02em;
   color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.world-map__github-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.world-map__github-link:hover {
+  color: var(--text-main);
+  transform: scale(1.15);
 }
 
 .world-map__subtitle {
