@@ -1988,21 +1988,39 @@ function WorldMap() {
     <div className="world-map">
       <motion.header className="world-map__topbar" {...headerMotion}>
         <div className="world-map__topbar-left">
-          <span className="world-map__incident">
-            <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true" style={{ fill: 'currentColor' }}>
-              <path d="M9 1 L17 16 H1 Z" />
-              <rect x="8.3" y="6" width="1.4" height="5" fill="#ffffff" />
-              <rect x="8.3" y="12" width="1.4" height="1.4" fill="#ffffff" />
-            </svg>
-            Incident #047 · Production Outage
-          </span>
-          <h1 className="world-map__title">Corporate Test Campus</h1>
-          <p className="world-map__subtitle">
-            Resolve the outage by visiting all five company departments. Each location
-            represents a critical ISO/IEC/IEEE 29119-1:2022 testing sector.
-          </p>
+          <img
+            src="/iso-logo2.png"
+            alt="ISO Testing World"
+            className="world-map__logo"
+          />
+          <div className="world-map__brand-text">
+            <span className="world-map__incident">
+              <svg viewBox="0 0 18 18" width="14" height="14" aria-hidden="true" style={{ fill: 'currentColor' }}>
+                <path d="M9 1 L17 16 H1 Z" />
+                <rect x="8.3" y="6" width="1.4" height="5" fill="#ffffff" />
+                <rect x="8.3" y="12" width="1.4" height="1.4" fill="#ffffff" />
+              </svg>
+              Incident #047 · Production Outage
+            </span>
+            <h1 className="world-map__title">Corporate Test Campus</h1>
+            <p className="world-map__subtitle">
+              Resolve the outage by visiting all five company departments. Each location
+              represents a critical ISO/IEC/IEEE 29119-1:2022 testing sector.
+            </p>
+          </div>
         </div>
         <div className="world-map__topbar-right">
+          <div className="world-map__help-card" role="group" aria-label="User guide call to action">
+            <span className="world-map__help-card-caption">Don't know how to use?</span>
+            <button
+              type="button"
+              className="world-map__help-btn"
+              onClick={() => navigate('/user-guide')}
+              aria-label="Open user guide"
+            >
+              📖 User Guide
+            </button>
+          </div>
           <ProgressTracker completed={completedCount} total={4} />
         </div>
       </motion.header>

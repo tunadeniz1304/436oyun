@@ -58,8 +58,80 @@ body {
 
 .world-map__topbar-left {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.world-map__logo {
+  height: 140px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.world-map__brand-text {
+  display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+}
+
+.world-map__topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.world-map__help-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.world-map__help-card-caption {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+  padding-right: 4px;
+}
+
+.world-map__help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--zone5-color, #3C3489);
+  border: 1px solid var(--zone5-color, #3C3489);
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition:
+    background var(--t-base) var(--ease-out),
+    border-color var(--t-base) var(--ease-out),
+    box-shadow var(--t-base) var(--ease-out),
+    transform var(--t-base) var(--ease-out);
+}
+
+.world-map__help-btn:hover {
+  filter: brightness(1.12);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-lg, var(--shadow-md));
+  transform: translateY(-2px);
+}
+
+.world-map__help-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
 }
 
 .world-map__incident {
@@ -464,4 +536,6 @@ body {
   .world-map__sidebar {
     flex-direction: column;
   }
+  .world-map__topbar-left { gap: 14px; }
+  .world-map__logo { height: 90px; }
 }
