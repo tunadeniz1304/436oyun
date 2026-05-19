@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="frontend/public/iso-world-logo.jpeg" alt="ISO Testing World logo" width="320" height="auto" />
+  <img src="frontend/public/iso-logo2.png" alt="ISO Testing World logo" width="380" height="auto" />
   <h1>ISO Testing World</h1>
 
   <p>
